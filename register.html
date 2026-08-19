@@ -36,7 +36,8 @@
        <span class="text-danger fw-bold">อย่าเพิ่งปิดหน้าจอนะครับ!</span><br>
        รบกวนทำแบบสอบถามสั้นๆ เพื่อเปิดใช้งานระบบสะสมแต้ม
     </p>
-    <a href="#" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold mb-2 shadow-sm text-dark">📝 ทำแบบสอบถามรับแต้ม</a>
+    <!-- 🌟 เพิ่ม id="surveyBtn" เพื่อให้ JavaScript มองเห็นและเอาลิงก์มาใส่ -->
+    <a href="#" id="surveyBtn" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold mb-2 shadow-sm text-dark" target="_blank">📝 ทำแบบสอบถามรับแต้ม</a>
     <button class="btn btn-outline-secondary w-100 rounded-pill mt-2" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
   </div>
 
@@ -74,6 +75,11 @@
           if (result.status === "success") {
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
+
+              // 🌟 นำค่า formUrl ที่ดึงมาจากชีต Settings ใน Code.gs มาแปะใส่ปุ่มโดยอัตโนมัติ
+              if (result.formUrl) {
+                  document.getElementById('surveyBtn').href = result.formUrl;
+              }
           } else {
               throw new Error("Server Error");
           }
