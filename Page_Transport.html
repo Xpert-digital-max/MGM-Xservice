@@ -19,25 +19,57 @@
     .reg-text { font-weight: bold; font-size: 1.1rem; color: #2c3e50; }
     .price-text { color: #d63384; font-weight: bold; }
     .content-area { margin-bottom: 80px; }
+    .badge-count { font-size: 0.75em; margin-left: 5px; }
   </style>
 </head>
 <body>
 
   <div class="container content-area" style="max-width: 800px;">
-    <h3 class="fw-bold text-primary mb-3">จัดการงานขนส่ง</h3>
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+       <h3 class="fw-bold text-primary"><i class="fas fa-tasks"></i> จัดการงานขนส่ง</h3>
+       <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="loadData()">
+         <i class="fas fa-sync"></i> รีเฟรช
+       </button>
+    </div>
+
     <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded-pill shadow-sm">
-      <li class="nav-item"><a class="nav-link active" onclick="switchTab('pending')" id="tab-pending">📤 รอไปขนส่ง</a></li>
-      <li class="nav-item"><a class="nav-link" onclick="switchTab('processing')" id="tab-processing">📥 รอรับเล่มคืน</a></li>
+      <li class="nav-item">
+        <a class="nav-link active" onclick="switchTab('pending')" id="tab-pending">
+           📤 รอไปขนส่ง <span class="badge bg-light text-dark badge-count" id="count-pending">0</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="switchTab('processing')" id="tab-processing">
+           📥 รอรับเล่มคืน <span class="badge bg-light text-dark badge-count" id="count-processing">0</span>
+        </a>
+      </li>
     </ul>
+
     <div class="table-container">
-       <div id="loading" class="text-center py-4">⏳ กำลังโหลด...</div>
+       <div id="loading" class="text-center py-4 text-muted">⏳ กำลังโหลดรายการ...</div>
+       <div id="emptyMsg" class="text-center py-4 text-success" style="display:none;">
+          <div class="mb-2"><i class="fas fa-check-circle fa-3x"></i></div>
+          <h4>ไม่มีรายการในส่วนนี้</h4>
+       </div>
        <div id="listArea"></div>
     </div>
+
   </div>
 
   <div class="total-bar">
-      <div>เลือก <span id="selCount" class="fw-bold">0</span> คัน</div>
-      <button id="btnAction" class="btn btn-secondary btn-lg rounded-pill" onclick="doAction()" disabled>กรุณาเลือกรายการ</button>
+      <div>
+         <small class="text-muted">เลือก:</small> 
+         <span id="selCount" class="fw-bold fs-5">0</span> คัน
+         <span id="totalWrapper" style="display:none;">
+           | <small class="text-muted">ยอด:</small> 
+           <span id="selTotal" class="fw-bold text-danger fs-5">0</span> บ.
+         </span>
+      </div>
+      
+      <button id="btnAction" class="btn btn-secondary btn-lg rounded-pill px-4" onclick="doAction()" disabled>
+         กรุณาเลือกรายการ
+      </button>
   </div>
 
   <script>
@@ -58,9 +90,8 @@
            });
            const res = await response.json();
 
-           // 🌟 เช็คและดึงข้อมูลจากโครงสร้าง API ให้ถูกต้อง
            if(res.status === "success" && res.data) {
-               dataStore = res.data; // ข้อมูลตารางจะเข้ามาตรงนี้
+               dataStore = res.data;
            } else {
                dataStore = { pending: [], processing: [] };
            }
@@ -75,21 +106,138 @@
        }
     }
 
-    // ... (ส่วน renderList และ calcSelection คงเดิม แต่ปรับจุดเรียก doAction) ...
+    function switchTab(tabName) {
+       currentTab = tabName;
+       document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+       document.getElementById('tab-' + tabName).classList.add('active');
+       renderList();
+    }
+
+    function renderList() {
+       document.getElementById('loading').style.display = 'none';
+       let jobs = dataStore[currentTab] || [];
+
+       updateActionButton();
+
+       if (jobs.length === 0) {
+          document.getElementById('listArea').innerHTML = '';
+          document.getElementById('emptyMsg').style.display = 'block';
+          return;
+       }
+       document.getElementById('emptyMsg').style.display = 'none';
+
+       let html = '<div class="list-group list-group-flush">';
+       jobs.forEach((item, index) => {
+          html += `
+            <label class="list-group-item d-flex align-items-center gap-3 py-3" style="cursor:pointer;">
+                <input class="form-check-input flex-shrink-0" type="checkbox" value="${index}" onchange="calcSelection()">
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="reg-text">${item.reg || '-'}</span>
+                        ${currentTab === 'pending' ? `<span class="price-text">${(item.taxAmount || 0).toLocaleString()} บ.</span>` : ''}
+                    </div>
+                    <small class="text-muted">${item.carType || '-'} | JOB: ${item.jobId || '-'}</small>
+                    ${currentTab === 'processing' && item.userId ? '<br><small class="text-success"><i class="fab fa-line"></i> ลูกค้ารอแจ้งเตือน</small>' : ''}
+                </div>
+            </label>
+          `;
+       });
+       html += '</div>';
+       
+       html = `<div class="mb-2 px-3"><input type="checkbox" id="checkAll" onchange="toggleAll(this)"> <label for="checkAll">เลือกทั้งหมด</label></div>` + html;
+
+       document.getElementById('listArea').innerHTML = html;
+       calcSelection();
+    }
+
+    function calcSelection() {
+       let checks = document.querySelectorAll('.list-group-item input[type="checkbox"]:checked');
+       let total = 0;
+       let jobs = dataStore[currentTab] || [];
+
+       checks.forEach(chk => {
+           let idx = parseInt(chk.value);
+           if(jobs[idx]) total += (jobs[idx].taxAmount || 0);
+       });
+
+       document.getElementById('selCount').innerText = checks.length;
+       
+       if(currentTab === 'pending') {
+          document.getElementById('totalWrapper').style.display = 'inline';
+          document.getElementById('selTotal').innerText = total.toLocaleString();
+       } else {
+          document.getElementById('totalWrapper').style.display = 'none';
+       }
+
+       let btn = document.getElementById('btnAction');
+       if(checks.length > 0) {
+           btn.disabled = false;
+           if(currentTab === 'pending') {
+               btn.className = "btn btn-primary btn-lg rounded-pill px-4";
+               btn.innerHTML = `🚀 แจ้งเบิกเงิน (${checks.length})`;
+           } else {
+               btn.className = "btn btn-success btn-lg rounded-pill px-4";
+               btn.innerHTML = `✅ จบงาน/แจ้งลูกค้า (${checks.length})`;
+           }
+       } else {
+           btn.disabled = true;
+           btn.className = "btn btn-secondary btn-lg rounded-pill px-4";
+           btn.innerHTML = "กรุณาเลือกรายการ";
+       }
+    }
+
+    function toggleAll(source) {
+        let checkboxes = document.querySelectorAll('.list-group-item input[type="checkbox"]');
+        checkboxes.forEach(chk => chk.checked = source.checked);
+        calcSelection();
+    }
+
+    function updateActionButton() {
+        document.getElementById('selCount').innerText = '0';
+        let btn = document.getElementById('btnAction');
+        btn.disabled = true;
+        btn.innerHTML = "กรุณาเลือกรายการ";
+    }
 
     async function doAction() {
-        let checks = document.querySelectorAll('.list-group-item input[type="checkbox"]:checked');
-        let selectedItems = Array.from(checks).map(c => dataStore[currentTab][c.value]);
-        
-        let action = (currentTab === 'pending') ? "processBatchTransport" : "processBatchFinish";
+       let checks = document.querySelectorAll('.list-group-item input[type="checkbox"]:checked');
+       if(checks.length === 0) return;
 
-        Swal.fire({ title: 'ยืนยัน?', icon: 'question', showCancelButton: true }).then(async (res) => {
-            if (res.isConfirmed) {
-                await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: action, items: selectedItems }) });
-                Swal.fire('สำเร็จ', '', 'success');
-                loadData();
-            }
-        });
+       let selectedItems = [];
+       let jobs = dataStore[currentTab] || [];
+       checks.forEach(chk => {
+           let idx = parseInt(chk.value);
+           selectedItems.push(jobs[idx]);
+       });
+
+       let actionName = (currentTab === 'pending') ? "processBatchTransport" : "processBatchFinish";
+
+       Swal.fire({
+          title: 'ยืนยันทำรายการ?',
+          text: `ทำรายการทั้งหมด ${checks.length} คัน`,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'ยืนยัน'
+       }).then(async (result) => {
+          if (result.isConfirmed) {
+              Swal.fire({title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+              try {
+                  const response = await fetch(GAS_API_URL, {
+                      method: 'POST',
+                      body: JSON.stringify({ action: actionName, items: selectedItems })
+                  });
+                  const r = await response.json();
+                  if(r.status === "success") {
+                      Swal.fire('สำเร็จ', 'บันทึกเรียบร้อย', 'success');
+                      loadData();
+                  } else {
+                      throw new Error(r.message || "Unknown error");
+                  }
+              } catch(e) {
+                  Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + e, 'error');
+              }
+          }
+       });
     }
   </script>
 </body>
