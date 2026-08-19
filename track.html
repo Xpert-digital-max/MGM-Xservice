@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- ดึงค่า URL กลางจาก config.js -->
+  <!-- 🌟 ดึงค่า URL กลางจาก config.js -->
   <script src="config.js"></script>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -99,16 +99,18 @@
               Swal.close();
               checkUrlParamsAndShowForm();
           }
-      }, 12000);
+      }, 12000); // เผื่อเวลาเน็ตช้าเป็น 12 วิ
 
       try {
-          await liff.init({ liffId: "2000218686-kY7ah48L" }); // แก้ LIFF ID ของคุณตรงนี้ได้ตามต้องการ
+          await liff.init({ liffId: "2000218686-kY7ah48L" }); // แก้ LIFF ID ของคุณตามจริง
           if (!liff.isLoggedIn()) {
               liff.login();
               return;
           }
+          
           liffProfile = await liff.getProfile();
           checkAutoTrack(liffProfile.userId); 
+          
       } catch (err) {
           isDataLoaded = true;
           clearTimeout(failsafeTimer);
@@ -136,7 +138,7 @@
               body: JSON.stringify({ action: "autoTrackByUserId", userId: userId })
           });
           const res = await response.json();
-          
+
           isDataLoaded = true;
           clearTimeout(failsafeTimer);
           Swal.close();
