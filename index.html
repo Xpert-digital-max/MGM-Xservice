@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบรับสิทธิพิเศษ</title>
+  <script src="config.js"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body style="background-color: #f5f5f5; text-align: center; font-family: sans-serif; padding-top: 30px; margin: 0;">
@@ -27,9 +28,6 @@
     // ⚠️ ลิงก์นี้สำคัญมาก หากเขาไม่ได้แอดเพื่อน ระบบจะพามาที่ลิงก์นี้
     const lineOALink = "https://line.me/R/ti/p/@xservice"; 
     
-    // ⚠️ นำ Web App URL ของ GAS มาวางตรงนี้
-    const gasAppUrl = "https://script.google.com/macros/s/AKfycbyzFxHS2LMwdh0d2BvggdBiUMDY79wRQr_xfJLBUzo8RB9XbxPQIWaNe6S8PpvGeAJDmw/exec"; 
-
     let currentUserId = "", currentUserName = "", currentUserPic = "";
 
     async function initializeLiff() {
