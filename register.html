@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ลงทะเบียนรับสิทธิ์</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { background-color: #f0f2f5; padding: 20px; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    .container-box { width: 100%; max-width: 450px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .btn-green { background-color: #1DB446; color: white; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <!-- 📱 ฟอร์มกรอกเบอร์ -->
+  <div class="container-box" id="formSection">
+    <h3 class="text-center mb-4 text-success fw-bold">🎁 ลงทะเบียนรับสิทธิ์</h3>
+    <p class="text-center text-muted small mb-4">กรุณากรอกเบอร์โทรศัพท์เพื่อเชื่อมโยงข้อมูลรถ<br>และเปิดระบบสะสมแต้ม</p>
+
+    <div class="mb-4">
+      <label class="form-label fw-bold">เบอร์โทรศัพท์</label>
+      <input type="tel" class="form-control form-control-lg text-center" id="phone" placeholder="08xxxxxxxx" maxlength="10">
+    </div>
+    <button class="btn btn-green w-100 btn-lg shadow-sm rounded-pill" id="submitBtn" onclick="triggerBotPush()">ยืนยันรับสิทธิ์</button>
+  </div>
+
+  <!-- 🎁 หน้าต่างสำเร็จ -->
+  <div class="container-box text-center" id="successSection" style="display:none;">
+    <div class="mb-3"><span style="font-size: 4rem;">🎉</span></div>
+    <h3 class="text-success fw-bold">ระบบส่งข้อมูลสำเร็จ!</h3>
+    <p class="text-muted small">
+       กรุณาดูรายละเอียดคิวที่ช่องแชทครับ<br><br>
+       <span class="text-danger fw-bold">อย่าเพิ่งปิดหน้าจอนะครับ!</span><br>
+       รบกวนทำแบบสอบถามสั้นๆ เพื่อเปิดใช้งานระบบสะสมแต้ม
+    </p>
+    <a href="#" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold mb-2 shadow-sm text-dark">📝 ทำแบบสอบถามรับแต้ม</a>
+    <button class="btn btn-outline-secondary w-100 rounded-pill mt-2" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
+  </div>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    const MY_LIFF_ID = "2000218686-kY7ah48L"; 
+    
+    // 🌟 นำ URL ที่ก๊อปปี้จากขั้นตอนที่ 1 มาวางตรงนี้ครับ 🌟
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyzFxHS2LMwdh0d2BvggdBiUMDY79wRQr_xfJLBUzo8RB9XbxPQIWaNe6S8PpvGeAJDmw/exec"; 
+
+    window.onload = () => { liff.init({ liffId: MY_LIFF_ID }).then(() => { if (!liff.isLoggedIn()) liff.login(); }); };
+
+    async function triggerBotPush() {
+      const phone = document.getElementById('phone').value.replace(/[^0-9]/g, '');
+      if(phone.length < 9) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกเบอร์โทรศัพท์', 'warning');
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerText = "กำลังประมวลผล..."; 
+
+      try {
+          const profile = await liff.getProfile();
+          const payload = {
+              action: "processPhoneFromLiff", 
+              phone: phone, 
+              userId: profile.userId, 
+              displayName: profile.displayName
+          };
+
+          // ยิง API ไปหา Google แบบข้ามโดเมน
+          const response = await fetch(GAS_API_URL, {
+              method: 'POST',
+              body: JSON.stringify(payload) 
+          });
+
+          const result = await response.json();
+
+          if (result.status === "success") {
+              document.getElementById('formSection').style.display = 'none';
+              document.getElementById('successSection').style.display = 'block';
+          } else {
+              throw new Error("Server Error");
+          }
+      } catch (err) {
+          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
+          btn.disabled = false; btn.innerText = "ยืนยันรับสิทธิ์";
+      }
+    }
+  </script>
+</body>
+</html>
