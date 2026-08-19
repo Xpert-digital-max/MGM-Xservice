@@ -47,10 +47,32 @@
     window.onload = loadData;
 
     async function loadData() {
-        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getTransportQueue" }) });
-        dataStore = (await res.json()).data;
-        document.getElementById('loading').style.display = 'none';
-        renderList();
+       document.getElementById('loading').style.display = 'block';
+       document.getElementById('listArea').innerHTML = '';
+       document.getElementById('emptyMsg').style.display = 'none';
+       
+       try {
+           const response = await fetch(GAS_API_URL, {
+               method: 'POST',
+               body: JSON.stringify({ action: "getTransportQueue" })
+           });
+           const res = await response.json();
+
+           // 🌟 เช็คและดึงข้อมูลจากโครงสร้าง API ให้ถูกต้อง
+           if(res.status === "success" && res.data) {
+               dataStore = res.data; // ข้อมูลตารางจะเข้ามาตรงนี้
+           } else {
+               dataStore = { pending: [], processing: [] };
+           }
+
+           document.getElementById('count-pending').innerText = dataStore.pending ? dataStore.pending.length : 0;
+           document.getElementById('count-processing').innerText = dataStore.processing ? dataStore.processing.length : 0;
+           
+           renderList();
+       } catch (e) {
+           document.getElementById('loading').innerText = "❌ โหลดข้อมูลไม่สำเร็จ";
+           console.error(e);
+       }
     }
 
     // ... (ส่วน renderList และ calcSelection คงเดิม แต่ปรับจุดเรียก doAction) ...
