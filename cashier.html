@@ -1,120 +1,433 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-  <meta charset="utf-8">
+  <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ระบบแคชเชียร์ / ชำระเงิน</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- ดึงลิงก์จาก config.js -->
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- ดึงค่า URL กลางจาก config.js -->
   <script src="config.js"></script>
   <style>
-    body { background-color: #f8f9fa; padding: 20px; font-family: sans-serif; }
-    .container-box { max-width: 600px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 0 auto; }
+    body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; padding: 20px; }
+    .card { border-radius: 15px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .section-header { background: linear-gradient(45deg, #0d6efd, #0a58ca); color: white; padding: 12px; border-radius: 15px 15px 0 0; font-weight: bold; }
+    .price-row { display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px dashed #eee; }
+    .grand-total { font-size: 1.8rem; color: #198754; font-weight: bold; text-align: right; margin-top: 10px; background: #e8f5e9; padding: 10px; border-radius: 10px; }
+    #edit, #previewSection, #preSaveButtons, #postSaveButtons, #successBanner { display: none; }
   </style>
 </head>
 <body>
-
-  <div class="container-box">
-    <h3 class="text-center text-success fw-bold mb-4">💰 ระบบแคชเชียร์และชำระเงิน</h3>
+  <div class="container" style="max-width: 700px;">
     
-    <div class="input-group mb-3">
-      <input type="text" id="searchKeyword" class="form-control" placeholder="กรอกเลข JOB หรือ ทะเบียนรถ...">
-      <button class="btn btn-outline-primary" type="button" onclick="searchJob()">ค้นหาข้อมูล</button>
+    <div id="searchSection" class="card p-5 text-center">
+      <h3 class="text-primary mb-3">🔍 ค้นหาคิวงาน (การเงิน)</h3>
+      
+      <select id="userBranch" class="form-select form-select-lg mb-3 text-primary fw-bold" style="border: 2px solid #0d6efd;">
+          <option value="All">🌐 ดูทุกสาขา (แอดมิน)</option>
+          <option value="สาขาพระยืน">สาขาพระยืน</option>
+          <option value="สาขาท่าใหม่">สาขาท่าใหม่</option>
+      </select>
+      
+      <div class="input-group input-group-lg">
+        <input type="text" id="sk" class="form-control" placeholder="ทะเบียน / คิว / JOB ID">
+        <button id="btnSearch" class="btn btn-primary" onclick="find()">ค้นหา</button>
+      </div>
     </div>
 
-    <div id="resultSection" style="display: none;">
-      <hr>
-      <div class="mb-3">
-        <p class="mb-1"><strong>JOB ID:</strong> <span id="lblJobId">-</span></p>
-        <p class="mb-1"><strong>ทะเบียนรถ:</strong> <span id="lblReg">-</span></p>
-        <p class="mb-1"><strong>เบอร์โทร:</strong> <span id="lblPhone">-</span></p>
+    <div id="edit">
+      <div class="card"><div class="section-header">🚗 ข้อมูล: <span id="v"></span></div>
+        <div class="card-body">
+          <input type="hidden" id="idx"><input type="hidden" id="jobId">
+          <div class="row g-2">
+            <div class="col-6">
+              <label>ประเภท</label>
+              <select id="cType" class="form-select" onchange="toggleCarType()">
+                <option value="รถเก๋ง / 4 ประตู (รย.1)">รถเก๋ง / 4 ประตู (รย.1)</option>
+                <option value="รถตู้ (รย.2)">รถตู้ (รย.2)</option>
+                <option value="รถกระบะ (รย.3)">รถกระบะ (รย.3)</option>
+                <option value="รถกระบะ (เกิน 2000 กก.)">รถกระบะ (เกิน 2000 กก.)</option>
+                <option value="รถตู้ (เกิน 2000 กก.)">รถตู้ (เกิน 2000 กก.)</option>
+                <option value="รถจักรยานยนต์">รถจักรยานยนต์</option>
+                <option value="รถอื่นๆ">รถอื่นๆ</option>
+              </select>
+            </div>
+            <div class="col-6">
+               <label id="engineLabel">เครื่องยนต์ (CC)</label>
+               <input type="number" id="engineVal" class="form-control">
+            </div>
+            <div class="col-12"><label>วันจดทะเบียน</label><div class="input-group"><select id="regDay" class="form-select"></select><select id="regMonth" class="form-select"><option value="1">ม.ค.</option><option value="2">ก.พ.</option></select><input type="number" id="regYear" class="form-control" placeholder="พ.ศ." onchange="autoCheckTor()"></div></div>
+            <div class="col-12 text-end text-primary fw-bold" id="carAgeText">อายุรถ: - ปี</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card"><div class="section-header" style="background:#198754">✅ รายการ</div>
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+             <div class="form-check form-switch me-3">
+                 <input class="form-check-input" type="checkbox" id="doPrb" onchange="togglePrbDate()">
+                 <label class="form-check-label fw-bold">ทำ พ.ร.บ.</label>
+             </div>
+             <div id="prbDateSection" style="display:none;">
+                 <input type="date" id="prbStartDate" class="form-control form-control-sm" style="width: 150px;">
+             </div>
+          </div>
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="doTor"><label class="form-check-label fw-bold">ตรวจสภาพ (ตรอ.)</label></div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="doTax"><label class="form-check-label fw-bold">ต่อภาษีประจำปี</label></div>
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label class="form-label fw-bold">ยอดรับแต่ละรายการ (บาท)</label>
-        <input type="number" id="amount" class="form-control" placeholder="0.00" oninput="calculateTotal()">
+      <div class="card"><div class="section-header" style="background:#ffc107">💰 เพิ่มเติม</div>
+        <div class="card-body"><div class="row g-2">
+          <div class="col-6"><input type="number" id="fine" class="form-control" placeholder="ค่าปรับ"><label>ค่าปรับ</label></div>
+          <div class="col-6"><input type="number" id="serviceFee" class="form-control" placeholder="ค่าบริการ"><label>ค่าบริการ</label></div>
+          <div class="col-12"><input type="text" id="serviceNote" class="form-control form-control-sm" placeholder="หมายเหตุ"></div>
+          
+          <div class="col-12">
+            <label class="form-label small text-muted">ทำประกัน</label>
+            <select id="insType" class="form-select" onchange="toggleIns()">
+              <option value="- ไม่ทำเพิ่ม -">- ไม่ทำเพิ่ม -</option>
+              <option value="ประเภท 1">ประเภท 1</option>
+              <option value="ประเภท 2+ พลัส">ประเภท 2+ พลัส</option>
+              <option value="ประเภท 2">ประเภท 2</option>
+              <option value="ประเภท 3+ พลัส">ประเภท 3+ พลัส</option>
+              <option value="ประเภท 3">ประเภท 3</option>
+              <option value="ประกันอื่นๆ">ประกันอื่นๆ</option>
+              <option value="พ.ร.บ. รายวัน">พ.ร.บ. รายวัน</option>
+            </select>
+          </div>
+          
+          <div id="insDateSection" class="row g-2 mt-2" style="display:none">
+              <div class="col-6"><label class="small">วันเริ่ม</label><input type="date" id="insStartDate" class="form-control form-control-sm"></div>
+              <div class="col-6"><label class="small">วันสิ้นสุด</label><input type="date" id="insEndDate" class="form-control form-control-sm"></div>
+          </div>
+          <div class="col-6 mt-2"><input type="number" id="insPrice" class="form-control" placeholder="ราคาประกัน"></div>
+          <div class="col-6 mt-2"><input type="text" id="insNote" class="form-control" placeholder="บริษัท/รายละเอียด"></div>
+        </div></div>
       </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold">ส่วนลด (บาท)</label>
-        <input type="number" id="discount" class="form-control" value="0" placeholder="0.00" oninput="calculateTotal()">
+      <div class="d-grid gap-2 mb-5">
+        <button id="calcBtn" class="btn btn-primary fw-bold py-3 shadow" onclick="calculatePreview()">🚀 คำนวณ & ตรวจสอบ</button>
+        <button class="btn btn-link" onclick="resetPage()">ยกเลิก</button>
       </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold">เปอร์เซ็นต์ค่ามือ (%)</label>
-        <input type="number" id="commissionRate" class="form-control" value="0" placeholder="0" oninput="calculateTotal()">
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold">ทิป (บาท)</label>
-        <input type="number" id="tip" class="form-control" value="0" placeholder="0.00" oninput="calculateTotal()">
-      </div>
-
-      <div class="card p-3 bg-light mb-3">
-        <h5 class="fw-bold text-dark mb-0">ยอดรวมสุทธิที่ต้องชำระ: <span id="lblTotal" class="text-success">0.00</span> บาท</h5>
-      </div>
-
-      <button class="btn btn-success w-100 py-3 fw-bold shadow-sm" onclick="submitCashier()">บันทึกการชำระเงิน</button>
     </div>
+
+    <div id="previewSection">
+       <div class="summary-box shadow p-3 bg-white rounded">
+          <h3 class="text-center fw-bold mb-3">📝 ตรวจสอบรายการ</h3>
+          <div id="previewContent"></div>
+          <div class="grand-total">สุทธิ: <span id="p_total"></span> บาท</div>
+
+          <div class="mt-3 d-grid">
+             <button type="button" class="btn btn-success py-2 fw-bold shadow-sm" onclick="sendQuotationFromPage()" style="background-color: #00B900; border: none;">
+               📤 ส่งใบเสนอราคาทาง LINE ให้ลูกค้า
+             </button>
+          </div>
+
+          <div id="preSaveButtons" class="mt-3 d-grid gap-2">
+             <button class="btn btn-primary py-3 fw-bold" onclick="confirmSave()">✅ ยืนยันและบันทึก</button>
+             <button class="btn btn-secondary" onclick="backToEdit()">↩️ กลับไปแก้ไข</button>
+          </div>
+
+          <div id="successBanner" class="alert alert-success text-center mt-3">
+             ✨ บันทึกข้อมูลเรียบร้อยแล้ว ✨<br><small>ข้อมูลถูกส่งเข้า LINE และล็อกการแก้ไข</small>
+          </div>
+
+          <div id="postSaveButtons" class="mt-4 d-grid gap-2">
+             <button id="printBtn" class="btn btn-dark py-3 fw-bold" onclick="printReceipt()">🖨️ พิมพ์ใบเสร็จ</button>
+             <button class="btn btn-primary py-3 fw-bold" onclick="resetPage()">🔍 รับคิวใหม่ (เริ่มค้นหา)</button>
+          </div>
+       </div>
+    </div>
+
   </div>
 
   <script>
-    let currentJobId = "";
+    window.onload = function() { initDateFields(); setDefaultDate(); };
 
-    function calculateTotal() {
-        const amount = parseFloat(document.getElementById('amount').value) || 0;
-        const discount = parseFloat(document.getElementById('discount').value) || 0;
-        const tip = parseFloat(document.getElementById('tip').value) || 0;
-        let total = (amount - discount) + tip;
-        document.getElementById('lblTotal').innerText = total.toLocaleString('th-TH', {minimumFractionDigits: 2});
-        return total;
+    function resetPage() {
+       document.getElementById('sk').value = ''; 
+       document.getElementById('searchSection').style.display = 'block';
+       document.getElementById('edit').style.display = 'none';
+       document.getElementById('previewSection').style.display = 'none';
+       let successBox = document.getElementById('successBanner');
+       if(successBox) successBox.style.display = 'none';
+       document.getElementById('preSaveButtons').style.display = 'grid';
+       document.getElementById('postSaveButtons').style.display = 'none';
+       
+       let saveBtn = document.querySelector('#preSaveButtons .btn-primary');
+       if(saveBtn) {
+           saveBtn.innerHTML = '✅ ยืนยันและบันทึก';
+           saveBtn.disabled = false;
+           saveBtn.removeAttribute('data-payload');
+           saveBtn.removeAttribute('data-result');
+       }
     }
 
-    async function searchJob() {
-      const keyword = document.getElementById('searchKeyword').value.trim();
-      if(!keyword) return Swal.fire('แจ้งเตือน', 'กรุณากรอกคำค้นหา', 'warning');
-      Swal.fire({title: 'กำลังค้นหา...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-      try {
-        const response = await fetch(GAS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: "searchJobForCashier", keyword: keyword })
-        });
-        const res = await response.json();
-        Swal.close();
-        if(res.status === "success" && res.data) {
-            currentJobId = res.data.jobId;
-            document.getElementById('lblJobId').innerText = res.data.jobId;
-            document.getElementById('lblReg').innerText = res.data.reg;
-            document.getElementById('lblPhone').innerText = res.data.phone;
-            document.getElementById('resultSection').style.display = 'block';
-        } else {
-            Swal.fire('ไม่พบข้อมูล', 'ไม่พบเลขคิวหรือทะเบียนรถดังกล่าว', 'error');
+    async function find() {
+        let k = document.getElementById('sk').value; 
+        let branch = document.getElementById('userBranch').value;
+        let btn = document.getElementById('btnSearch'); 
+        let originalText = btn.innerHTML;
+        btn.innerHTML = '⏳...'; btn.disabled = true;
+
+        try {
+            const res = await (await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "searchJobData", keyword: k, branch: branch })
+            })).json();
+
+            btn.innerHTML = originalText; btn.disabled = false;
+            if (!res) return Swal.fire('Error', 'Server returned null', 'error');
+            if (!res.found) return Swal.fire('ไม่พบข้อมูล', 'หรือคิวนี้ไม่ได้อยู่สาขาที่คุณเลือก', 'warning');
+
+            if (res.jobs.length > 1) { 
+                 let options = {};
+                 res.jobs.forEach(item => {
+                     let status = (item.total > 0 || (item.fee_inspect > 0)) ? "ทำรายการแล้ว" : "รอดำเนินการ";
+                     options[item.jobId] = item.reg + " (" + status + ")";
+                 });
+                 Swal.fire({
+                     title: 'เลือกรายการ', input: 'select', inputOptions: options, showCancelButton: true
+                 }).then((choice) => {
+                     if (choice.isConfirmed) { document.getElementById('sk').value = choice.value; find(); }
+                 });
+            } else {
+                 let job = res.jobs[0]; 
+                 if (job.total > 0 || (job.fee_inspect && job.fee_inspect > 0)) { showSavedPreview(job); } 
+                 else { showEditForm(job); }
+            }
+        } catch(e) {
+            btn.innerHTML = originalText; btn.disabled = false;
+            Swal.fire('Error', e.message, 'error');
         }
-      } catch(e) { Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้', 'error'); }
     }
 
-    async function submitCashier() {
-      let totalToPay = calculateTotal();
-      const btn = document.querySelector('button.btn-success');
-      btn.disabled = true; btn.innerText = "กำลังบันทึก...";
-      try {
-          const payload = {
-              action: "saveCashierPayment",
-              jobId: currentJobId,
-              amount: parseFloat(document.getElementById('amount').value) || 0,
-              discount: parseFloat(document.getElementById('discount').value) || 0,
-              commissionRate: parseFloat(document.getElementById('commissionRate').value) || 0,
-              tip: parseFloat(document.getElementById('tip').value) || 0,
-              total: totalToPay
-          };
-          const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
-          const r = await response.json();
-          if(r.status === "success") {
-              Swal.fire('สำเร็จ', 'บันทึกเรียบร้อย', 'success').then(() => location.reload());
-          } else { throw new Error(r.message); }
-      } catch(e) {
-          Swal.fire('Error', 'บันทึกไม่สำเร็จ: ' + e, 'error');
-          btn.disabled = false; btn.innerText = "บันทึกการชำระเงิน";
-      }
+    function showEditForm(res) {
+        document.getElementById('searchSection').style.display='none';
+        document.getElementById('edit').style.display='block';
+        document.getElementById('previewSection').style.display='none';
+        
+        document.getElementById('idx').value = res.rowIndex;
+        document.getElementById('jobId').value = res.jobId;
+        document.getElementById('v').innerText = res.reg; 
+        document.getElementById('engineVal').value = res.engineVal || "";
+        if(res.carType) {
+            let sel = document.getElementById('cType');
+            for(let i=0; i<sel.options.length; i++){ if(sel.options[i].value.includes(res.carType)) { sel.selectedIndex = i; break; } }
+        }
+        toggleCarType();
+        document.getElementById('doTax').checked = (res.savedTax > 0);
+        document.getElementById('doPrb').checked = (res.savedPrb > 0);
+        document.getElementById('doTor').checked = (res.savedTor > 0);
+        togglePrbDate(); 
+        
+        if(res.regDate) {
+             let d = new Date(res.regDate);
+             if (!isNaN(d.getTime())) { 
+                document.getElementById('regDay').value = d.getDate();
+                document.getElementById('regMonth').value = d.getMonth() + 1;
+                document.getElementById('regYear').value = d.getFullYear() + 543;
+                autoCheckTor();
+             }
+        }
     }
+
+    async function calculatePreview() {
+        let engine = document.getElementById('engineVal').value;
+        if(!engine) return Swal.fire('','ระบุข้อมูลให้ครบ','warning');
+
+        let payload = {
+          action: "calculateJobCosts",
+          rowIndex: document.getElementById('idx').value,
+          jobId: document.getElementById('jobId').value,
+          carType: document.getElementById('cType').value,
+          engineVal: engine,
+          regDay: document.getElementById('regDay').value,
+          regMonth: document.getElementById('regMonth').value,
+          regYearBE: document.getElementById('regYear').value,
+          doPrb: document.getElementById('doPrb').checked,
+          prbStartDate: document.getElementById('prbStartDate').value,
+          doTor: document.getElementById('doTor').checked,
+          doTax: document.getElementById('doTax').checked,
+          fine: document.getElementById('fine').value,
+          serviceFee: document.getElementById('serviceFee').value,
+          serviceNote: document.getElementById('serviceNote').value,
+          insType: document.getElementById('insType').value,
+          insStartDate: document.getElementById('insStartDate').value,
+          insEndDate: document.getElementById('insEndDate').value,
+          insPrice: document.getElementById('insPrice').value,
+          insNote: document.getElementById('insNote').value
+        };
+
+        let saveBtn = document.querySelector('#preSaveButtons .btn-primary');
+        saveBtn.setAttribute('data-payload', JSON.stringify(payload));
+
+        let btn = document.getElementById('calcBtn');
+        btn.innerText="⏳ กำลังคำนวณ..."; btn.disabled=true;
+        let plate = document.getElementById('v').innerText; 
+
+        try {
+            const res = await (await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })).json();
+
+            btn.innerText="🚀 คำนวณ & ตรวจสอบ"; btn.disabled=false;
+            saveBtn.setAttribute('data-result', JSON.stringify(res));
+
+            document.getElementById('edit').style.display='none';
+            document.getElementById('previewSection').style.display='block';
+            renderPreviewHTML(plate, res.carAge, res.prb, res.tor, res.tax, res.fine, res.service, res.insurance, res.total);
+            document.getElementById('preSaveButtons').style.display = 'grid';
+            document.getElementById('successBanner').style.display = 'none';
+            document.getElementById('postSaveButtons').style.display = 'none';
+        } catch(e) {
+            btn.innerText="🚀 คำนวณ & ตรวจสอบ"; btn.disabled=false;
+            Swal.fire('Error', e.message, 'error');
+        }
+    }
+
+    async function confirmSave() {
+        let btn = document.querySelector('#preSaveButtons .btn-primary');
+        let payloadJson = btn.getAttribute('data-payload');
+        let resultJson = btn.getAttribute('data-result');
+
+        if (!payloadJson || !resultJson) {
+            Swal.fire('ข้อมูลไม่ครบ', 'กรุณากด "กลับไปแก้ไข" แล้วกด "คำนวณ" ใหม่อีกครั้งครับ', 'error');
+            return;
+        }
+
+        let payload = JSON.parse(payloadJson);
+        let calcResult = JSON.parse(resultJson);
+        payload.action = "saveJobFinal";
+
+        btn.innerText = "⏳ กำลังบันทึก..."; btn.disabled = true;
+
+        try {
+            await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "saveJobFinal", payload: payload, calcResult: calcResult })
+            });
+            document.getElementById('preSaveButtons').style.display = 'none';
+            document.getElementById('successBanner').style.display = 'block';
+            document.getElementById('postSaveButtons').style.display = 'grid';
+        } catch(err) {
+            btn.innerText = "✅ ยืนยันและบันทึก"; btn.disabled = false;
+            Swal.fire('Error', err.message, 'error');
+        }
+    }
+
+    function showSavedPreview(res) {
+        document.getElementById('searchSection').style.display='none';
+        document.getElementById('edit').style.display='none';
+        document.getElementById('previewSection').style.display='block';
+        let prb = Number(res.savedPrb || 0);
+        let tor = Number(res.savedTor || 0);
+        let tax = Number(res.savedTax || 0);
+        let fine = Number(res.fine || 0);
+        let sFee = Number(res.serviceFee || 0);
+        let ins = Number(res.insPrice || 0);
+        let total = Math.ceil(prb + tor + tax + fine + sFee + ins);
+        renderPreviewHTML(res.reg, res.carAge, prb, tor, tax, fine, sFee, ins, total);
+        document.getElementById('preSaveButtons').style.display = 'none';
+        document.getElementById('successBanner').style.display = 'block';
+        document.getElementById('postSaveButtons').style.display = 'grid';
+        document.getElementById('idx').value = res.rowIndex;
+        document.getElementById('jobId').value = res.jobId; 
+    }
+
+    function renderPreviewHTML(plate, age, prb, tor, tax, fine, sFee, ins, total) {
+        let html = `
+            <div class="alert alert-info text-center">
+                <h2 class="fw-bold mb-0 text-primary">${plate || 'ไม่ระบุทะเบียน'}</h2>
+                <small class="text-muted">อายุรถ: ${age || '-'} ปี</small>
+            </div>
+            <div class="price-row"><span>พ.ร.บ.</span><span>${fmt(prb)}</span></div>
+            <div class="price-row"><span>ตรวจสภาพ</span><span>${fmt(tor)}</span></div>
+            <div class="price-row"><span>ภาษีประจำปี</span><span>${fmt(tax)}</span></div>
+            <div class="price-row text-danger"><span>ค่าปรับ</span><span>${fmt(fine)}</span></div>
+            <div class="price-row"><span>ค่าบริการ</span><span>${fmt(sFee)}</span></div>
+            <div class="price-row"><span>ประกัน</span><span>${fmt(ins)}</span></div>
+       `;
+       document.getElementById('previewContent').innerHTML = html;
+       document.getElementById('p_total').innerText = fmt(Math.ceil(total));
+    }
+    
+    function backToEdit() {
+       document.getElementById('previewSection').style.display='none';
+       document.getElementById('edit').style.display='block';
+    }
+
+    async function sendQuotationFromPage() {
+      let jobId = document.getElementById('jobId').value;
+      if (!jobId) {
+        Swal.fire('แจ้งเตือน', 'ไม่พบรหัส Job ID กรุณาค้นหาและเลือกข้อมูลรถก่อน', 'warning');
+        return;
+      }
+
+      Swal.fire({
+        title: 'ยืนยันการส่ง?',
+        text: "ต้องการส่งใบเสนอราคาของ Job ID: " + jobId + " ไปหาลูกค้าทาง LINE ใช่หรือไม่?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'ใช่, ส่งเลย',
+        cancelButtonText: 'ยกเลิก'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'กำลังส่ง...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+          try {
+              const res = await (await fetch(GAS_API_URL, {
+                  method: 'POST',
+                  body: JSON.stringify({ action: "sendQuotationFromWeb", jobId: jobId })
+              })).json();
+
+              if (res.status === "success") {
+                Swal.fire('สำเร็จ!', res.message, 'success');
+              } else {
+                Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+              }
+          } catch(error) {
+              Swal.fire('Error', error.message, 'error');
+          }
+        }
+      });
+    }
+
+    async function printReceipt() { 
+        let idx = document.getElementById('idx').value;
+        const res = await (await fetch(GAS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "createAndSendReceipt", rowIndex: idx })
+        })).json();
+        if(res.pdfUrl) window.open(res.pdfUrl);
+    }
+
+    function initDateFields() { let h=""; for(let i=1;i<=31;i++) h+=`<option value="${i}">${i}</option>`; document.getElementById('regDay').innerHTML=h; }
+    function fmt(n) { return parseFloat(n||0).toLocaleString('th-TH',{minimumFractionDigits:0}); }
+    function toggleCarType() { let t = document.getElementById('cType').value; let lbl = document.getElementById('engineLabel'); if(t.includes('รย.3') || t.includes('กระบะ')) lbl.innerText = "น้ำหนักรถ (กก.)"; else if(t.includes('รย.2') || t.includes('ตู้')) lbl.innerText = "จำนวนที่นั่ง"; else lbl.innerText = "เครื่องยนต์ (CC)"; autoCheckTor(); }
+    function autoCheckTor() { let yInput = document.getElementById('regYear').value; if(!yInput || yInput.length < 4) return; let yearBE = parseInt(yInput); let currentYearBE = new Date().getFullYear() + 543; let age = currentYearBE - yearBE; document.getElementById('carAgeText').innerText = "อายุรถ: " + age + " ปี"; let type = document.getElementById('cType').value; let torCheck = document.getElementById('doTor'); let limit = 7; if(type.includes("จักรยานยนต์")) limit = 5; if (age >= limit) torCheck.checked = true; }
+    
+    function setDefaultDate() { 
+        let t = new Date().toISOString().split('T')[0]; 
+        let prbInput = document.getElementById('prbStartDate');
+        prbInput.value = t;  
+        prbInput.min = t;    
+        document.getElementById('insStartDate').value = t; 
+        document.getElementById('insEndDate').value = t; 
+        document.getElementById('regYear').value = new Date().getFullYear()+543; 
+        document.getElementById('regMonth').innerHTML = `<option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>`; 
+        togglePrbDate(); 
+    }
+
+    function togglePrbDate() { 
+        let isChecked = document.getElementById('doPrb').checked; 
+        let dateSection = document.getElementById('prbDateSection');
+        dateSection.style.display = isChecked ? 'block' : 'none'; 
+    }
+
+    function toggleIns() { let val = document.getElementById('insType').value; if(val === "" || val === "- ไม่ทำเพิ่ม -") document.getElementById('insDateSection').style.display = 'none'; else document.getElementById('insDateSection').style.display = 'flex'; }
   </script>
 </body>
 </html>
