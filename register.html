@@ -36,8 +36,8 @@
        <span class="text-danger fw-bold">อย่าเพิ่งปิดหน้าจอนะครับ!</span><br>
        รบกวนทำแบบสอบถามสั้นๆ เพื่อเปิดใช้งานระบบสะสมแต้ม
     </p>
-    <!-- 🌟 เพิ่ม id="surveyBtn" เพื่อให้ JavaScript มองเห็นและเอาลิงก์มาใส่ -->
-    <a href="#" id="surveyBtn" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold mb-2 shadow-sm text-dark" target="_blank">📝 ทำแบบสอบถามรับแต้ม</a>
+    <!-- 🌟 ฝังลิงก์แบบสอบถามตรงนี้เลย ปลอดภัย ไม่ต้องพึ่งหลังบ้าน -->
+    <a href="ใส่ลิงก์_GOOGLE_FORM_ของคุณตรงนี้" id="surveyBtn" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold mb-2 shadow-sm text-dark" target="_blank">📝 ทำแบบสอบถามรับแต้ม</a>
     <button class="btn btn-outline-secondary w-100 rounded-pill mt-2" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
   </div>
 
@@ -64,7 +64,6 @@
               displayName: profile.displayName
           };
 
-          // ยิง API ไปหา Google แบบข้ามโดเมน
           const response = await fetch(GAS_API_URL, {
               method: 'POST',
               body: JSON.stringify(payload) 
@@ -72,21 +71,17 @@
 
           const result = await response.json();
 
+          // ✅ แก้ไข Syntax ปีกกาเรียบร้อยแล้ว
           if (result.status === "success") {
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
-
-              // 🌟 แก้ไขตรงนี้ให้ดึงผ่าน .detail.formUrl ตามโครงสร้างที่หลังบ้านส่งมา
-              if (result.detail && result.detail.formUrl) {
-                  document.getElementById('surveyBtn').href = result.detail.formUrl;
-              }
-          }
           } else {
               throw new Error("Server Error");
           }
       } catch (err) {
           Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
-          btn.disabled = false; btn.innerText = "ยืนยันรับสิทธิ์";
+          btn.disabled = false; 
+          btn.innerText = "ยืนยันรับสิทธิ์";
       }
     }
   </script>
