@@ -399,12 +399,7 @@
 
     async function printReceipt() {    
         let idx = document.getElementById('idx').value;
-        if (!idx) {
-            Swal.fire('แจ้งเตือน', 'กรุณาเลือกรายการที่จะพิมพ์ใบเสร็จก่อน', 'warning');
-            return;
-        }
-
-        Swal.fire({ title: 'กำลังสร้างใบเสร็จ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        if (!idx) return;
 
         try {
             const response = await fetch(GAS_API_URL, {
@@ -412,16 +407,13 @@
                 body: JSON.stringify({ action: "createAndSendReceipt", rowIndex: idx })
             });
             const res = await response.json();
-            Swal.close();
 
             if(res.status === "success" && res.pdfUrl) {
-                window.open(res.pdfUrl, '_blank');
-            } else {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างใบเสร็จได้', 'error');
+                // 🌟 บังคับเปิดลิงก์ PDF ในแท็บใหม่ของเบราว์เซอร์เครื่อง (Chrome / Safari)
+                window.open(res.pdfUrl, '_system'); 
             }
         } catch(e) {
-            Swal.close();
-            Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
+            console.error(e);
         }
     }
 
