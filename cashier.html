@@ -474,6 +474,9 @@
             return;
         }
 
+        // 🌟 ทริคทะลวงบล็อก: เปิดหน้าต่างหน้าขาวรอไว้ "ทันที" ที่นิ้วกดปุ่ม (ก่อนเริ่มโหลด)
+        let printWindow = window.open('about:blank', '_blank');
+
         Swal.fire({ title: 'กำลังสร้างใบเสร็จ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         try {
@@ -485,38 +488,30 @@
             Swal.close();
 
             if(res.status === "success" && res.htmlData) {
-                // พยายามเปิดหน้าต่างใหม่
-                let printWindow = window.open('', '_blank');
-                
-                // 🌟 จุดสำคัญ: ตรวจสอบว่าโดนเบราว์เซอร์บล็อกป๊อปอัปหรือไม่
                 if (printWindow) {
+                    // 🌟 พอหลังบ้านส่ง HTML กลับมา ค่อยเอามาเขียนใส่หน้าต่างที่เปิดรอไว้
                     printWindow.document.write(res.htmlData);
                     printWindow.document.close();
                     
                     printWindow.onload = function() {
                         printWindow.focus();
-                        printWindow.print();
+                        printWindow.print(); // เด้งหน้าต่างปริ้นอัตโนมัติ
                     };
                 } else {
-                    // ถ้าระบบ (เช่น LINE LIFF) บล็อกการเปิดแท็บใหม่ ให้เด้งเปิดไฟล์ PDF แทน
-                    Swal.fire({
-                        title: 'ดูใบเสร็จ',
-                        text: 'ระบบพร้อมแสดงใบเสร็จในรูปแบบ PDF แล้วครับ',
-                        icon: 'success',
-                        confirmButtonText: 'เปิดใบเสร็จ PDF'
-                    }).then(() => {
-                        window.location.href = res.pdfUrl; // ใช้วิธีเปลี่ยนหน้าเว็บไปเลย จะไม่โดนบล็อก
-                    });
+                    // ถ้าถูกบล็อกจริงๆ ให้เปลี่ยนหน้าปัจจุบันเป็นลิงก์ PDF ไปเลย ไม่ต้องเด้งถาม
+                    window.location.href = res.pdfUrl;
                 }
-            } else if (res.pdfUrl) {
-                window.location.href = res.pdfUrl;
             } else {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างใบเสร็จได้', 'error');
+                if (printWindow) printWindow.close(); // ปิดหน้าต่างทิ้งถ้า Error
+                if (res.pdfUrl) {
+                    window.location.href = res.pdfUrl;
+                } else {
+                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างใบเสร็จได้', 'error');
+                }
             }
         } catch(e) {
+            if (printWindow) printWindow.close(); // ปิดหน้าต่างทิ้งถ้า Error
             Swal.close();
-            console.error("Local Error:", e);
-            // เปลี่ยนข้อความแจ้งเตือนให้ตรงจุดขึ้น
             Swal.fire('Error', 'เกิดข้อผิดพลาดในระบบ: ' + e.message, 'error'); 
         }
     }
