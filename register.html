@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ลงทะเบียนรับสิทธิ์</title>
+  <title>ตรวจสอบข้อมูล & รับสิทธิ์</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -11,34 +11,56 @@
     body { background-color: #f0f2f5; padding: 20px; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
     .container-box { width: 100%; max-width: 450px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .btn-green { background-color: #1DB446; color: white; font-weight: bold; }
+    
+    /* สไตล์สำหรับปุ่มสีทอง */
+    .btn-gold {
+      background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+      color: #4A3300;
+      font-weight: 800;
+      border: none;
+      box-shadow: 0 4px 10px rgba(253, 185, 49, 0.4);
+      transition: transform 0.2s;
+    }
+    .btn-gold:hover { transform: scale(1.02); color: #332200; }
+    .premium-box {
+      background-color: #FFFDF0;
+      border: 1px solid #FFE8A1;
+      border-radius: 12px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- 📱 ฟอร์มกรอกเบอร์ -->
+  <!-- 📱 หน้าต่างที่ 1: ฟอร์มกรอกเบอร์เช็คข้อมูล -->
   <div class="container-box" id="formSection">
-    <h3 class="text-center mb-4 text-success fw-bold">🎁 ลงทะเบียนรับสิทธิ์</h3>
-    <p class="text-center text-muted small mb-4">กรุณากรอกเบอร์โทรศัพท์เพื่อเชื่อมโยงข้อมูลรถ<br>และเปิดระบบสะสมแต้ม</p>
+    <h4 class="text-center mb-3 text-dark fw-bold">🔍 ตรวจสอบประวัติรถ</h4>
+    <p class="text-center text-muted small mb-4">กรุณากรอกเบอร์โทรศัพท์เพื่อดึงข้อมูลเข้าระบบ<br>และรับการแจ้งเตือนผ่านช่องแชท</p>
 
     <div class="mb-4">
-      <label class="form-label fw-bold">เบอร์โทรศัพท์</label>
-      <input type="tel" class="form-control form-control-lg text-center" id="phone" placeholder="08xxxxxxxx" maxlength="10">
+      <input type="tel" class="form-control form-control-lg text-center fw-bold" id="phone" placeholder="08XXXXXXXX" maxlength="10" style="letter-spacing: 2px;">
     </div>
-    <button class="btn btn-green w-100 btn-lg shadow-sm rounded-pill" id="submitBtn" onclick="triggerBotPush()">ยืนยันรับสิทธิ์</button>
+    <button class="btn btn-green w-100 btn-lg shadow-sm rounded-pill" id="submitBtn" onclick="triggerBotPush()">ดำเนินการตรวจสอบ</button>
   </div>
 
-  <!-- 🎁 หน้าต่างสำเร็จ -->
+  <!-- 🎁 หน้าต่างที่ 2: อัปเกรดสิทธิพิเศษ (ปุ่มสีทอง) -->
   <div class="container-box text-center" id="successSection" style="display:none;">
-    <div class="mb-3"><span style="font-size: 4rem;">🎉</span></div>
-    <h3 class="text-success fw-bold">ระบบส่งข้อมูลสำเร็จ!</h3>
-    <p class="text-muted small">
-       กรุณาดูรายละเอียดคิวที่ช่องแชทครับ<br><br>
-       <span class="text-danger fw-bold">อย่าเพิ่งปิดหน้าจอนะครับ!</span><br>
-       รบกวนทำแบบสอบถามสั้นๆ เพื่อเปิดใช้งานระบบสะสมแต้ม
-    </p>
-    <!-- 🌟 ฝังลิงก์แบบสอบถามตรงนี้เลย ปลอดภัย ไม่ต้องพึ่งหลังบ้าน -->
-    <a href="#" id="surveyBtn" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold mb-2 shadow-sm text-dark" target="_blank">📝 ทำแบบสอบถามรับแต้ม</a>
-    <button class="btn btn-outline-secondary w-100 rounded-pill mt-2" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
+    <div class="mb-3"><span style="font-size: 3.5rem;">✨</span></div>
+    <h4 class="text-success fw-bold mb-2">เชื่อมโยงข้อมูลสำเร็จ</h4>
+    <p class="text-muted small mb-4">ระบบได้จัดส่งรายละเอียดและประวัติรถของคุณ<br>ไปยังช่องแชทเรียบร้อยแล้ว</p>
+    
+    <div class="premium-box p-4 mb-4">
+      <h5 class="fw-bold mb-3" style="color: #B8860B;">อัปเกรดสิทธิประโยชน์ของคุณ</h5>
+      <p class="small text-muted mb-4">
+        รับการดูแลที่เหนือกว่าและสัมผัสความคุ้มค่าที่มากกว่า<br>ผ่านการเข้าร่วมเป็นสมาชิกระดับพรีเมียมของเรา
+      </p>
+      
+      <!-- 🌟 ปุ่มสีทองดึงลิงก์จาก Settings หลังบ้าน -->
+      <a href="#" id="surveyBtn" class="btn btn-gold w-100 btn-lg rounded-pill" target="_blank">
+        👑 กดรับสิทธิพิเศษ
+      </a>
+    </div>
+
+    <button class="btn btn-outline-secondary w-100 rounded-pill mt-2" onclick="liff.closeWindow()">กลับสู่หน้าแชท</button>
   </div>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -47,13 +69,36 @@
     
     window.onload = () => { liff.init({ liffId: MY_LIFF_ID }).then(() => { if (!liff.isLoggedIn()) liff.login(); }); };
 
-    async function triggerBotPush() {const result = await response.json();
+    async function triggerBotPush() {
+      const phone = document.getElementById('phone').value.replace(/[^0-9]/g, '');
+      if(phone.length < 9) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง', 'warning');
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังดึงข้อมูล...'; 
+
+      try {
+          const profile = await liff.getProfile();
+          const payload = {
+              action: "processPhoneFromLiff", 
+              phone: phone, 
+              userId: profile.userId, 
+              displayName: profile.displayName
+          };
+
+          const response = await fetch(GAS_API_URL, {
+              method: 'POST',
+              body: JSON.stringify(payload) 
+          });
+
+          const result = await response.json();
 
           if (result.status === "success") {
+              // ซ่อนหน้ากรอกเบอร์ โชว์หน้าปุ่มสีทอง
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
 
-              // 🌟 ดึง URL จากชีตมาใส่ในปุ่ม (ต้องอ้างอิงผ่าน result.detail เพราะ doPost ของคุณห่อข้อมูลไว้ชั้นนึง)
+              // ยัดลิงก์สิทธิพิเศษใส่ปุ่มสีทอง
               if (result.detail && result.detail.formUrl) {
                   document.getElementById('surveyBtn').href = result.detail.formUrl;
               }
@@ -63,7 +108,7 @@
       } catch (err) {
           Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
           btn.disabled = false; 
-          btn.innerText = "ยืนยันรับสิทธิ์";
+          btn.innerText = "ดำเนินการตรวจสอบ";
       }
     }
   </script>
