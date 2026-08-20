@@ -37,7 +37,7 @@
        รบกวนทำแบบสอบถามสั้นๆ เพื่อเปิดใช้งานระบบสะสมแต้ม
     </p>
     <!-- 🌟 ฝังลิงก์แบบสอบถามตรงนี้เลย ปลอดภัย ไม่ต้องพึ่งหลังบ้าน -->
-    <a href="ใส่ลิงก์_GOOGLE_FORM_ของคุณตรงนี้" id="surveyBtn" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold mb-2 shadow-sm text-dark" target="_blank">📝 ทำแบบสอบถามรับแต้ม</a>
+    <a href="#" id="surveyBtn" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold mb-2 shadow-sm text-dark" target="_blank">📝 ทำแบบสอบถามรับแต้ม</a>
     <button class="btn btn-outline-secondary w-100 rounded-pill mt-2" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
   </div>
 
@@ -47,34 +47,16 @@
     
     window.onload = () => { liff.init({ liffId: MY_LIFF_ID }).then(() => { if (!liff.isLoggedIn()) liff.login(); }); };
 
-    async function triggerBotPush() {
-      const phone = document.getElementById('phone').value.replace(/[^0-9]/g, '');
-      if(phone.length < 9) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกเบอร์โทรศัพท์', 'warning');
+    async function triggerBotPush() {const result = await response.json();
 
-      const btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.innerText = "กำลังประมวลผล..."; 
-
-      try {
-          const profile = await liff.getProfile();
-          const payload = {
-              action: "processPhoneFromLiff", 
-              phone: phone, 
-              userId: profile.userId, 
-              displayName: profile.displayName
-          };
-
-          const response = await fetch(GAS_API_URL, {
-              method: 'POST',
-              body: JSON.stringify(payload) 
-          });
-
-          const result = await response.json();
-
-          // ✅ แก้ไข Syntax ปีกกาเรียบร้อยแล้ว
           if (result.status === "success") {
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
+
+              // 🌟 ดึง URL จากชีตมาใส่ในปุ่ม (ต้องอ้างอิงผ่าน result.detail เพราะ doPost ของคุณห่อข้อมูลไว้ชั้นนึง)
+              if (result.detail && result.detail.formUrl) {
+                  document.getElementById('surveyBtn').href = result.detail.formUrl;
+              }
           } else {
               throw new Error("Server Error");
           }
