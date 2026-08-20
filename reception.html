@@ -96,15 +96,15 @@
       if(!reg || !phone) return Swal.fire('ข้อมูลไม่ครบ','กรุณากรอก ทะเบียน และ เบอร์โทร','warning');
       
       const btn = document.querySelector('#ui button.btn-primary');
-      btn.disabled = true; btn.innerText = "⏳ กำลังบันทึกและอัปโหลดรูป...";
+      btn.disabled = true; btn.innerText = "⏳ กำลังบันทึก...";
       
-      const payload = {
+      let payload = {
           action: "saveQueue",
           branch: branch,
           reg: reg,
           phone: phone,
           carType: carType,
-          files: processedFiles // ส่งรูปภาพที่ผ่านการบีบอัดแล้วไปด้วย
+          files: processedFiles // ส่งรูปภาพที่อัพโหลดไปด้วย
       };
       
       try {
@@ -120,12 +120,11 @@
               document.getElementById('qNum').innerText = r.queueNo;
               document.getElementById('jId').innerText = r.jobID;
 
-              // ลิงก์ QR สำหรับสมาชิก
-              let targetUrl = "https://liff.line.me/2000218686-kY7ah48L"; // เปลี่ยนตาม LIFF ID ของคุณ
+              let targetUrl = "https://liff.line.me/2000218686-kY7ah48L"; 
               let qrApi = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(targetUrl);
               document.getElementById('qrImage').src = qrApi;
           } else {
-              throw new Error(r.message || "บันทึกไม่สำเร็จ");
+              throw new Error("Save failed");
           }
       } catch(e) {
           Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + e, 'error');
