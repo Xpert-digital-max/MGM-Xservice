@@ -485,22 +485,39 @@
             Swal.close();
 
             if(res.status === "success" && res.htmlData) {
+                // พยายามเปิดหน้าต่างใหม่
                 let printWindow = window.open('', '_blank');
-                printWindow.document.write(res.htmlData);
-                printWindow.document.close();
                 
-                printWindow.onload = function() {
-                    printWindow.focus();
-                    printWindow.print();
-                };
+                // 🌟 จุดสำคัญ: ตรวจสอบว่าโดนเบราว์เซอร์บล็อกป๊อปอัปหรือไม่
+                if (printWindow) {
+                    printWindow.document.write(res.htmlData);
+                    printWindow.document.close();
+                    
+                    printWindow.onload = function() {
+                        printWindow.focus();
+                        printWindow.print();
+                    };
+                } else {
+                    // ถ้าระบบ (เช่น LINE LIFF) บล็อกการเปิดแท็บใหม่ ให้เด้งเปิดไฟล์ PDF แทน
+                    Swal.fire({
+                        title: 'ดูใบเสร็จ',
+                        text: 'ระบบพร้อมแสดงใบเสร็จในรูปแบบ PDF แล้วครับ',
+                        icon: 'success',
+                        confirmButtonText: 'เปิดใบเสร็จ PDF'
+                    }).then(() => {
+                        window.location.href = res.pdfUrl; // ใช้วิธีเปลี่ยนหน้าเว็บไปเลย จะไม่โดนบล็อก
+                    });
+                }
             } else if (res.pdfUrl) {
-                window.open(res.pdfUrl, '_blank');
+                window.location.href = res.pdfUrl;
             } else {
                 Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างใบเสร็จได้', 'error');
             }
         } catch(e) {
             Swal.close();
-            Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
+            console.error("Local Error:", e);
+            // เปลี่ยนข้อความแจ้งเตือนให้ตรงจุดขึ้น
+            Swal.fire('Error', 'เกิดข้อผิดพลาดในระบบ: ' + e.message, 'error'); 
         }
     }
 
