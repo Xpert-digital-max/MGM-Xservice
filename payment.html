@@ -182,7 +182,7 @@
        }
     }
 
-    // 5. ส่งข้อมูลไปยัง Google Apps Script (ปรับใช้ fetch)
+    // 5. ส่งข้อมูลไปยัง Google Apps Script (เวอร์ชัน GitHub Fetch API)
     async function submitToBackend(jobId, method, amount, linkData, mimeType) {
        if (!currentStaff || currentStaff === "") {
            return Swal.fire('ผิดพลาด', 'ไม่พบข้อมูลพนักงาน! กรุณารีเฟรชหน้าแล้ว Login ใหม่', 'error');
@@ -196,7 +196,7 @@
           amount: amount,
           paymentMethod: method,
           receiver: currentStaff, 
-          image: linkData,   
+          image: linkData,   // ลิงก์สลิปที่จะวิ่งไปลงคอลัมน์ Z
           mimeType: mimeType      
        };
 
@@ -209,7 +209,7 @@
 
            if(res.status === 'success') {
               Swal.fire('เรียบร้อย', 'บันทึกข้อมูลสำเร็จ', 'success').then(() => {
-                  search(); 
+                  search(); // รีโหลดข้อมูลตารางใหม่
               });
            } else {
               Swal.fire('เกิดข้อผิดพลาด', res.message || 'ไม่สามารถบันทึกได้', 'error');
