@@ -414,18 +414,19 @@
             const res = await response.json();
             Swal.close();
 
-            // 🌟 ถ้าระบบส่งหน้าตาใบเสร็จมา ให้เปิดแท็บใหม่และสั่งปริ้นทันที!
+            // 🌟 ถ้าระบบส่งหน้าตาใบเสร็จมา ให้เปิดแท็บใหม่และสั่งปริ้นทันที (ไม่ง้อ Google Drive)
             if(res.status === "success" && res.htmlData) {
                 let printWindow = window.open('', '_blank');
                 printWindow.document.write(res.htmlData);
                 printWindow.document.close();
                 
-                // สั่งให้ปริ้นทันทีที่โหลดเสร็จ
+                // สั่งให้หน้าต่างปริ้นเด้งขึ้นมาทันทีที่โหลดเสร็จ
                 printWindow.onload = function() {
                     printWindow.focus();
                     printWindow.print();
                 };
             } else if (res.pdfUrl) {
+                // เผื่อไว้กรณีฉุกเฉิน
                 window.open(res.pdfUrl, '_blank');
             } else {
                 Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างใบเสร็จได้', 'error');
