@@ -397,13 +397,32 @@
       });
     }
 
-    async function printReceipt() { 
+    async function printReceipt() {    
         let idx = document.getElementById('idx').value;
-        const res = await (await fetch(GAS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: "createAndSendReceipt", rowIndex: idx })
-        })).json();
-        if(res.pdfUrl) window.open(res.pdfUrl);
+        if (!idx) {
+            Swal.fire('แจ้งเตือน', 'กรุณาเลือกรายการที่จะพิมพ์ใบเสร็จก่อน', 'warning');
+            return;
+        }
+
+        Swal.fire({ title: 'กำลังสร้างใบเสร็จ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        try {
+            const response = await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "createAndSendReceipt", rowIndex: idx })
+            });
+            const res = await response.json();
+            Swal.close();
+
+            if(res.status === "success" && res.pdfUrl) {
+                window.open(res.pdfUrl, '_blank');
+            } else {
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างใบเสร็จได้', 'error');
+            }
+        } catch(e) {
+            Swal.close();
+            Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
+        }
     }
 
     function initDateFields() { let h=""; for(let i=1;i<=31;i++) h+=`<option value="${i}">${i}</option>`; document.getElementById('regDay').innerHTML=h; }
