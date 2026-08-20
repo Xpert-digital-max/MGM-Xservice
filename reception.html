@@ -88,17 +88,24 @@
 
     // 2. ปรับปรุงฟังก์ชัน sendData ให้ใช้ fetch แทน google.script.run
     async function sendData() {
-      const btn = document.querySelector('#ui button.btn-primary');
-      const payload = {
-          action: "saveQueue", // ระบุ action ที่เราดักไว้ใน doPost
-          branch: document.getElementById('branch').value,
-          reg: document.getElementById('reg').value,
-          phone: document.getElementById('phone').value,
-          carType: document.getElementById('carType').value,
-          files: processedFiles
-      };
+      const branch = document.getElementById('branch').value;
+      const reg = document.getElementById('reg').value;
+      const phone = document.getElementById('phone').value;
+      const carType = document.getElementById('carType').value;
       
-      btn.disabled = true; btn.innerText = "⏳ กำลังบันทึก...";
+      if(!reg || !phone) return Swal.fire('ข้อมูลไม่ครบ','กรุณากรอก ทะเบียน และ เบอร์โทร','warning');
+      
+      const btn = document.querySelector('#ui button.btn-primary');
+      btn.disabled = true; btn.innerText = "⏳ กำลังบันทึกและอัปโหลดรูป...";
+      
+      const payload = {
+          action: "saveQueue",
+          branch: branch,
+          reg: reg,
+          phone: phone,
+          carType: carType,
+          files: processedFiles // ส่งรูปภาพที่ผ่านการบีบอัดแล้วไปด้วย
+      };
       
       try {
           const response = await fetch(GAS_API_URL, {
@@ -112,13 +119,16 @@
               document.getElementById('res').style.display = 'block';
               document.getElementById('qNum').innerText = r.queueNo;
               document.getElementById('jId').innerText = r.jobID;
-              
-              // ลิงก์ LIFF สำหรับลูกค้า (ถ้าอยากให้ยืดหยุ่น แนะนำดึงจาก Config หรือ Google Sheet แทน)
-              let qrApi = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent("https://liff.line.me/2000218686-kY7ah48L");
+
+              // ลิงก์ QR สำหรับสมาชิก
+              let targetUrl = "https://liff.line.me/2000218686-kY7ah48L"; // เปลี่ยนตาม LIFF ID ของคุณ
+              let qrApi = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(targetUrl);
               document.getElementById('qrImage').src = qrApi;
+          } else {
+              throw new Error(r.message || "บันทึกไม่สำเร็จ");
           }
       } catch(e) {
-          Swal.fire('Error', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+          Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + e, 'error');
           btn.disabled = false; btn.innerText = "ออกบัตรคิว";
       }
     }
