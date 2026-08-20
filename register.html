@@ -76,10 +76,11 @@
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
 
-              // 🌟 นำค่า formUrl ที่ดึงมาจากชีต Settings ใน Code.gs มาแปะใส่ปุ่มโดยอัตโนมัติ
-              if (result.formUrl) {
-                  document.getElementById('surveyBtn').href = result.formUrl;
+              // 🌟 แก้ไขตรงนี้ให้ดึงผ่าน .detail.formUrl ตามโครงสร้างที่หลังบ้านส่งมา
+              if (result.detail && result.detail.formUrl) {
+                  document.getElementById('surveyBtn').href = result.detail.formUrl;
               }
+          }
           } else {
               throw new Error("Server Error");
           }
