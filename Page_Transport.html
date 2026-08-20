@@ -20,44 +20,55 @@
     .price-text { color: #d63384; font-weight: bold; }
     .content-area { margin-bottom: 80px; }
     .badge-count { font-size: 0.75em; margin-left: 5px; }
+    #mainContent { display: none; } /* 🌟 ซ่อนเนื้อหาทั้งหมดจนกว่าจะล็อกอินผ่าน */
   </style>
 </head>
 <body>
 
   <div class="container content-area" style="max-width: 800px;">
     
+    <!-- 🌟 แถบแสดงสถานะล็อกอิน -->
     <div class="d-flex justify-content-between align-items-center mb-3">
-       <h3 class="fw-bold text-primary"><i class="fas fa-tasks"></i> จัดการงานขนส่ง</h3>
-       <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="loadData()">
-         <i class="fas fa-sync"></i> รีเฟรช
-       </button>
-    </div>
-
-    <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded-pill shadow-sm">
-      <li class="nav-item">
-        <a class="nav-link active" onclick="switchTab('pending')" id="tab-pending">
-           📤 รอไปขนส่ง <span class="badge bg-light text-dark badge-count" id="count-pending">0</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" onclick="switchTab('processing')" id="tab-processing">
-           📥 รอรับเล่มคืน <span class="badge bg-light text-dark badge-count" id="count-processing">0</span>
-        </a>
-      </li>
-    </ul>
-
-    <div class="table-container">
-       <div id="loading" class="text-center py-4 text-muted">⏳ กำลังโหลดรายการ...</div>
-       <div id="emptyMsg" class="text-center py-4 text-success" style="display:none;">
-          <div class="mb-2"><i class="fas fa-check-circle fa-3x"></i></div>
-          <h4>ไม่มีรายการในส่วนนี้</h4>
+       <h3 class="fw-bold text-primary"><i class="fas fa-tasks"></i> งานขนส่ง</h3>
+       <div class="text-end">
+           <span id="staffNameDisplay" class="badge bg-secondary fs-6">กำลังตรวจสอบ...</span>
        </div>
-       <div id="listArea"></div>
     </div>
 
+    <!-- 🌟 ห่อเนื้อหาทั้งหมดไว้ใน mainContent -->
+    <div id="mainContent">
+       <div class="d-flex justify-content-end mb-3">
+          <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="loadData()">
+            <i class="fas fa-sync"></i> รีเฟรชข้อมูล
+          </button>
+       </div>
+
+       <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded-pill shadow-sm">
+         <li class="nav-item">
+           <a class="nav-link active" onclick="switchTab('pending')" id="tab-pending">
+               📤 รอไปขนส่ง <span class="badge bg-light text-dark badge-count" id="count-pending">0</span>
+           </a>
+         </li>
+         <li class="nav-item">
+           <a class="nav-link" onclick="switchTab('processing')" id="tab-processing">
+               📥 รอรับเล่มคืน <span class="badge bg-light text-dark badge-count" id="count-processing">0</span>
+           </a>
+         </li>
+       </ul>
+
+       <div class="table-container">
+          <div id="loading" class="text-center py-4 text-muted">⏳ กำลังโหลดรายการ...</div>
+          <div id="emptyMsg" class="text-center py-4 text-success" style="display:none;">
+             <div class="mb-2"><i class="fas fa-check-circle fa-3x"></i></div>
+             <h4>ไม่มีรายการในส่วนนี้</h4>
+          </div>
+          <div id="listArea"></div>
+       </div>
+    </div>
   </div>
 
-  <div class="total-bar">
+  <!-- 🌟 ย้าย total-bar เข้ามาควบคุมการซ่อนโชว์ด้วย JS -->
+  <div class="total-bar" id="actionBottomBar" style="display: none;">
       <div>
          <small class="text-muted">เลือก:</small> 
          <span id="selCount" class="fw-bold fs-5">0</span> คัน
@@ -73,11 +84,73 @@
   </div>
 
   <script>
+    // 🌟 ใส่ LIFF ID 
+    const MY_LIFF_ID = "2000218686-kY7ah48L"; 
+    
+    var currentStaff = "";
+    var currentBranch = "";
     var dataStore = { pending: [], processing: [] };
     var currentTab = 'pending';
 
-    window.onload = loadData;
+    window.onload = function() { 
+        initLiff(); 
+    };
 
+    // 🌟 1. ฟังก์ชันโหลด LIFF และตรวจสอบสิทธิ์
+    async function initLiff() {
+        try {
+            await liff.init({ liffId: MY_LIFF_ID });
+            if (!liff.isLoggedIn()) { 
+                liff.login(); 
+            } else { 
+                verifyPermission(); 
+            }
+        } catch(e) { 
+            Swal.fire('Error', 'ไม่สามารถโหลดระบบ LINE ได้', 'error'); 
+        }
+    }
+
+    async function verifyPermission() {
+        Swal.fire({ title: 'กำลังตรวจสอบสิทธิ์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        const profile = await liff.getProfile();
+        try {
+            const response = await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: "verifyUserAccess", 
+                    userId: profile.userId, 
+                    pageName: "Page_Transport.html" // 🌟 ส่งชื่อหน้าไปเช็คช่อง G
+                })
+            });
+            const res = await response.json();
+
+            if (res.valid) {
+                Swal.close();
+                currentStaff = res.name;
+                currentBranch = res.branch;
+                
+                document.getElementById('staffNameDisplay').innerHTML = `👤 ${currentStaff} <br><small class="text-light">(${currentBranch})</small>`;
+                document.getElementById('staffNameDisplay').className = "badge bg-success fs-6";
+                
+                // ปลดล็อกหน้าจอ
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('actionBottomBar').style.display = 'flex';
+                
+                // โหลดข้อมูลหลังจากตรวจสอบสิทธิ์ผ่านแล้วเท่านั้น
+                loadData(); 
+            } else {
+                Swal.fire('ไม่มีสิทธิ์เข้าถึง', res.message, 'error');
+                document.getElementById('staffNameDisplay').innerText = "❌ ไม่มีสิทธิ์";
+                document.getElementById('staffNameDisplay').className = "badge bg-danger fs-6";
+            }
+        } catch(e) { 
+            Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้', 'error'); 
+        }
+    }
+
+    // ==========================================
+    // ฟังก์ชันเดิม (จัดการข้อมูลขนส่ง)
+    // ==========================================
     async function loadData() {
        document.getElementById('loading').style.display = 'block';
        document.getElementById('listArea').innerHTML = '';
@@ -129,17 +202,17 @@
        let html = '<div class="list-group list-group-flush">';
        jobs.forEach((item, index) => {
           html += `
-            <label class="list-group-item d-flex align-items-center gap-3 py-3" style="cursor:pointer;">
-                <input class="form-check-input flex-shrink-0" type="checkbox" value="${index}" onchange="calcSelection()">
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between w-100">
-                        <span class="reg-text">${item.reg || '-'}</span>
-                        ${currentTab === 'pending' ? `<span class="price-text">${(item.taxAmount || 0).toLocaleString()} บ.</span>` : ''}
-                    </div>
-                    <small class="text-muted">${item.carType || '-'} | JOB: ${item.jobId || '-'}</small>
-                    ${currentTab === 'processing' && item.userId ? '<br><small class="text-success"><i class="fab fa-line"></i> ลูกค้ารอแจ้งเตือน</small>' : ''}
-                </div>
-            </label>
+             <label class="list-group-item d-flex align-items-center gap-3 py-3" style="cursor:pointer;">
+                 <input class="form-check-input flex-shrink-0" type="checkbox" value="${index}" onchange="calcSelection()">
+                 <div class="flex-grow-1">
+                     <div class="d-flex justify-content-between w-100">
+                         <span class="reg-text">${item.reg || '-'}</span>
+                         ${currentTab === 'pending' ? `<span class="price-text">${(item.taxAmount || 0).toLocaleString()} บ.</span>` : ''}
+                     </div>
+                     <small class="text-muted">${item.carType || '-'} | JOB: ${item.jobId || '-'}</small>
+                     ${currentTab === 'processing' && item.userId ? '<br><small class="text-success"><i class="fab fa-line"></i> ลูกค้ารอแจ้งเตือน</small>' : ''}
+                 </div>
+             </label>
           `;
        });
        html += '</div>';
