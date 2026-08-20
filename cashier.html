@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- 🌟 เพิ่มสคริปต์ของ LINE LIFF -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   <!-- ดึงค่า URL กลางจาก config.js -->
   <script src="config.js"></script>
@@ -15,138 +17,206 @@
     .price-row { display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px dashed #eee; }
     .grand-total { font-size: 1.8rem; color: #198754; font-weight: bold; text-align: right; margin-top: 10px; background: #e8f5e9; padding: 10px; border-radius: 10px; }
     #edit, #previewSection, #preSaveButtons, #postSaveButtons, #successBanner { display: none; }
+    #mainContent { display: none; } /* 🌟 ซ่อนเนื้อหาหลักไว้จนกว่าจะล็อกอินผ่าน */
   </style>
 </head>
 <body>
   <div class="container" style="max-width: 700px;">
     
-    <div id="searchSection" class="card p-5 text-center">
-      <h3 class="text-primary mb-3">🔍 ค้นหาคิวงาน (การเงิน)</h3>
-      
-      <select id="userBranch" class="form-select form-select-lg mb-3 text-primary fw-bold" style="border: 2px solid #0d6efd;">
-          <option value="All">🌐 ดูทุกสาขา (แอดมิน)</option>
-          <option value="สาขาพระยืน">สาขาพระยืน</option>
-          <option value="สาขาท่าใหม่">สาขาท่าใหม่</option>
-      </select>
-      
-      <div class="input-group input-group-lg">
-        <input type="text" id="sk" class="form-control" placeholder="ทะเบียน / คิว / JOB ID">
-        <button id="btnSearch" class="btn btn-primary" onclick="find()">ค้นหา</button>
-      </div>
-    </div>
-
-    <div id="edit">
-      <div class="card"><div class="section-header">🚗 ข้อมูล: <span id="v"></span></div>
-        <div class="card-body">
-          <input type="hidden" id="idx"><input type="hidden" id="jobId">
-          <div class="row g-2">
-            <div class="col-6">
-              <label>ประเภท</label>
-              <select id="cType" class="form-select" onchange="toggleCarType()">
-                <option value="รถเก๋ง / 4 ประตู (รย.1)">รถเก๋ง / 4 ประตู (รย.1)</option>
-                <option value="รถตู้ (รย.2)">รถตู้ (รย.2)</option>
-                <option value="รถกระบะ (รย.3)">รถกระบะ (รย.3)</option>
-                <option value="รถกระบะ (เกิน 2000 กก.)">รถกระบะ (เกิน 2000 กก.)</option>
-                <option value="รถตู้ (เกิน 2000 กก.)">รถตู้ (เกิน 2000 กก.)</option>
-                <!-- 🌟 เพิ่มประเภทรถใหม่ตามที่ต้องการ -->
-                <option value="4 ประตู / 3 ตอน ( เกิน 2000 )">4 ประตู / 3 ตอน ( เกิน 2000 )</option>
-                <option value="รถจักรยานยนต์">รถจักรยานยนต์</option>
-                <option value="รถอื่นๆ">รถอื่นๆ</option>
-              </select>
-            </div>
-            <div class="col-6">
-               <label id="engineLabel">เครื่องยนต์ (CC)</label>
-               <input type="number" id="engineVal" class="form-control">
-            </div>
-            <div class="col-12"><label>วันจดทะเบียน</label><div class="input-group"><select id="regDay" class="form-select"></select><select id="regMonth" class="form-select"><option value="1">ม.ค.</option><option value="2">ก.พ.</option></select><input type="number" id="regYear" class="form-control" placeholder="พ.ศ." onchange="autoCheckTor()"></div></div>
-            <div class="col-12 text-end text-primary fw-bold" id="carAgeText">อายุรถ: - ปี</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card"><div class="section-header" style="background:#198754">✅ รายการ</div>
-        <div class="card-body">
-          <div class="d-flex align-items-center mb-2">
-             <div class="form-check form-switch me-3">
-                 <input class="form-check-input" type="checkbox" id="doPrb" onchange="togglePrbDate()">
-                 <label class="form-check-label fw-bold">ทำ พ.ร.บ.</label>
-             </div>
-             <div id="prbDateSection" style="display:none;">
-                 <input type="date" id="prbStartDate" class="form-control form-control-sm" style="width: 150px;">
-             </div>
-          </div>
-          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="doTor"><label class="form-check-label fw-bold">ตรวจสภาพ (ตรอ.)</label></div>
-          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="doTax"><label class="form-check-label fw-bold">ต่อภาษีประจำปี</label></div>
-        </div>
-      </div>
-
-      <div class="card"><div class="section-header" style="background:#ffc107">💰 เพิ่มเติม</div>
-        <div class="card-body"><div class="row g-2">
-          <div class="col-6"><input type="number" id="fine" class="form-control" placeholder="ค่าปรับ"><label>ค่าปรับ</label></div>
-          <div class="col-6"><input type="number" id="serviceFee" class="form-control" placeholder="ค่าบริการ"><label>ค่าบริการ</label></div>
-          <div class="col-12"><input type="text" id="serviceNote" class="form-control form-control-sm" placeholder="หมายเหตุ"></div>
-          
-          <div class="col-12">
-            <label class="form-label small text-muted">ทำประกัน</label>
-            <select id="insType" class="form-select" onchange="toggleIns()">
-              <option value="- ไม่ทำเพิ่ม -">- ไม่ทำเพิ่ม -</option>
-              <option value="ประเภท 1">ประเภท 1</option>
-              <option value="ประเภท 2+ พลัส">ประเภท 2+ พลัส</option>
-              <option value="ประเภท 2">ประเภท 2</option>
-              <option value="ประเภท 3+ พลัส">ประเภท 3+ พลัส</option>
-              <option value="ประเภท 3">ประเภท 3</option>
-              <option value="ประกันอื่นๆ">ประกันอื่นๆ</option>
-              <option value="พ.ร.บ. รายวัน">พ.ร.บ. รายวัน</option>
-            </select>
-          </div>
-          
-          <div id="insDateSection" class="row g-2 mt-2" style="display:none">
-              <div class="col-6"><label class="small">วันเริ่ม</label><input type="date" id="insStartDate" class="form-control form-control-sm"></div>
-              <div class="col-6"><label class="small">วันสิ้นสุด</label><input type="date" id="insEndDate" class="form-control form-control-sm"></div>
-          </div>
-          <div class="col-6 mt-2"><input type="number" id="insPrice" class="form-control" placeholder="ราคาประกัน"></div>
-          <div class="col-6 mt-2"><input type="text" id="insNote" class="form-control" placeholder="บริษัท/รายละเอียด"></div>
-        </div></div>
-      </div>
-      <div class="d-grid gap-2 mb-5">
-        <button id="calcBtn" class="btn btn-primary fw-bold py-3 shadow" onclick="calculatePreview()">🚀 คำนวณ & ตรวจสอบ</button>
-        <button class="btn btn-link" onclick="resetPage()">ยกเลิก</button>
-      </div>
-    </div>
-
-    <div id="previewSection">
-       <div class="summary-box shadow p-3 bg-white rounded">
-          <h3 class="text-center fw-bold mb-3">📝 ตรวจสอบรายการ</h3>
-          <div id="previewContent"></div>
-          <div class="grand-total">สุทธิ: <span id="p_total"></span> บาท</div>
-
-          <div class="mt-3 d-grid">
-             <button type="button" class="btn btn-success py-2 fw-bold shadow-sm" onclick="sendQuotationFromPage()" style="background-color: #00B900; border: none;">
-               📤 ส่งใบเสนอราคาทาง LINE ให้ลูกค้า
-             </button>
-          </div>
-
-          <div id="preSaveButtons" class="mt-3 d-grid gap-2">
-             <button class="btn btn-primary py-3 fw-bold" onclick="confirmSave()">✅ ยืนยันและบันทึก</button>
-             <button class="btn btn-secondary" onclick="backToEdit()">↩️ กลับไปแก้ไข</button>
-          </div>
-
-          <div id="successBanner" class="alert alert-success text-center mt-3">
-             ✨ บันทึกข้อมูลเรียบร้อยแล้ว ✨<br><small>ข้อมูลถูกส่งเข้า LINE และล็อกการแก้ไข</small>
-          </div>
-
-          <div id="postSaveButtons" class="mt-4 d-grid gap-2">
-             <button id="printBtn" class="btn btn-dark py-3 fw-bold" onclick="printReceipt()">🖨️ พิมพ์ใบเสร็จ</button>
-             <button class="btn btn-primary py-3 fw-bold" onclick="resetPage()">🔍 รับคิวใหม่ (เริ่มค้นหา)</button>
-          </div>
+    <!-- 🌟 ส่วนแสดงชื่อพนักงานที่ล็อกอิน -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+       <h4 class="text-primary fw-bold">💰 ระบบการเงิน (Cashier)</h4>
+       <div class="text-end">
+           <span id="staffNameDisplay" class="badge bg-secondary fs-6">กำลังตรวจสอบสิทธิ์...</span>
        </div>
     </div>
+
+    <!-- 🌟 ห่อเนื้อหาทั้งหมดไว้ใน mainContent -->
+    <div id="mainContent">
+      <div id="searchSection" class="card p-5 text-center">
+        <h3 class="text-primary mb-3">🔍 ค้นหาคิวงาน (การเงิน)</h3>
+        
+        <select id="userBranch" class="form-select form-select-lg mb-3 text-primary fw-bold" style="border: 2px solid #0d6efd;">
+            <option value="All">🌐 ดูทุกสาขา (แอดมิน)</option>
+            <option value="สาขาพระยืน">สาขาพระยืน</option>
+            <option value="สาขาท่าใหม่">สาขาท่าใหม่</option>
+        </select>
+        
+        <div class="input-group input-group-lg">
+          <input type="text" id="sk" class="form-control" placeholder="ทะเบียน / คิว / JOB ID">
+          <button id="btnSearch" class="btn btn-primary" onclick="find()">ค้นหา</button>
+        </div>
+      </div>
+
+      <div id="edit">
+        <div class="card"><div class="section-header">🚗 ข้อมูล: <span id="v"></span></div>
+          <div class="card-body">
+            <input type="hidden" id="idx"><input type="hidden" id="jobId">
+            <div class="row g-2">
+              <div class="col-6">
+                <label>ประเภท</label>
+                <select id="cType" class="form-select" onchange="toggleCarType()">
+                  <option value="รถเก๋ง / 4 ประตู (รย.1)">รถเก๋ง / 4 ประตู (รย.1)</option>
+                  <option value="รถตู้ (รย.2)">รถตู้ (รย.2)</option>
+                  <option value="รถกระบะ (รย.3)">รถกระบะ (รย.3)</option>
+                  <option value="รถกระบะ (เกิน 2000 กก.)">รถกระบะ (เกิน 2000 กก.)</option>
+                  <option value="รถตู้ (เกิน 2000 กก.)">รถตู้ (เกิน 2000 กก.)</option>
+                  <!-- 🌟 เพิ่มประเภทรถใหม่ตามที่ต้องการ -->
+                  <option value="4 ประตู / 3 ตอน ( เกิน 2000 )">4 ประตู / 3 ตอน ( เกิน 2000 )</option>
+                  <option value="รถจักรยานยนต์">รถจักรยานยนต์</option>
+                  <option value="รถอื่นๆ">รถอื่นๆ</option>
+                </select>
+              </div>
+              <div class="col-6">
+                 <label id="engineLabel">เครื่องยนต์ (CC)</label>
+                 <input type="number" id="engineVal" class="form-control">
+              </div>
+              <div class="col-12"><label>วันจดทะเบียน</label><div class="input-group"><select id="regDay" class="form-select"></select><select id="regMonth" class="form-select"><option value="1">ม.ค.</option><option value="2">ก.พ.</option></select><input type="number" id="regYear" class="form-control" placeholder="พ.ศ." onchange="autoCheckTor()"></div></div>
+              <div class="col-12 text-end text-primary fw-bold" id="carAgeText">อายุรถ: - ปี</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card"><div class="section-header" style="background:#198754">✅ รายการ</div>
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+                <div class="form-check form-switch me-3">
+                    <input class="form-check-input" type="checkbox" id="doPrb" onchange="togglePrbDate()">
+                    <label class="form-check-label fw-bold">ทำ พ.ร.บ.</label>
+                </div>
+                <div id="prbDateSection" style="display:none;">
+                    <input type="date" id="prbStartDate" class="form-control form-control-sm" style="width: 150px;">
+                </div>
+            </div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="doTor"><label class="form-check-label fw-bold">ตรวจสภาพ (ตรอ.)</label></div>
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="doTax"><label class="form-check-label fw-bold">ต่อภาษีประจำปี</label></div>
+          </div>
+        </div>
+
+        <div class="card"><div class="section-header" style="background:#ffc107">💰 เพิ่มเติม</div>
+          <div class="card-body"><div class="row g-2">
+            <div class="col-6"><input type="number" id="fine" class="form-control" placeholder="ค่าปรับ"><label>ค่าปรับ</label></div>
+            <div class="col-6"><input type="number" id="serviceFee" class="form-control" placeholder="ค่าบริการ"><label>ค่าบริการ</label></div>
+            <div class="col-12"><input type="text" id="serviceNote" class="form-control form-control-sm" placeholder="หมายเหตุ"></div>
+            
+            <div class="col-12">
+              <label class="form-label small text-muted">ทำประกัน</label>
+              <select id="insType" class="form-select" onchange="toggleIns()">
+                <option value="- ไม่ทำเพิ่ม -">- ไม่ทำเพิ่ม -</option>
+                <option value="ประเภท 1">ประเภท 1</option>
+                <option value="ประเภท 2+ พลัส">ประเภท 2+ พลัส</option>
+                <option value="ประเภท 2">ประเภท 2</option>
+                <option value="ประเภท 3+ พลัส">ประเภท 3+ พลัส</option>
+                <option value="ประเภท 3">ประเภท 3</option>
+                <option value="ประกันอื่นๆ">ประกันอื่นๆ</option>
+                <option value="พ.ร.บ. รายวัน">พ.ร.บ. รายวัน</option>
+              </select>
+            </div>
+            
+            <div id="insDateSection" class="row g-2 mt-2" style="display:none">
+                <div class="col-6"><label class="small">วันเริ่ม</label><input type="date" id="insStartDate" class="form-control form-control-sm"></div>
+                <div class="col-6"><label class="small">วันสิ้นสุด</label><input type="date" id="insEndDate" class="form-control form-control-sm"></div>
+            </div>
+            <div class="col-6 mt-2"><input type="number" id="insPrice" class="form-control" placeholder="ราคาประกัน"></div>
+            <div class="col-6 mt-2"><input type="text" id="insNote" class="form-control" placeholder="บริษัท/รายละเอียด"></div>
+          </div></div>
+        </div>
+        <div class="d-grid gap-2 mb-5">
+          <button id="calcBtn" class="btn btn-primary fw-bold py-3 shadow" onclick="calculatePreview()">🚀 คำนวณ & ตรวจสอบ</button>
+          <button class="btn btn-link" onclick="resetPage()">ยกเลิก</button>
+        </div>
+      </div>
+
+      <div id="previewSection">
+         <div class="summary-box shadow p-3 bg-white rounded">
+            <h3 class="text-center fw-bold mb-3">📝 ตรวจสอบรายการ</h3>
+            <div id="previewContent"></div>
+            <div class="grand-total">สุทธิ: <span id="p_total"></span> บาท</div>
+
+            <div class="mt-3 d-grid">
+               <button type="button" class="btn btn-success py-2 fw-bold shadow-sm" onclick="sendQuotationFromPage()" style="background-color: #00B900; border: none;">
+                 📤 ส่งใบเสนอราคาทาง LINE ให้ลูกค้า
+               </button>
+            </div>
+
+            <div id="preSaveButtons" class="mt-3 d-grid gap-2">
+               <button class="btn btn-primary py-3 fw-bold" onclick="confirmSave()">✅ ยืนยันและบันทึก</button>
+               <button class="btn btn-secondary" onclick="backToEdit()">↩️ กลับไปแก้ไข</button>
+            </div>
+
+            <div id="successBanner" class="alert alert-success text-center mt-3">
+               ✨ บันทึกข้อมูลเรียบร้อยแล้ว ✨<br><small>ข้อมูลถูกส่งเข้า LINE และล็อกการแก้ไข</small>
+            </div>
+
+            <div id="postSaveButtons" class="mt-4 d-grid gap-2">
+               <button id="printBtn" class="btn btn-dark py-3 fw-bold" onclick="printReceipt()">🖨️ พิมพ์ใบเสร็จ</button>
+               <button class="btn btn-primary py-3 fw-bold" onclick="resetPage()">🔍 รับคิวใหม่ (เริ่มค้นหา)</button>
+            </div>
+         </div>
+      </div>
+    </div> <!-- ปิด mainContent -->
 
   </div>
 
   <script>
-    window.onload = function() { initDateFields(); setDefaultDate(); };
+    // 🌟 ใส่ LIFF ID 
+    const MY_LIFF_ID = "2000218686-kY7ah48L"; 
+    
+    var currentStaff = "";
+    var currentBranch = "";
 
+    window.onload = function() { 
+        initLiff(); // เปลี่ยนมาเรียกระบบล็อกอินก่อน
+    };
+
+    // 🌟 1. ฟังก์ชันโหลด LIFF และตรวจสอบสิทธิ์
+    async function initLiff() {
+        try {
+            await liff.init({ liffId: MY_LIFF_ID });
+            if (!liff.isLoggedIn()) { liff.login(); } 
+            else { verifyPermission(); }
+        } catch(e) { Swal.fire('Error', 'ไม่สามารถโหลดระบบ LINE ได้', 'error'); }
+    }
+
+    async function verifyPermission() {
+        Swal.fire({ title: 'กำลังตรวจสอบสิทธิ์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        const profile = await liff.getProfile();
+        try {
+            const res = await (await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: "verifyUserAccess", 
+                    userId: profile.userId, 
+                    pageName: "cashier.html" // 🌟 ส่งหน้า cashier.html ไปเช็คช่อง E
+                })
+            })).json();
+
+            if (res.valid) {
+                Swal.close();
+                currentStaff = res.name;
+                currentBranch = res.branch;
+                
+                document.getElementById('staffNameDisplay').innerHTML = `👤 ${currentStaff} <br><small class="text-light">(${currentBranch})</small>`;
+                document.getElementById('staffNameDisplay').className = "badge bg-success fs-6";
+                
+                document.getElementById('mainContent').style.display = 'block'; // ปลดล็อกหน้าจอ
+                
+                // โหลดวันที่และ Dropdown เมื่อล็อกอินผ่าน
+                initDateFields(); 
+                setDefaultDate(); 
+            } else {
+                Swal.fire('ไม่มีสิทธิ์เข้าถึง', res.message, 'error');
+                document.getElementById('staffNameDisplay').innerText = "❌ ไม่มีสิทธิ์";
+                document.getElementById('staffNameDisplay').className = "badge bg-danger fs-6";
+            }
+        } catch(e) { 
+            Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้', 'error'); 
+        }
+    }
+
+    // ==========================================
+    // ฟังก์ชันเดิมของคุณด้านล่างนี้ (ไม่ได้ดัดแปลง)
+    // ==========================================
     function resetPage() {
        document.getElementById('sk').value = ''; 
        document.getElementById('searchSection').style.display = 'block';
@@ -414,19 +484,16 @@
             const res = await response.json();
             Swal.close();
 
-            // 🌟 ถ้าระบบส่งหน้าตาใบเสร็จมา ให้เปิดแท็บใหม่และสั่งปริ้นทันที (ไม่ง้อ Google Drive)
             if(res.status === "success" && res.htmlData) {
                 let printWindow = window.open('', '_blank');
                 printWindow.document.write(res.htmlData);
                 printWindow.document.close();
                 
-                // สั่งให้หน้าต่างปริ้นเด้งขึ้นมาทันทีที่โหลดเสร็จ
                 printWindow.onload = function() {
                     printWindow.focus();
                     printWindow.print();
                 };
             } else if (res.pdfUrl) {
-                // เผื่อไว้กรณีฉุกเฉิน
                 window.open(res.pdfUrl, '_blank');
             } else {
                 Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างใบเสร็จได้', 'error');
