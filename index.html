@@ -63,7 +63,7 @@
           // ถ้ายอมรับเป็นเพื่อนแล้ว: ให้ดำเนินการส่งข้อมูลแจกสิทธิ์ต่อ
           statusText.innerText = "ยืนยันการรับสิทธิ์ให้คุณ " + currentUserName + "...";
           
-          const url = new URL(gasAppUrl);
+          const url = new URL(GAS_API_URL);
           url.searchParams.append("action", "recordReferral");
           url.searchParams.append("refId", refId);
           url.searchParams.append("refName", urlParams.get('refName') || "");
