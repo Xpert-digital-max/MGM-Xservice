@@ -65,11 +65,11 @@
     <div class="control-panel no-print">
         <h2 style="margin-top: 0;">🖨️ ระบบออกใบเสร็จรายเดือน (Batch Print)</h2>
         
-        <!-- เพิ่มช่องเลือกสาขาตรงนี้ คุณสามารถแก้ชื่อสาขาให้ตรงกับใน Sheet ได้เลย -->
         <select id="branchPicker">
             <option value="ทั้งหมด">ดึงข้อมูลทุกสาขา</option>
+            <option value="สาขาท่าแฉลบ">สาขาท่าแฉลบ</option>
+            <option value="สาขามะขาม">สาขามะขาม</option>
             <option value="สาขาพระยืน">สาขาพระยืน</option>
-            <option value="สาขาท่าใหม่">สาขาท่าใหม่</option>
         </select>
 
         <input type="month" id="monthPicker" required>
@@ -82,7 +82,6 @@
     <div id="print-area"></div>
 
     <script>
-        <script>
         // ฟังก์ชันแปลงตัวเลขเป็นคำอ่านภาษาไทย
         function ThaiBahtText(number) {
             let num = parseFloat(number); // บังคับแปลงเป็นตัวเลข
@@ -128,7 +127,6 @@
             Swal.fire({ title: 'กำลังประมวลผล...', text: 'ดึงข้อมูลจาก Google Sheet', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             try {
-                // ส่ง branchName พ่วงไปให้ GAS กรองข้อมูลด้วย
                 const response = await fetch(GAS_API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: "getMonthlyReceipts", monthStr: monthVal, branchName: branchVal })
@@ -149,11 +147,11 @@
                     document.getElementById('btnPrint').style.display = 'inline-block';
                     generateHTML(data);
                 } else {
-                    Swal.fire('Error', 'ดึงข้อมูลไม่สำเร็จ', 'error');
+                    Swal.fire('Error', 'ดึงข้อมูลไม่สำเร็จ: ' + (res.message || ''), 'error');
                 }
             } catch(e) {
                 Swal.close();
-                Swal.fire('Error', e.message, 'error');
+                Swal.fire('Error ระบบเชื่อมต่อ', e.message, 'error');
             }
         }
 
@@ -208,7 +206,6 @@
                             <tr>
                                 <td colspan="2" style="border:none; height:15px;"></td>
                             </tr>
-                            <!-- แทรกยอดเงินภาษาไทยและคำว่า "รวม" ตรงนี้ -->
                             <tr>
                                 <td style="border:none; border-top: 1px solid #333; padding-top:10px;">
                                     <b>${thText}</b>
@@ -237,7 +234,6 @@
             
             container.innerHTML = html;
         }
-    </script>
     </script>
 </body>
 </html>
