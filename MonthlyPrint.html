@@ -82,10 +82,12 @@
     <div id="print-area"></div>
 
     <script>
+        <script>
         // ฟังก์ชันแปลงตัวเลขเป็นคำอ่านภาษาไทย
         function ThaiBahtText(number) {
-            if (isNaN(number) || number === 0) return "-ศูนย์บาทถ้วน-";
-            let numStr = number.toFixed(2).toString();
+            let num = parseFloat(number); // บังคับแปลงเป็นตัวเลข
+            if (isNaN(num) || num === 0) return "-ศูนย์บาทถ้วน-";
+            let numStr = num.toFixed(2).toString();
             let parts = numStr.split('.');
             let baht = parts[0];
             let satang = parts[1];
@@ -160,9 +162,12 @@
             let html = "";
             
             dataList.forEach(item => {
+                // บังคับให้เป็นตัวเลข เพื่อป้องกัน Error .toFixed is not a function
+                let numTotal = parseFloat(item.total) || 0;
+                
                 // คำนวณคำอ่านภาษาไทย
-                let thText = ThaiBahtText(item.total);
-                let totalStr = item.total.toFixed(2); // แปลงกลับเป็น 2 ตำแหน่ง
+                let thText = ThaiBahtText(numTotal);
+                let totalStr = numTotal.toFixed(2); 
 
                 let receiptTemplate = (typeText) => `
                     <div class="receipt-box">
@@ -232,6 +237,7 @@
             
             container.innerHTML = html;
         }
+    </script>
     </script>
 </body>
 </html>
