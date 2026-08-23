@@ -278,7 +278,6 @@
         try {
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
-                // 🌟 ส่งพารามิเตอร์ 'todayOnly: true' เพื่อให้หลังบ้านหากรองเฉพาะของวันนี้
                 body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch, todayOnly: true })
             });
             const res = await response.json();
@@ -286,13 +285,13 @@
 
             if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบคิวนี้ในสาขาที่เลือก หรือ ไม่ใช่คิวของวันนี้', 'info');
 
-            // 🌟 บังคับดึงเอาตัวแรกที่เจอมาแสดงเลย โดยไม่ต้องมี Popup ให้เลือก
             let job = res.jobs[0];
             
-            // 🌟 ตรวจสอบจากสถานะการชำระเงิน (Col Y / Index 24)
-            // เช็ค property paymentStatus ที่ส่งมาจาก Code.gs
-            if (job.paymentStatus !== "") {
-                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการประเมินราคา หรือ รับชำระเงินไปแล้ว<br><small class="text-danger">(' + job.paymentStatus + ')</small>', 'error');
+            // 🌟 ตรวจสอบแค่สถานะการชำระเงิน (คอลัมน์ Y) เท่านั้น
+            // ถ้า paymentStatus ส่งมาไม่เป็นค่าว่าง หรือขึ้นว่า undefined ให้เช็คจากสถานะอื่นๆ สำรองไว้กันเหนียว
+            let payStatus = job.paymentStatus || ""; 
+            if (payStatus !== "" && payStatus !== "undefined") {
+                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการรับชำระเงินเรียบร้อยแล้ว<br><small class="text-danger">(' + payStatus + ')</small>', 'error');
             }
 
             // 🌟 นำข้อมูลมาใส่ฟอร์มเพื่อแก้ไข
