@@ -1,4 +1,107 @@
-// 3. ฟังก์ชันค้นหา (อัปเดต: สรุปยอดรวมค้างชำระ)
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- ดึงค่า URL กลางจาก config.js -->
+  <script src="config.js"></script>
+  <!-- 🌟 เพิ่มสคริปต์ของ LINE LIFF -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+      body { font-family: 'Sarabun', sans-serif; background: #f4f6f9; padding: 20px; }
+      .card-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: 0.2s; }
+      .btn-myshop { color: #06c755; border-color: #06c755; }
+      .btn-myshop:hover { background-color: #06c755; color: white; }
+  </style>
+</head>
+<body>
+
+  <div class="container" style="max-width: 600px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+       <h4 class="text-primary fw-bold">💰 ระบบรับชำระเงิน</h4>
+       <div class="text-end">
+           <span id="staffNameDisplay" class="badge bg-secondary fs-6">กำลังตรวจสอบสิทธิ์...</span>
+       </div>
+    </div>
+
+    <!-- 🌟 ซ่อนส่วนการทำงานไว้ก่อน จนกว่าจะตรวจสอบสิทธิ์ผ่าน -->
+    <div id="mainContent" style="display: none;">
+      <div class="card p-4 shadow-sm mb-3">
+         <label class="form-label fw-bold">ค้นหารายการค้างจ่าย</label>
+         <div class="input-group">
+            <input type="text" id="sk" class="form-control" placeholder="ระบุทะเบียน / เลขคิว / JOB ID">
+            <button class="btn btn-primary" onclick="search()">🔍 ค้นหา</button>
+         </div>
+      </div>
+      <div id="resultArea"></div>
+    </div>
+  </div>
+
+  <script>
+    // 🌟 ใส่ LIFF ID ของหน้านี้ (ดึงจาก LINE Developers)
+    const MY_LIFF_ID = "2000218686-jvvVChwV"; 
+    
+    var currentStaff = "";
+    var currentBranch = ""; 
+    var tempPayData = {}; 
+
+    window.onload = function() { 
+        initializeLiff(); 
+    };
+
+    // 1. ฟังก์ชันโหลด LIFF และบังคับล็อกอิน
+    async function initializeLiff() {
+        try {
+            await liff.init({ liffId: MY_LIFF_ID });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                verifyLineUser();
+            }
+        } catch (err) {
+            Swal.fire('Error', 'ไม่สามารถโหลดระบบ LINE ได้', 'error');
+        }
+    }
+
+    // 2. ฟังก์ชันตรวจสอบสิทธิ์ (อัปเกรดแทนการใส่ PIN)
+    async function verifyLineUser() {
+       Swal.fire({ title: 'กำลังตรวจสอบสิทธิ์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+       try {
+           const profile = await liff.getProfile();
+           const response = await fetch(GAS_API_URL, {
+               method: 'POST',
+               body: JSON.stringify({ 
+                   action: "verifyUserAccess", 
+                   userId: profile.userId,
+                   pageName: "payment.html" // 🌟 ส่งชื่อหน้าไปตรวจสอบให้ตรงกับคอลัมน์
+               })
+           });
+           const res = await response.json();
+
+           if(res.valid) {
+              Swal.close();
+              currentStaff = res.name;
+              currentBranch = res.branch;
+              
+              document.getElementById('staffNameDisplay').innerHTML = `👤 ${currentStaff} <br><small class="text-light">(${currentBranch})</small>`;
+              document.getElementById('staffNameDisplay').className = "badge bg-success fs-6";
+              
+              // 🌟 ปลดล็อกหน้าจอให้ใช้งาน
+              document.getElementById('mainContent').style.display = 'block';
+           } else {
+              Swal.fire('ไม่มีสิทธิ์เข้าถึง', res.message || 'คุณไม่มีสิทธิ์ใช้งานหน้านี้', 'error');
+              document.getElementById('staffNameDisplay').innerHTML = `❌ ไม่มีสิทธิ์`;
+              document.getElementById('staffNameDisplay').className = "badge bg-danger fs-6";
+           }
+       } catch(e) {
+           Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
+       }
+    }
+
+    // 3. ฟังก์ชันค้นหา (อัปเดต: สรุปยอดรวมค้างชำระ)
     async function search() {
        let k = document.getElementById('sk').value;
        document.getElementById('resultArea').innerHTML = '<div class="text-center mt-3">⏳ กำลังค้นหา...</div>';
@@ -54,3 +157,103 @@
            document.getElementById('resultArea').innerHTML = '<div class="alert alert-danger text-center">❌ เกิดข้อผิดพลาดในการเชื่อมต่อ</div>';
        }
     }
+
+    // 4. ฟังก์ชันแสดงตัวเลือกการชำระเงิน (คงเดิม)
+    function showPaymentOptions(jobId, plate, amount) {
+       tempPayData = { jobId, plate, amount };
+
+       Swal.fire({
+          title: 'เลือกช่องทางชำระเงิน',
+          text: `ยอดรวม ${amount.toLocaleString()} บาท`,
+          html: `
+            <div class="d-grid gap-2 mt-2">
+              <button class="btn btn-outline-success" onclick="selectMethod('เงินสด')">💵 เงินสด</button>
+              <button class="btn btn-outline-info" onclick="selectMethod('เงินโอน')">📲 เงินโอน (แนบลิงก์สลิป)</button>
+              <button class="btn btn-outline-primary" onclick="selectMethod('บัตรเครดิต')">💳 บัตรเครดิต</button>
+              <button class="btn btn-myshop" onclick="selectMethod('LINE Myshop')">🛍️ LINE Myshop</button>
+              <button class="btn btn-outline-danger" onclick="selectMethod('ค้างชำระ')">⚠️ ค้างชำระ</button>
+            </div>
+          `,
+          showConfirmButton: false, 
+          showCloseButton: true
+       });
+    }
+
+    // 5. ฟังก์ชันจัดการเมื่อเลือกช่องทางชำระเงิน (คงเดิม)
+    async function selectMethod(method) {
+       Swal.close(); 
+       let { jobId, amount } = tempPayData;
+
+       if (method === 'เงินโอน') {
+          const { value: slipLink } = await Swal.fire({
+             title: 'กรุณาวางลิงก์สลิป',
+             input: 'text',
+             inputPlaceholder: 'https://...',
+             html: `<div class="text-danger small mt-2">* ยอด ${amount.toLocaleString()} บาท</div>`,
+             showCancelButton: true,
+             confirmButtonText: 'ยืนยันการโอน',
+             inputValidator: (value) => {
+                if (!value || value.trim() === "") {
+                   return 'คุณต้องวางลิงก์สลิปก่อนยืนยัน!';
+                }
+             }
+          });
+
+          if (slipLink) {
+             submitToBackend(jobId, method, amount, slipLink.trim(), "link");
+          }
+       } 
+       else {
+          Swal.fire({
+             title: `ยืนยันรับชำระ?`,
+             text: `ช่องทาง: ${method} | ยอด: ${amount.toLocaleString()} บาท`,
+             icon: 'question',
+             showCancelButton: true,
+             confirmButtonText: 'ยืนยัน'
+          }).then((r) => {
+             if(r.isConfirmed) {
+                submitToBackend(jobId, method, amount, "", ""); 
+             }
+          });
+       }
+    }
+
+    // 6. ส่งข้อมูลไปยัง Google Apps Script (คงเดิม)
+    async function submitToBackend(jobId, method, amount, linkData, mimeType) {
+       if (!currentStaff || currentStaff === "") {
+           return Swal.fire('ผิดพลาด', 'ไม่พบข้อมูลพนักงาน! กรุณารีเฟรชหน้าแล้ว Login ใหม่', 'error');
+       }
+
+       Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+       let payload = {
+         action: "savePaymentData",
+         jobId: jobId,
+         amount: amount,
+         paymentMethod: method,
+         receiver: currentStaff, 
+         image: linkData,   
+         mimeType: mimeType      
+       };
+
+       try {
+           const response = await fetch(GAS_API_URL, {
+               method: 'POST',
+               body: JSON.stringify(payload)
+           });
+           const res = await response.json();
+
+           if(res.status === 'success') {
+              Swal.fire('เรียบร้อย', 'บันทึกข้อมูลสำเร็จ', 'success').then(() => {
+                  search(); 
+              });
+           } else {
+              Swal.fire('เกิดข้อผิดพลาด', res.message || 'ไม่สามารถบันทึกได้', 'error');
+           }
+       } catch(err) {
+           Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
+       }
+    }
+  </script>
+</body>
+</html>
