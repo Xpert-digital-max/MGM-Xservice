@@ -103,7 +103,22 @@
           <div class="card-body"><div class="row g-2">
             <div class="col-6"><input type="number" id="fine" class="form-control" placeholder="ค่าปรับ"><label>ค่าปรับ</label></div>
             <div class="col-6"><input type="number" id="serviceFee" class="form-control" placeholder="ค่าบริการ"><label>ค่าบริการ</label></div>
+            
             <div class="col-12"><input type="text" id="serviceNote" class="form-control form-control-sm" placeholder="หมายเหตุ"></div>
+            
+            <!-- 🌟 สวิตช์เปิด-ปิด การแบ่งจ่าย / มัดจำ -->
+            <div class="col-12 mt-3">
+                <div class="form-check form-switch border p-2 rounded bg-light">
+                    <input class="form-check-input ms-1" type="checkbox" id="isInstallment" onchange="toggleInstallment()">
+                    <label class="form-check-label fw-bold text-success ms-2" for="isInstallment">ออกใบเสร็จแบบแบ่งจ่าย / รับมัดจำล่วงหน้า</label>
+                </div>
+            </div>
+            
+            <!-- 🌟 ช่องกรอกมัดจำ (จะถูกซ่อนไว้โดยค่าเริ่มต้น) -->
+            <div class="col-12 mt-2" id="depositSection" style="display: none;">
+                <label class="text-success fw-bold">💵 ยอดรับมัดจำล่วงหน้า (งวดที่ 1)</label>
+                <input type="number" id="deposit" class="form-control border-success text-success fw-bold form-control-lg" placeholder="ระบุจำนวนเงินที่รับจริง">
+            </div>
             
             <div class="col-12">
               <label class="form-label small text-muted">ทำประกัน</label>
@@ -312,8 +327,15 @@
     async function calculatePreview() {
         let engine = document.getElementById('engineVal').value;
         let idCard = document.getElementById('idCard').value;
-        // 🌟 ดึงข้อความจาก Label มาใช้ในการแจ้งเตือนแบบไดนามิก
         let engineLabel = document.getElementById('engineLabel').innerText; 
+        
+        // 🌟 เช็คว่าเปิดสวิตช์แบ่งจ่ายหรือไม่ และดึงยอดมัดจำ
+        let isInstallment = document.getElementById('isInstallment') ? document.getElementById('isInstallment').checked : false;
+        let deposit = 0;
+        if (isInstallment) {
+            deposit = Number(document.getElementById('deposit').value || 0);
+            if (deposit <= 0) return Swal.fire('','กรุณาระบุยอดเงินมัดจำ/รับล่วงหน้าให้ถูกต้อง','warning');
+        }
         
         if(!engine) return Swal.fire('','กรุณาระบุข้อมูล' + engineLabel,'warning');
         if(!idCard || idCard.trim().length !== 13) return Swal.fire('','กรุณากรอกเลขประจำตัวประชาชนให้ครบ 13 หลัก','warning');
@@ -324,7 +346,8 @@
           jobId: document.getElementById('jobId').value,
           carType: document.getElementById('cType').value,
           engineVal: engine,
-          idCard: idCard, 
+          idCard: idCard,
+          deposit: deposit, 
           regDay: document.getElementById('regDay').value,
           regMonth: document.getElementById('regMonth').value,
           regYearBE: document.getElementById('regYear').value,
@@ -420,6 +443,9 @@
     }
 
     function renderPreviewHTML(plate, age, prb, tor, tax, fine, sFee, ins, total) {
+        let deposit = document.getElementById('deposit') ? Number(document.getElementById('deposit').value || 0) : 0;
+        let remain = total - deposit; 
+
         let html = `
             <div class="alert alert-info text-center">
                 <h2 class="fw-bold mb-0 text-primary">${plate || 'ไม่ระบุทะเบียน'}</h2>
@@ -431,9 +457,17 @@
             <div class="price-row text-danger"><span>ค่าปรับ</span><span>${fmt(fine)}</span></div>
             <div class="price-row"><span>ค่าบริการ</span><span>${fmt(sFee)}</span></div>
             <div class="price-row"><span>ประกัน</span><span>${fmt(ins)}</span></div>
+            <hr>
+            <div class="price-row fw-bold text-dark"><span>รวมยอดสุทธิเต็ม</span><span>${fmt(total)}</span></div>
        `;
+       if (deposit > 0) {
+           html += `<div class="price-row fw-bold text-success"><span>หักมัดจำล่วงหน้า</span><span>- ${fmt(deposit)}</span></div>`;
+           html += `<div class="price-row fw-bold text-danger"><span>ยอดคงเหลือค้างชำระ</span><span>${fmt(remain)}</span></div>`;
+           document.getElementById('p_total').innerText = fmt(Math.ceil(remain));
+       } else {
+           document.getElementById('p_total').innerText = fmt(Math.ceil(total));
+       }
        document.getElementById('previewContent').innerHTML = html;
-       document.getElementById('p_total').innerText = fmt(Math.ceil(total));
     }
     
     function backToEdit() {
@@ -534,6 +568,12 @@
         togglePrbDate(); 
     }
 
+    function toggleInstallment() { 
+        let isChecked = document.getElementById('isInstallment').checked; 
+        document.getElementById('depositSection').style.display = isChecked ? 'block' : 'none'; 
+        if (!isChecked) document.getElementById('deposit').value = ""; 
+    }
+    
     function togglePrbDate() { 
         let isChecked = document.getElementById('doPrb').checked; 
         let dateSection = document.getElementById('prbDateSection');
