@@ -103,24 +103,9 @@
           <div class="card-body"><div class="row g-2">
             <div class="col-6"><input type="number" id="fine" class="form-control" placeholder="ค่าปรับ"><label>ค่าปรับ</label></div>
             <div class="col-6"><input type="number" id="serviceFee" class="form-control" placeholder="ค่าบริการ"><label>ค่าบริการ</label></div>
-            
             <div class="col-12"><input type="text" id="serviceNote" class="form-control form-control-sm" placeholder="หมายเหตุ"></div>
             
-            <!-- 🌟 สวิตช์เปิด-ปิด การแบ่งจ่าย / มัดจำ -->
-            <div class="col-12 mt-3">
-                <div class="form-check form-switch border p-2 rounded bg-light">
-                    <input class="form-check-input ms-1" type="checkbox" id="isInstallment" onchange="toggleInstallment()">
-                    <label class="form-check-label fw-bold text-success ms-2" for="isInstallment">ออกใบเสร็จแบบแบ่งจ่าย / รับมัดจำล่วงหน้า</label>
-                </div>
-            </div>
-            
-            <!-- 🌟 ช่องกรอกมัดจำ (จะถูกซ่อนไว้โดยค่าเริ่มต้น) -->
-            <div class="col-12 mt-2" id="depositSection" style="display: none;">
-                <label class="text-success fw-bold">💵 ยอดรับมัดจำล่วงหน้า (งวดที่ 1)</label>
-                <input type="number" id="deposit" class="form-control border-success text-success fw-bold form-control-lg" placeholder="ระบุจำนวนเงินที่รับจริง">
-            </div>
-            
-            <div class="col-12">
+            <div class="col-12 mt-2">
               <label class="form-label small text-muted">ทำประกัน</label>
               <select id="insType" class="form-select" onchange="toggleIns()">
                 <option value="- ไม่ทำเพิ่ม -">- ไม่ทำเพิ่ม -</option>
@@ -140,6 +125,20 @@
             </div>
             <div class="col-6 mt-2"><input type="number" id="insPrice" class="form-control" placeholder="ราคาประกัน"></div>
             <div class="col-6 mt-2"><input type="text" id="insNote" class="form-control" placeholder="บริษัท/รายละเอียด"></div>
+            
+            <!-- 🌟 ย้ายลงมาตรงนี้: สวิตช์เปิด-ปิด การแบ่งจ่าย / มัดจำ -->
+            <div class="col-12 mt-4 pt-3 border-top border-success">
+                <div class="form-check form-switch border border-success p-2 rounded bg-light shadow-sm">
+                    <input class="form-check-input ms-1" type="checkbox" id="isInstallment" onchange="toggleInstallment()">
+                    <label class="form-check-label fw-bold text-success ms-2" for="isInstallment">เปิดระบบผ่อนชำระ / รับมัดจำล่วงหน้า</label>
+                </div>
+            </div>
+            
+            <!-- 🌟 ช่องกรอกมัดจำ (จะถูกซ่อนไว้โดยค่าเริ่มต้น) -->
+            <div class="col-12 mt-2 mb-2" id="depositSection" style="display: none;">
+                <label class="text-success fw-bold">💵 ยอดรับมัดจำล่วงหน้า (งวดที่ 1)</label>
+                <input type="number" id="deposit" class="form-control border-success text-success fw-bold form-control-lg" placeholder="ระบุจำนวนเงินที่รับจริง">
+            </div>
           </div></div>
         </div>
         <div class="d-grid gap-2 mb-5">
@@ -300,7 +299,6 @@
         document.getElementById('jobId').value = res.jobId;
         document.getElementById('v').innerText = res.reg; 
         document.getElementById('engineVal').value = res.engineVal || "";
-        // 🌟 ดึงค่าบัตรประชาชนมาแสดง (ถ้ามี)
         document.getElementById('idCard').value = res.idCard || "";
 
         if(res.carType) {
