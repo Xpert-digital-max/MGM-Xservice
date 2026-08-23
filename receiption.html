@@ -278,6 +278,7 @@
         try {
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
+                // ส่งพารามิเตอร์ 'todayOnly: true' เพื่อให้ดึงเฉพาะของวันนี้
                 body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch, todayOnly: true })
             });
             const res = await response.json();
@@ -285,17 +286,18 @@
 
             if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบคิวนี้ในสาขาที่เลือก หรือ ไม่ใช่คิวของวันนี้', 'info');
 
-            // 🌟 ดึงคันแรกสุดที่เจอมาใช้งาน
+            // บังคับดึงเอาคันแรกของวันนี้มาเลย
             let job = res.jobs[0];
             
-            // 🌟 ตรวจสอบสิทธิ์ที่คอลัมน์ Y ตามที่คุณสั่งไว้เป๊ะๆ
-            // ถ้า paymentStatus เป็นค่าว่าง (คือคอลัมน์ Y ว่าง) -> ให้ผ่านไปแก้ได้เลย
-            // ถ้า paymentStatus ไม่ว่าง -> ให้บล็อกการแก้ไข
-            if (job.paymentStatus !== "") {
-                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการรับชำระเงินเรียบร้อยแล้ว<br><small class="text-danger">(' + job.paymentStatus + ')</small>', 'error');
+            // 🌟 เช็คสิทธิ์ที่คอลัมน์ Y (paymentStatus) เพียวๆ เลย!
+            let payStatus = String(job.paymentStatus || "").trim(); 
+            
+            // ถ้า Col Y ไม่ว่าง ห้ามแก้!
+            if (payStatus !== "" && payStatus !== "undefined") {
+                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการรับชำระเงินเรียบร้อยแล้ว<br><small class="text-danger">(' + payStatus + ')</small>', 'error');
             }
 
-            // ถ้ารอดมาได้ (คอลัมน์ Y ว่าง) ดึงข้อมูลมาใส่ฟอร์มให้แก้เลย
+            // ถ้า Col Y ว่าง ให้เอาข้อมูลมายัดใส่ฟอร์มให้แก้
             document.getElementById('editRowIndex').value = job.rowIndex;
             document.getElementById('editJobId').value = job.jobId;
             document.getElementById('reg').value = job.reg;
@@ -306,7 +308,7 @@
                 if(selType.options[i].value === job.carType) { selType.selectedIndex = i; break; }
             }
 
-            // เปลี่ยนปุ่มเป็นสีเหลืองเพื่อเตือนว่ากำลังแก้ไข
+            // เปลี่ยนปุ่ม
             let saveBtn = document.getElementById('btnSubmitQueue');
             saveBtn.innerText = "💾 บันทึกการแก้ไข";
             saveBtn.className = "btn btn-warning w-100 py-3 fw-bold shadow";
