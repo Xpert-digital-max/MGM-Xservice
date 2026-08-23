@@ -268,7 +268,7 @@
 
     async function searchQueueData() {
         let keyword = document.getElementById('searchQueue').value.trim();
-        if (!keyword) return Swal.fire('แจ้งเตือน', 'กรุณากรอกเลขคิว ทะเบียน หรือ Job ID', 'warning');
+        if (!keyword) return Swal.fire('แจ้งเตือน', 'กรุณากรอกเลขคิว หรือ ทะเบียน', 'warning');
         
         let branch = document.getElementById('branch').value;
         let btn = document.querySelector('.btn-outline-primary');
@@ -278,6 +278,7 @@
         try {
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
+                // ส่งพารามิเตอร์ 'todayOnly: true' เพื่อให้ดึงเฉพาะของวันนี้
                 body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch, todayOnly: true })
             });
             const res = await response.json();
@@ -285,11 +286,14 @@
 
             if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบคิวนี้ในสาขาที่เลือก หรือ ไม่ใช่คิวของวันนี้', 'info');
 
+            // บังคับดึงเอาคันแรกของวันนี้มาเลย
             let job = res.jobs[0];
             
-            // 🌟 ตรวจสอบแค่สถานะการชำระเงิน (คอลัมน์ Y) เท่านั้น
-            // ถ้า paymentStatus ส่งมาไม่เป็นค่าว่าง หรือขึ้นว่า undefined ให้เช็คจากสถานะอื่นๆ สำรองไว้กันเหนียว
-            let payStatus = job.paymentStatus || ""; 
+            // 🌟 พระเอกของงานนี้: ตรวจสอบแค่ "สถานะการชำระเงิน" (Col Y เท่านั้น)
+            // คลีนตัวแปรให้เป็นข้อความเปล่าๆ ถ้าไม่มีค่า
+            let payStatus = String(job.paymentStatus || "").trim(); 
+            
+            // 🌟 เช็คว่าถ้ามันไม่ใช่ค่าว่าง และไม่ใช่คำว่า undefined (บั๊กของ JS) แสดงว่ารับเงินไปแล้ว ห้ามแก้!
             if (payStatus !== "" && payStatus !== "undefined") {
                 return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการรับชำระเงินเรียบร้อยแล้ว<br><small class="text-danger">(' + payStatus + ')</small>', 'error');
             }
