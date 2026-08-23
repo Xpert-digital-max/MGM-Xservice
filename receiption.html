@@ -41,14 +41,7 @@
         <hr>
         <div id="ui">
 
-          <!-- 🌟 ส่วนค้นหาคิวเพื่อแก้ไข -->
-          <div class="input-group mb-4">
-            <input type="text" id="searchQueue" class="form-control border-primary" placeholder="🔎 ค้นหาเลขคิว / ทะเบียน เพื่อแก้ไข">
-            <button class="btn btn-outline-primary fw-bold" onclick="searchQueueData()">ค้นหา</button>
-          </div>
-          <!-- 🌟 ซ่อน ID และแถวไว้สำหรับอัปเดต -->
-          <input type="hidden" id="editRowIndex" value="">
-          <input type="hidden" id="editJobId" value="">
+
 
           <label class="fw-bold text-danger">สาขาที่รับรถ</label>
           <select id="branch" class="form-select mb-3 border-danger">
@@ -94,6 +87,18 @@
           <div id="fileList" class="file-preview mb-3"></div>
           
           <button type="button" id="btnSubmitQueue" class="btn btn-primary w-100 py-3 fw-bold shadow" onclick="sendData()">ออกบัตรคิว</button>
+          
+          <hr class="my-4">
+          <!-- 🌟 ส่วนค้นหาคิวเพื่อแก้ไข (ย้ายมาไว้ข้างล่าง) -->
+          <div class="input-group">
+            <input type="text" id="searchQueue" class="form-control border-primary" placeholder="🔎 ระบุเลขคิว หรือ ทะเบียน เพื่อแก้ไข">
+            <button class="btn btn-outline-primary fw-bold" onclick="searchQueueData()">ค้นหา</button>
+          </div>
+          <div class="text-muted small mt-1 text-center">*ค้นหาและแก้ไขได้เฉพาะคิวของวันนี้เท่านั้น</div>
+          
+          <!-- 🌟 ซ่อน ID และแถวไว้สำหรับอัปเดต -->
+          <input type="hidden" id="editRowIndex" value="">
+          <input type="hidden" id="editJobId" value="">
         </div>
         
         <div id="res" class="text-center" style="display:none;">
@@ -261,7 +266,6 @@
       });
     }
 
-    // 🌟 ระบบค้นหาคิวเดิม เพื่อดึงมาแก้
     async function searchQueueData() {
         let keyword = document.getElementById('searchQueue').value.trim();
         if (!keyword) return Swal.fire('แจ้งเตือน', 'กรุณากรอกเลขคิว ทะเบียน หรือ Job ID', 'warning');
@@ -274,50 +278,40 @@
         try {
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch })
+                // 🌟 ส่งพารามิเตอร์ 'todayOnly: true' เพื่อให้หลังบ้านหากรองเฉพาะของวันนี้
+                body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch, todayOnly: true })
             });
             const res = await response.json();
             btn.innerText = oldText; btn.disabled = false;
 
-            if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบข้อมูลคิวนี้ในสาขาที่เลือก', 'info');
+            if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบคิวนี้ในสาขาที่เลือก หรือ ไม่ใช่คิวของวันนี้', 'info');
 
-            if (res.jobs.length > 1) {
-                let options = {};
-                res.jobs.forEach(item => {
-                    options[item.jobId] = item.reg + " (" + item.status + ")";
-                });
-                Swal.fire({
-                    title: 'เลือกรายการที่ต้องการแก้ไข', input: 'select', inputOptions: options, showCancelButton: true
-                }).then((choice) => {
-                    if (choice.isConfirmed) { document.getElementById('searchQueue').value = choice.value; searchQueueData(); }
-                });
-            } else {
-                let job = res.jobs[0];
-                
-                // 🌟 ตรวจสอบว่ามีการลงการเงินไปแล้วหรือยัง (เช็คยอด, สถานะบิล)
-                if (job.total > 0 || (job.savedTor > 0) || job.status === 'ส่งใบเสนอราคาแล้ว' || job.status === 'กำลังดำเนินการที่ขนส่ง') {
-                    return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการประเมินราคา หรือ รับชำระเงินไปแล้ว<br><small class="text-danger">(' + job.status + ')</small>', 'error');
-                }
-
-                // 🌟 นำข้อมูลมาใส่ฟอร์มเพื่อแก้ไข
-                document.getElementById('editRowIndex').value = job.rowIndex;
-                document.getElementById('editJobId').value = job.jobId;
-                document.getElementById('reg').value = job.reg;
-                document.getElementById('phone').value = job.phone;
-                
-                let selType = document.getElementById('carType');
-                for(let i=0; i<selType.options.length; i++) {
-                    if(selType.options[i].value === job.carType) { selType.selectedIndex = i; break; }
-                }
-
-                // เปลี่ยนปุ่มเป็นสีเหลืองเพื่อเตือนว่ากำลังแก้ไข
-                let saveBtn = document.getElementById('btnSubmitQueue');
-                saveBtn.innerText = "💾 บันทึกการแก้ไข";
-                saveBtn.className = "btn btn-warning w-100 py-3 fw-bold shadow";
-                
-                // แจ้งเตือนว่าดึงสำเร็จ
-                Swal.fire('ดึงข้อมูลสำเร็จ', 'คุณสามารถแก้ไขทะเบียน เบอร์โทร ประเภทรถ หรือแนบรูปใหม่ได้เลย', 'success');
+            // 🌟 บังคับดึงเอาตัวแรกที่เจอมาแสดงเลย โดยไม่ต้องมี Popup ให้เลือก
+            let job = res.jobs[0];
+            
+            // 🌟 ตรวจสอบว่ามีการลงการเงินไปแล้วหรือยัง (เช็คยอด, สถานะบิล)
+            if (job.total > 0 || (job.savedTor > 0) || job.status === 'ส่งใบเสนอราคาแล้ว' || job.status === 'กำลังดำเนินการที่ขนส่ง' || job.status === 'ดำเนินการเสร็จแล้ว') {
+                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการประเมินราคา หรือ รับชำระเงินไปแล้ว<br><small class="text-danger">(' + job.status + ')</small>', 'error');
             }
+
+            // 🌟 นำข้อมูลมาใส่ฟอร์มเพื่อแก้ไข
+            document.getElementById('editRowIndex').value = job.rowIndex;
+            document.getElementById('editJobId').value = job.jobId;
+            document.getElementById('reg').value = job.reg;
+            document.getElementById('phone').value = job.phone;
+            
+            let selType = document.getElementById('carType');
+            for(let i=0; i<selType.options.length; i++) {
+                if(selType.options[i].value === job.carType) { selType.selectedIndex = i; break; }
+            }
+
+            // เปลี่ยนปุ่มเป็นสีเหลืองเพื่อเตือนว่ากำลังแก้ไข
+            let saveBtn = document.getElementById('btnSubmitQueue');
+            saveBtn.innerText = "💾 บันทึกการแก้ไข";
+            saveBtn.className = "btn btn-warning w-100 py-3 fw-bold shadow";
+            
+            // แจ้งเตือนว่าดึงสำเร็จ
+            Swal.fire('ดึงข้อมูลสำเร็จ', 'คุณสามารถแก้ไขทะเบียน เบอร์โทร ประเภทรถ หรือแนบรูปใหม่ได้เลย', 'success');
 
         } catch (e) {
             btn.innerText = oldText; btn.disabled = false;
