@@ -101,7 +101,7 @@
        }
     }
 
-    // 3. ฟังก์ชันค้นหา (อัปเดต: สรุปยอดรวมค้างชำระ)
+    // 3. ฟังก์ชันค้นหา (อัปเดต: ส่งตัวแปร paid มารับค่ามัดจำ)
     async function search() {
        let k = document.getElementById('sk').value;
        document.getElementById('resultArea').innerHTML = '<div class="text-center mt-3">⏳ กำลังค้นหา...</div>';
@@ -117,11 +117,9 @@
            if(!results || results.length === 0) {
               html = '<div class="alert alert-warning text-center shadow-sm">❌ ไม่พบยอดค้างชำระของสาขานี้</div>';
            } else {
-              // 🌟 คำนวณยอดรวมของบิลค้างชำระทั้งหมดที่หาเจอ
               let sumTotal = 0;
               results.forEach(r => sumTotal += r.total);
               
-              // 🌟 เพิ่มแบนเนอร์แสดงสรุปยอดค้างชำระไว้ด้านบนสุด
               html += `
                 <div class="alert alert-danger text-center shadow-sm mb-4" style="border: 2px dashed #dc3545;">
                    <h5 class="fw-bold mb-2 text-danger">⚠️ ยอดรวมรายการค้างชำระ (${results.length} คัน)</h5>
@@ -130,12 +128,15 @@
               `;
 
               results.forEach(r => {
+                 // 🌟 เช็คว่าถ้ามียอดจ่ายสะสม (paid) แสดงว่าเป็นเคสผ่อน/แบ่งจ่าย ให้เพิ่ม Badge โชว์ด้วย
+                 let badgeHtml = (r.paid > 0) ? `<span class="badge bg-primary text-white ms-1">แบ่งจ่าย</span>` : `<span class="badge bg-danger text-white">ค้างชำระ</span>`;
+
                  html += `
                    <div class="card mb-3 border-danger shadow-sm card-hover">
                      <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <h5 class="fw-bold text-primary">${r.plate}</h5>
-                            <span class="badge bg-danger text-white">ค้างชำระ</span>
+                            <div>${badgeHtml}</div>
                         </div>
                         <p class="mb-1 text-muted small">JOB ID: ${r.jobId} | เบอร์: ${r.phone}</p>
                         <hr>
@@ -144,7 +145,7 @@
                             <h3 class="text-success fw-bold m-0">${parseInt(r.total).toLocaleString()} ฿</h3>
                         </div>
                         <button class="btn btn-success w-100 mt-3 py-2 fw-bold" 
-                          onclick="showPaymentOptions('${r.jobId}', '${r.plate}', ${r.total})">
+                          onclick="showPaymentOptions('${r.jobId}', '${r.plate}', ${r.total}, ${r.paid})">
                           ✅ แจ้งโอน / รับเงิน
                         </button>
                      </div>
@@ -158,9 +159,9 @@
        }
     }
 
-    // 4. ฟังก์ชันแสดงตัวเลือกการชำระเงิน (คงเดิม)
-    function showPaymentOptions(jobId, plate, amount) {
-       tempPayData = { jobId, plate, amount };
+    // 4. ฟังก์ชันแสดงตัวเลือกการชำระเงิน (อัปเดต: เก็บตัวแปร paid ไว้เช็คสถานะ)
+    function showPaymentOptions(jobId, plate, amount, paid) {
+       tempPayData = { jobId, plate, amount, paid };
 
        Swal.fire({
           title: 'เลือกช่องทางชำระเงิน',
@@ -179,40 +180,62 @@
        });
     }
 
-    // 5. ฟังก์ชันจัดการเมื่อเลือกช่องทางชำระเงิน (คงเดิม)
+    // 5. ฟังก์ชันจัดการเมื่อเลือกช่องทางชำระเงิน (อัปเดต: เช็คเคสแบ่งจ่าย)
     async function selectMethod(method) {
        Swal.close(); 
-       let { jobId, amount } = tempPayData;
+       let { jobId, amount: remainAmount, paid } = tempPayData;
 
+       let finalAmount = remainAmount; // ค่าตั้งต้นคือยอดเต็ม
+
+       // 🌟 เช็คว่าถ้ามียอดสะสม (เคยเปิด Toggle มัดจำมา) ให้โชว์กล่องให้กรอกยอดเงินแบ่งจ่าย
+       if (paid > 0) {
+           const { value: payAmount, isConfirmed } = await Swal.fire({
+              title: 'ยอดเงินที่รับชำระ',
+              input: 'number',
+              inputValue: remainAmount,
+              html: `<span class="text-muted">ลูกค้าชำระค่างวดบางส่วนได้ (ยอดค้างสุทธิ: ${remainAmount.toLocaleString()} ฿)</span>`,
+              showCancelButton: true,
+              confirmButtonText: 'ถัดไป ➡️',
+              cancelButtonText: 'ยกเลิก',
+              inputValidator: (value) => {
+                 if (!value || value <= 0) return 'กรุณาระบุจำนวนเงินที่รับชำระ!';
+                 if (value > remainAmount) return 'ยอดชำระเกินยอดค้างชำระ!';
+              }
+           });
+
+           if (!isConfirmed) return showPaymentOptions(jobId, tempPayData.plate, remainAmount, paid);
+           finalAmount = parseFloat(payAmount); // เปลี่ยนเป็นยอดที่พนักงานกรอก
+       }
+
+       // 🌟 ถ้าเป็นเงินโอน ต้องแนบสลิป
        if (method === 'เงินโอน') {
           const { value: slipLink } = await Swal.fire({
              title: 'กรุณาวางลิงก์สลิป',
              input: 'text',
              inputPlaceholder: 'https://...',
-             html: `<div class="text-danger small mt-2">* ยอด ${amount.toLocaleString()} บาท</div>`,
+             html: `<div class="text-danger fw-bold mt-2">* ยืนยันรับชำระ: ${finalAmount.toLocaleString()} บาท</div>`,
              showCancelButton: true,
              confirmButtonText: 'ยืนยันการโอน',
              inputValidator: (value) => {
-                if (!value || value.trim() === "") {
-                   return 'คุณต้องวางลิงก์สลิปก่อนยืนยัน!';
-                }
+                if (!value || value.trim() === "") return 'คุณต้องวางลิงก์สลิปก่อนยืนยัน!';
              }
           });
 
           if (slipLink) {
-             submitToBackend(jobId, method, amount, slipLink.trim(), "link");
+             submitToBackend(jobId, method, finalAmount, slipLink.trim(), "link");
           }
        } 
        else {
+          // 🌟 ถ้าเป็นเงินสด/บัตรเครดิต/Myshop กดปุ๊บ ถามแค่ยืนยัน
           Swal.fire({
              title: `ยืนยันรับชำระ?`,
-             text: `ช่องทาง: ${method} | ยอด: ${amount.toLocaleString()} บาท`,
+             text: `ช่องทาง: ${method} | รับชำระ: ${finalAmount.toLocaleString()} บาท`,
              icon: 'question',
              showCancelButton: true,
-             confirmButtonText: 'ยืนยัน'
+             confirmButtonText: '✅ ยืนยันรับเงิน'
           }).then((r) => {
              if(r.isConfirmed) {
-                submitToBackend(jobId, method, amount, "", ""); 
+                submitToBackend(jobId, method, finalAmount, "", ""); 
              }
           });
        }
