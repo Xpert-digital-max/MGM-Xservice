@@ -9,43 +9,36 @@
     
     <style>
         body { font-family: 'Sarabun', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
-        
-        /* เมนูสลับหน้าต่าง */
         .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab-btn { flex: 1; padding: 15px; font-size: 18px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; background: #e0e0e0; color: #555; }
         .tab-btn.active { background: #0d6efd; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
         .control-panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
-        .control-panel input, .control-panel select { padding: 8px; font-size: 16px; font-family: 'Sarabun'; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .control-panel select, .control-panel input[type="date"] { padding: 8px; font-size: 16px; font-family: 'Sarabun'; margin: 0 5px; border: 1px solid #ccc; border-radius: 4px; }
         .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; color: white; transition: 0.3s; margin: 5px; }
         .btn-primary { background: #0d6efd; }
         .btn-success { background: #198754; display: none; }
         
-        /* สไตล์ตารางรายงาน */
         .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .report-table th, .report-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         .report-table th { background-color: #198754; color: white; text-align: center; }
         .report-table td.text-right { text-align: right; }
         .report-table td.text-center { text-align: center; }
         
-        /* Checkbox ชนิดรถ */
         .car-type-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
         .car-type-filters label { cursor: pointer; font-size: 16px; }
         
         #print-area, #report-area { display: none; } 
         
-        /* ตั้งค่าปริ้น */
+        /* ตั้งค่าปริ้นให้ประหยัดพื้นที่ */
         @media print {
             body { background: white; padding: 0; margin: 0; }
             .no-print { display: none !important; }
             #print-area { display: block; }
-            .report-table { box-shadow: none; }
+            .report-table { box-shadow: none; font-size: 13px; } /* ลดขนาดฟอนต์รายงาน */
+            .report-table th, .report-table td { padding: 4px 8px !important; } /* บีบแถวให้ชิดกัน */
             .report-table th { background-color: #e0e0e0 !important; color: black; -webkit-print-color-adjust: exact; }
             
-            .a4-page {
-                width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; page-break-after: always;
-                display: flex; flex-direction: column; justify-content: space-between;
-            }
+            .a4-page { width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; page-break-after: always; display: flex; flex-direction: column; justify-content: space-between; }
             .receipt-box { height: 48%; border: 1px dashed #ccc; padding: 15px 25px; box-sizing: border-box; position: relative; }
             .r-header { text-align: center; margin-bottom: 15px; position: relative; }
             .r-copy-tag { position: absolute; top: 0; right: 0; font-size: 12px; border: 1px solid #555; padding: 2px 6px; }
@@ -67,7 +60,7 @@
         <button class="tab-btn" id="btnTab2" onclick="switchTab(2)">📊 รายงานยอด พ.ร.บ. (Statement)</button>
     </div>
 
-    <!-- หน้าจอออกใบเสร็จ (แบบเดิม) -->
+    <!-- หน้าจอออกใบเสร็จ -->
     <div id="section-receipt" class="control-panel no-print">
         <h2 style="margin-top: 0; color:#0d6efd;">ระบบออกใบเสร็จตรวจสภาพรถรายเดือน</h2>
         <select id="branchPicker">
@@ -75,21 +68,26 @@
             <option value="สาขาพระยืน">สาขาพระยืน</option>
             <option value="สาขาท่าใหม่">สาขาท่าใหม่</option>
         </select>
-        <input type="month" id="monthPicker" required>
+        
+        <b>ตั้งแต่วันที่:</b> <input type="date" id="startDateReceipt" required>
+        <b>ถึง:</b> <input type="date" id="endDateReceipt" required>
+
         <button class="btn btn-primary" onclick="loadReceiptData()">🔍 ดึงข้อมูลใบเสร็จ</button>
         <button class="btn btn-success" id="btnPrintReceipt" onclick="window.print()">🖨️ พิมพ์ใบเสร็จทั้งหมด</button>
         <div id="statusTextReceipt" style="margin-top: 15px; font-weight: bold; color: #0d6efd;"></div>
     </div>
 
-    <!-- หน้าจอรายงาน พ.ร.บ. (แบบใหม่) -->
+    <!-- หน้าจอรายงาน พ.ร.บ. -->
     <div id="section-report" class="control-panel no-print" style="display:none;">
-        <h2 style="margin-top: 0; color:#198754;">รายงานสรุปยอดขาย พ.ร.บ. ประจำเดือน</h2>
+        <h2 style="margin-top: 0; color:#198754;">รายงานสรุปยอดขาย พ.ร.บ.</h2>
         <select id="branchPickerReport">
             <option value="ทั้งหมด">รายงานทุกสาขา</option>
             <option value="สาขาพระยืน">สาขาพระยืน</option>
             <option value="สาขาท่าใหม่">สาขาท่าใหม่</option>
         </select>
-        <input type="month" id="monthPickerReport" required>
+        
+        <b>ตั้งแต่วันที่:</b> <input type="date" id="startDateReport" required>
+        <b>ถึง:</b> <input type="date" id="endDateReport" required>
         
         <div class="car-type-filters">
             <b>เลือกประเภทรถ: </b>
@@ -106,22 +104,24 @@
         <button class="btn btn-success" id="btnPrintReport" onclick="window.print()" style="margin-top: 15px;">🖨️ พิมพ์รายงาน A4</button>
     </div>
 
-    <!-- คอนเทนเนอร์แสดงผล -->
     <div id="print-area"></div>
     <div id="report-area"></div>
 
     <script>
-        // -------------------------
-        // ระบบสลับหน้าจอ (Tabs)
-        // -------------------------
+        // เซ็ตวันที่ปัจจุบันเป็นค่าเริ่มต้น
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDateReceipt').value = today;
+            document.getElementById('endDateReceipt').value = today;
+            document.getElementById('startDateReport').value = today;
+            document.getElementById('endDateReport').value = today;
+        });
+
         function switchTab(tabNum) {
             document.getElementById('section-receipt').style.display = (tabNum === 1) ? 'block' : 'none';
             document.getElementById('section-report').style.display = (tabNum === 2) ? 'block' : 'none';
-            
             document.getElementById('btnTab1').classList.toggle('active', tabNum === 1);
             document.getElementById('btnTab2').classList.toggle('active', tabNum === 2);
-            
-            // ล้างหน้าจอเก่าทิ้ง
             document.getElementById('print-area').style.display = 'none';
             document.getElementById('report-area').style.display = 'none';
             document.getElementById('print-area').innerHTML = '';
@@ -130,9 +130,6 @@
             document.getElementById('btnPrintReport').style.display = 'none';
         }
 
-        // =======================================
-        // ฟังก์ชันของระบบใบเสร็จ (ลอกของเดิมมาเป๊ะๆ)
-        // =======================================
         function ThaiBahtText(number) {
             let num = parseFloat(number); 
             if (isNaN(num) || num === 0) return "-ศูนย์บาทถ้วน-";
@@ -160,23 +157,24 @@
         }
 
         async function loadReceiptData() {
-            let monthVal = document.getElementById('monthPicker').value;
+            let startVal = document.getElementById('startDateReceipt').value;
+            let endVal = document.getElementById('endDateReceipt').value;
             let branchVal = document.getElementById('branchPicker').value;
-            if(!monthVal) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกเดือนและปีก่อนครับ', 'warning');
+            
+            if(!startVal || !endVal) return Swal.fire('แจ้งเตือน', 'กรุณาระบุวันที่เริ่มต้นและสิ้นสุดให้ครบถ้วน', 'warning');
             
             Swal.fire({ title: 'กำลังดึงข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
                 const response = await fetch(GAS_API_URL, {
-                    method: 'POST', body: JSON.stringify({ action: "getMonthlyReceipts", monthStr: monthVal, branchName: branchVal })
+                    method: 'POST', body: JSON.stringify({ action: "getMonthlyReceipts", startDate: startVal, endDate: endVal, branchName: branchVal })
                 });
                 const res = await response.json();
                 Swal.close();
 
                 if(res.status === "success") {
                     let data = res.data;
-                    if(data.length === 0) {
-                        Swal.fire('ไม่พบข้อมูล', 'ไม่มียอดในเดือนนี้', 'info'); return;
-                    }
+                    if(data.length === 0) { Swal.fire('ไม่พบข้อมูล', 'ไม่มียอดในระยเวลาที่คุณเลือก', 'info'); return; }
+                    
                     let summaryCounts = {};
                     data.forEach(item => {
                         let price = parseFloat(item.total) || 0;
@@ -228,69 +226,66 @@
             container.innerHTML = html;
         }
 
-        // =======================================
-        // ฟังก์ชันใหม่: ระบบรายงาน พ.ร.บ. 
-        // =======================================
         async function loadPrbReport() {
-            let monthVal = document.getElementById('monthPickerReport').value;
+            let startVal = document.getElementById('startDateReport').value;
+            let endVal = document.getElementById('endDateReport').value;
             let branchVal = document.getElementById('branchPickerReport').value;
             
-            // อ่านค่าประเภทรถที่ถูกติ๊ก
             let checkedTypes = [];
             document.querySelectorAll('.car-chk:checked').forEach(chk => checkedTypes.push(chk.value));
 
-            if(!monthVal) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกเดือนและปีก่อนครับ', 'warning');
+            if(!startVal || !endVal) return Swal.fire('แจ้งเตือน', 'กรุณาระบุช่วงวันที่ให้ครบถ้วน', 'warning');
             if(checkedTypes.length === 0) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกประเภทรถอย่างน้อย 1 ประเภทครับ', 'warning');
 
             Swal.fire({ title: 'กำลังทำรายงาน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             
             try {
                 const response = await fetch(GAS_API_URL, {
-                    method: 'POST', body: JSON.stringify({ action: "getPrbReport", monthStr: monthVal, branchName: branchVal, carTypes: checkedTypes })
+                    method: 'POST', body: JSON.stringify({ action: "getPrbReport", startDate: startVal, endDate: endVal, branchName: branchVal, carTypes: checkedTypes })
                 });
                 const res = await response.json();
                 Swal.close();
 
                 if(res.status === "success") {
                     let data = res.data;
-                    if(data.length === 0) {
-                        Swal.fire('ไม่พบข้อมูล', 'ไม่มียอดขาย พ.ร.บ. ตามเงื่อนไขที่คุณเลือก', 'info'); return;
-                    }
-                    generateReportHTML(data, monthVal, branchVal);
+                    if(data.length === 0) { Swal.fire('ไม่พบข้อมูล', 'ไม่มียอดขาย พ.ร.บ. ตามเงื่อนไขที่คุณเลือก', 'info'); return; }
+                    generateReportHTML(data, startVal, endVal, branchVal);
                 }
             } catch(e) { Swal.close(); Swal.fire('Error', e.message, 'error'); }
         }
 
-        function generateReportHTML(dataList, monthStr, branchStr) {
+        function generateReportHTML(dataList, startStr, endStr, branchStr) {
             let container = document.getElementById('report-area');
             let sumTotal = 0;
             let countTypes = {};
             
-            // สร้าง Header ตาราง
+            // แปลงรูปแบบวันที่ให้ดูสวยงามขึ้น
+            let displayDateRange = startStr === endStr ? startStr : `${startStr} ถึง ${endStr}`;
+            
             let html = `
-                <div style="background:white; padding:20px; margin-top:20px;">
-                    <h2 style="text-align:center; color:#198754; margin-bottom: 5px;">รายงานสรุปยอดขาย พ.ร.บ. ประจำเดือน ${monthStr}</h2>
-                    <h3 style="text-align:center; color:#555; margin-top: 0;">สาขา: ${branchStr}</h3>
+                <div style="background:white; padding:15px; margin-top:10px;">
+                    <h2 style="text-align:center; color:#198754; margin-bottom: 5px;">รายงานสรุปยอดขาย พ.ร.บ.</h2>
+                    <h4 style="text-align:center; color:#555; margin-top: 0;">สาขา: ${branchStr} | วันที่: ${displayDateRange}</h4>
                     
                     <table class="report-table">
                         <thead>
                             <tr>
+                                <th style="width: 40px;" class="no-print">🔍</th>
                                 <th style="width: 50px;">ลำดับ</th>
-                                <th style="width: 120px;">วันที่</th>
+                                <th style="width: 100px;">วันที่</th>
                                 <th>เลขทะเบียน</th>
                                 <th>ประเภทรถ</th>
-                                <th style="width: 150px; text-align: right;">เบี้ยประกัน (พ.ร.บ.)</th>
+                                <th>หมายเหตุ</th>
+                                <th style="width: 120px; text-align: right;">เบี้ย (พ.ร.บ.)</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
-            // วนลูปสร้างแถว
             dataList.forEach((item, index) => {
                 let prbNum = parseFloat(item.prbFee) || 0;
                 sumTotal += prbNum;
                 
-                // เช็กคำเพื่อจัดกลุ่มประเภทรถแบบคร่าวๆ
                 let cleanType = "อื่นๆ";
                 if(item.carType.includes('จักรยานยนต์')) cleanType = "จักรยานยนต์";
                 else if(item.carType.includes('เก๋ง')) cleanType = "รถเก๋ง";
@@ -301,30 +296,32 @@
 
                 html += `
                     <tr>
+                        <td class="text-center no-print">
+                            <a href="cashier.html?reg=${encodeURIComponent(item.reg)}" target="_blank" title="ตรวจสอบในระบบ Cashier" style="text-decoration:none; cursor:pointer; font-size:18px;">🔎</a>
+                        </td>
                         <td class="text-center">${index + 1}</td>
                         <td class="text-center">${item.dateStr}</td>
                         <td>${item.reg}</td>
                         <td>${item.carType}</td>
+                        <td>${item.remark}</td>
                         <td class="text-right"><b>${prbNum.toLocaleString('en-US', {minimumFractionDigits: 2})}</b></td>
                     </tr>
                 `;
             });
 
-            // สร้างข้อความสรุปแยกประเภท
             let summaryTypeStr = Object.keys(countTypes).map(t => `${t}: <b>${countTypes[t]}</b> คัน`).join(" &nbsp;|&nbsp; ");
 
-            // ปิดท้ายตารางและยอดสรุป
             html += `
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="4" class="text-right" style="font-size:18px;"><b>รวมเป็นเงินทั้งสิ้น</b></td>
-                                <td class="text-right" style="font-size:18px; color:#e02424;"><b>${sumTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</b></td>
+                                <td colspan="6" class="text-right" style="font-size:16px;"><b>รวมเป็นเงินทั้งสิ้น</b></td>
+                                <td class="text-right" style="font-size:16px; color:#e02424;"><b>${sumTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</b></td>
                             </tr>
                         </tfoot>
                     </table>
                     
-                    <div style="background:#eaf2e8; padding: 15px; border-radius:8px; margin-top:20px; font-size:16px;">
+                    <div class="no-print" style="background:#eaf2e8; padding: 15px; border-radius:8px; margin-top:20px; font-size:16px;">
                         📌 <b>สรุปจำนวน:</b> ยอดขายรวม <b>${dataList.length}</b> คัน <br>
                         📊 <b>แยกตามประเภท:</b> ${summaryTypeStr}
                     </div>
