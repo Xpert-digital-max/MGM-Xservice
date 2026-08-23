@@ -29,11 +29,18 @@
         
         #print-area, #report-area { display: none; } 
         
+        /* ซ่อนใบเสร็จไม่ให้แสดงบนหน้าจอ */
+        @media screen {
+            #print-area { display: none !important; }
+            #report-area { display: none; } 
+        }
+        
         /* ตั้งค่าปริ้นให้ประหยัดพื้นที่ */
         @media print {
             body { background: white; padding: 0; margin: 0; }
             .no-print { display: none !important; }
-            #print-area { display: block; }
+            #print-area { display: block !important; }
+
             .report-table { box-shadow: none; font-size: 13px; } /* ลดขนาดฟอนต์รายงาน */
             .report-table th, .report-table td { padding: 4px 8px !important; } /* บีบแถวให้ชิดกัน */
             .report-table th { background-color: #e0e0e0 !important; color: black; -webkit-print-color-adjust: exact; }
@@ -50,6 +57,7 @@
             table.r-table th, table.r-table td { border: 1px solid #333; padding: 8px; }
             .text-right { text-align: right; }
             .r-footer { display: flex; justify-content: space-between; margin-top: 25px; font-size: 14px; }
+            .r-sign { width: 40%; text-align: center; } /* นำกลับมาใช้สำหรับผู้รับเงิน */
         }
     </style>
 </head>
@@ -185,7 +193,6 @@
                     document.getElementById('statusTextReceipt').innerHTML = `✅ สร้างฟอร์มสำเร็จ: ${data.length} รายการ<br><div style="font-size: 15px; color: #333; margin-top: 10px; background: #e5edff; padding: 10px; border-radius: 8px;">📊 <b>สรุปรายละเอียด:</b> ${breakdownStr}</div>`;
                     document.getElementById('btnPrintReceipt').style.display = 'inline-block';
                     generateReceiptHTML(data);
-                    document.getElementById('print-area').style.display = 'block';
                 }
             } catch(e) { Swal.close(); Swal.fire('Error', e.message, 'error'); }
         }
@@ -215,10 +222,16 @@
                             <tr><td>ค่าตรวจสภาพรถ</td><td class="text-right">${totalStr}</td></tr>
                             <tr><td colspan="2" style="border:none; height:15px;"></td></tr>
                             <tr>
-                                <td style="border:none; border-top: 1px solid #333; padding-top:10px;"><b>${thText}</b><span style="float: right;"><b>รวม</b></span></td>
-                                <td class="text-right" style="border-top: 1px solid #333; padding-top:10px;"><b>${totalStr}</b></td>
+                                <td style="border:1px solid #333;"><b>${thText}</b><span style="float: right;"><b>รวม</b></span></td>
+                                <td class="text-right" style="border:1px solid #333;"><b>${totalStr}</b></td>
                             </tr>
                         </table>
+                        
+                        <div class="r-footer">
+                            <div class="r-sign">
+                                ผู้รับเงิน .....................................................
+                            </div>
+                        </div>
                     </div>
                 `;
                 html += `<div class="a4-page">${receiptTemplate('ต้นฉบับ')} ${receiptTemplate('สำเนา')}</div>`;
@@ -259,7 +272,6 @@
             let sumTotal = 0;
             let countTypes = {};
             
-            // แปลงรูปแบบวันที่ให้ดูสวยงามขึ้น
             let displayDateRange = startStr === endStr ? startStr : `${startStr} ถึง ${endStr}`;
             
             let html = `
