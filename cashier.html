@@ -53,7 +53,7 @@
           <div class="card-body">
             <input type="hidden" id="idx"><input type="hidden" id="jobId">
             <div class="row g-2">
-              <div class="col-6">
+              <div class="col-12">
                 <label>ประเภท</label>
                 <select id="cType" class="form-select" onchange="toggleCarType()">
                   <option value="รถเก๋ง / 4 ประตู (รย.1)">รถเก๋ง / 4 ประตู (รย.1)</option>
@@ -71,7 +71,13 @@
                  <label id="engineLabel">เครื่องยนต์ (CC)</label>
                  <input type="number" id="engineVal" class="form-control">
               </div>
-              <div class="col-12"><label>วันจดทะเบียน</label><div class="input-group"><select id="regDay" class="form-select"></select><select id="regMonth" class="form-select"><option value="1">ม.ค.</option><option value="2">ก.พ.</option></select><input type="number" id="regYear" class="form-control" placeholder="พ.ศ." onchange="autoCheckTor()"></div></div>
+              <!-- 🌟 จุดที่เพิ่ม: ช่องกรอกบัตรประชาชน 13 หลัก -->
+              <div class="col-6">
+                 <label class="text-danger fw-bold">เลขประจำตัวประชาชน</label>
+                 <input type="text" id="idCard" class="form-control border-danger" maxlength="13" placeholder="กรอกเลข 13 หลัก">
+              </div>
+              
+              <div class="col-12"><label>วันจดทะเบียน</label><div class="input-group"><select id="regDay" class="form-select"></select><select id="regMonth" class="form-select"><option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option></select><input type="number" id="regYear" class="form-control" placeholder="พ.ศ." onchange="autoCheckTor()"></div></div>
               <div class="col-12 text-end text-primary fw-bold" id="carAgeText">อายุรถ: - ปี</div>
             </div>
           </div>
@@ -166,10 +172,9 @@
     var currentBranch = "";
 
     window.onload = function() { 
-        initLiff(); // เปลี่ยนมาเรียกระบบล็อกอินก่อน
+        initLiff(); 
     };
 
-    // 🌟 1. ฟังก์ชันโหลด LIFF และตรวจสอบสิทธิ์
     async function initLiff() {
         try {
             await liff.init({ liffId: MY_LIFF_ID });
@@ -187,7 +192,7 @@
                 body: JSON.stringify({ 
                     action: "verifyUserAccess", 
                     userId: profile.userId, 
-                    pageName: "cashier.html" // 🌟 ส่งหน้า cashier.html ไปเช็คช่อง E
+                    pageName: "cashier.html" 
                 })
             })).json();
 
@@ -199,9 +204,8 @@
                 document.getElementById('staffNameDisplay').innerHTML = `👤 ${currentStaff} <br><small class="text-light">(${currentBranch})</small>`;
                 document.getElementById('staffNameDisplay').className = "badge bg-success fs-6";
                 
-                document.getElementById('mainContent').style.display = 'block'; // ปลดล็อกหน้าจอ
+                document.getElementById('mainContent').style.display = 'block'; 
                 
-                // โหลดวันที่และ Dropdown เมื่อล็อกอินผ่าน
                 initDateFields(); 
                 setDefaultDate(); 
             } else {
@@ -214,9 +218,6 @@
         }
     }
 
-    // ==========================================
-    // ฟังก์ชันเดิมของคุณด้านล่างนี้ (ไม่ได้ดัดแปลง)
-    // ==========================================
     function resetPage() {
        document.getElementById('sk').value = ''; 
        document.getElementById('searchSection').style.display = 'block';
@@ -284,6 +285,9 @@
         document.getElementById('jobId').value = res.jobId;
         document.getElementById('v').innerText = res.reg; 
         document.getElementById('engineVal').value = res.engineVal || "";
+        // 🌟 ดึงค่าบัตรประชาชนมาแสดง (ถ้ามี)
+        document.getElementById('idCard').value = res.idCard || "";
+
         if(res.carType) {
             let sel = document.getElementById('cType');
             for(let i=0; i<sel.options.length; i++){ if(sel.options[i].value.includes(res.carType)) { sel.selectedIndex = i; break; } }
@@ -307,7 +311,11 @@
 
     async function calculatePreview() {
         let engine = document.getElementById('engineVal').value;
-        if(!engine) return Swal.fire('','ระบุข้อมูลให้ครบ','warning');
+        // 🌟 เพิ่มการดักจับเลขบัตรประชาชน 13 หลัก
+        let idCard = document.getElementById('idCard').value;
+        
+        if(!engine) return Swal.fire('','กรุณาระบุข้อมูลเครื่องยนต์ (CC)','warning');
+        if(!idCard || idCard.trim().length !== 13) return Swal.fire('','กรุณากรอกเลขประจำตัวประชาชนให้ครบ 13 หลัก','warning');
 
         let payload = {
           action: "calculateJobCosts",
@@ -315,6 +323,7 @@
           jobId: document.getElementById('jobId').value,
           carType: document.getElementById('cType').value,
           engineVal: engine,
+          idCard: idCard, // 🌟 ส่งข้อมูลบัตร ปชช. กลับไปหลังบ้าน
           regDay: document.getElementById('regDay').value,
           regMonth: document.getElementById('regMonth').value,
           regYearBE: document.getElementById('regYear').value,
@@ -467,7 +476,7 @@
       });
     }
 
-    async function printReceipt() {    
+    async function printReceipt() {   
         let idx = document.getElementById('idx').value;
         if (!idx) {
             Swal.fire('แจ้งเตือน', 'กรุณาเลือกรายการที่จะพิมพ์ใบเสร็จก่อน', 'warning');
@@ -485,7 +494,6 @@
             Swal.close();
 
             if(res.status === "success" && res.pdfUrl) {
-                // เด้งหน้าต่าง Popup แจ้งเตือนแบบเดิม
                 Swal.fire({
                     title: 'ดูใบเสร็จ',
                     text: 'ระบบพร้อมแสดงใบเสร็จในรูปแบบ PDF แล้วครับ',
@@ -496,7 +504,6 @@
                     cancelButtonColor: '#6c757d'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // เมื่อผู้ใช้กดปุ่ม จะเปิดแท็บใหม่ไปที่ไฟล์ PDF โดยตรง (ไม่โดนบล็อกเพราะเกิดจากการคลิก)
                         window.open(res.pdfUrl, '_blank');
                     }
                 });
