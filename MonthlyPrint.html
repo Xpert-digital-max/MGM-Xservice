@@ -83,7 +83,7 @@
     <script>
         // ฟังก์ชันแปลงตัวเลขเป็นคำอ่านภาษาไทย
         function ThaiBahtText(number) {
-            let num = parseFloat(number); // บังคับแปลงเป็นตัวเลข
+            let num = parseFloat(number); 
             if (isNaN(num) || num === 0) return "-ศูนย์บาทถ้วน-";
             let numStr = num.toFixed(2).toString();
             let parts = numStr.split('.');
@@ -142,7 +142,30 @@
                         return;
                     }
                     
-                    document.getElementById('statusText').innerText = `✅ สร้างฟอร์มสำเร็จ: ${data.length} รายการ (เล่มที่: ${res.bookNo})`;
+                    // 🌟 เพิ่มระบบนับแยกตามยอดเงิน
+                    let summaryCounts = {};
+                    data.forEach(item => {
+                        let price = parseFloat(item.total) || 0;
+                        if (summaryCounts[price]) {
+                            summaryCounts[price]++;
+                        } else {
+                            summaryCounts[price] = 1;
+                        }
+                    });
+
+                    // 🌟 สร้างข้อความสรุป (เรียงราคาจากน้อยไปมาก)
+                    let breakdownStr = Object.keys(summaryCounts)
+                        .sort((a,b) => a - b) 
+                        .map(price => `ราคา ${price}-. มี <span style="color:#e02424; font-size:18px;">${summaryCounts[price]}</span> คัน`)
+                        .join(" &nbsp;|&nbsp; ");
+                    
+                    // แทรกข้อความสรุปไปแสดงผลที่หน้าจอ
+                    let statusHtml = `✅ สร้างฟอร์มสำเร็จ: ${data.length} รายการ (เล่มที่: ${res.bookNo})<br>
+                                      <div style="font-size: 15px; color: #333; font-weight: normal; margin-top: 10px; background: #e5edff; padding: 10px; border-radius: 8px;">
+                                          📊 <b>สรุปรายละเอียด:</b> ${breakdownStr}
+                                      </div>`;
+
+                    document.getElementById('statusText').innerHTML = statusHtml;
                     document.getElementById('btnPrint').style.display = 'inline-block';
                     generateHTML(data);
                 } else {
@@ -159,10 +182,7 @@
             let html = "";
             
             dataList.forEach(item => {
-                // บังคับให้เป็นตัวเลข เพื่อป้องกัน Error .toFixed is not a function
                 let numTotal = parseFloat(item.total) || 0;
-                
-                // คำนวณคำอ่านภาษาไทย
                 let thText = ThaiBahtText(numTotal);
                 let totalStr = numTotal.toFixed(2); 
 
