@@ -289,9 +289,10 @@
             // 🌟 บังคับดึงเอาตัวแรกที่เจอมาแสดงเลย โดยไม่ต้องมี Popup ให้เลือก
             let job = res.jobs[0];
             
-            // 🌟 ตรวจสอบว่ามีการลงการเงินไปแล้วหรือยัง (เช็คยอด, สถานะบิล)
-            if (job.total > 0 || (job.savedTor > 0) || job.status === 'ส่งใบเสนอราคาแล้ว' || job.status === 'กำลังดำเนินการที่ขนส่ง' || job.status === 'ดำเนินการเสร็จแล้ว') {
-                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการประเมินราคา หรือ รับชำระเงินไปแล้ว<br><small class="text-danger">(' + job.status + ')</small>', 'error');
+            // 🌟 ตรวจสอบจากสถานะการชำระเงิน (Col Y / Index 24)
+            // เช็ค property paymentStatus ที่ส่งมาจาก Code.gs
+            if (job.paymentStatus !== "") {
+                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการประเมินราคา หรือ รับชำระเงินไปแล้ว<br><small class="text-danger">(' + job.paymentStatus + ')</small>', 'error');
             }
 
             // 🌟 นำข้อมูลมาใส่ฟอร์มเพื่อแก้ไข
