@@ -278,7 +278,6 @@
         try {
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
-                // ส่งพารามิเตอร์ 'todayOnly: true' เพื่อให้ดึงเฉพาะของวันนี้
                 body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch, todayOnly: true })
             });
             const res = await response.json();
@@ -286,19 +285,17 @@
 
             if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบคิวนี้ในสาขาที่เลือก หรือ ไม่ใช่คิวของวันนี้', 'info');
 
-            // บังคับดึงเอาคันแรกของวันนี้มาเลย
+            // 🌟 ดึงคันแรกสุดที่เจอมาใช้งาน
             let job = res.jobs[0];
             
-            // 🌟 พระเอกของงานนี้: ตรวจสอบแค่ "สถานะการชำระเงิน" (Col Y เท่านั้น)
-            // คลีนตัวแปรให้เป็นข้อความเปล่าๆ ถ้าไม่มีค่า
-            let payStatus = String(job.paymentStatus || "").trim(); 
-            
-            // 🌟 เช็คว่าถ้ามันไม่ใช่ค่าว่าง และไม่ใช่คำว่า undefined (บั๊กของ JS) แสดงว่ารับเงินไปแล้ว ห้ามแก้!
-            if (payStatus !== "" && payStatus !== "undefined") {
-                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการรับชำระเงินเรียบร้อยแล้ว<br><small class="text-danger">(' + payStatus + ')</small>', 'error');
+            // 🌟 ตรวจสอบสิทธิ์ที่คอลัมน์ Y ตามที่คุณสั่งไว้เป๊ะๆ
+            // ถ้า paymentStatus เป็นค่าว่าง (คือคอลัมน์ Y ว่าง) -> ให้ผ่านไปแก้ได้เลย
+            // ถ้า paymentStatus ไม่ว่าง -> ให้บล็อกการแก้ไข
+            if (job.paymentStatus !== "") {
+                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการรับชำระเงินเรียบร้อยแล้ว<br><small class="text-danger">(' + job.paymentStatus + ')</small>', 'error');
             }
 
-            // 🌟 นำข้อมูลมาใส่ฟอร์มเพื่อแก้ไข
+            // ถ้ารอดมาได้ (คอลัมน์ Y ว่าง) ดึงข้อมูลมาใส่ฟอร์มให้แก้เลย
             document.getElementById('editRowIndex').value = job.rowIndex;
             document.getElementById('editJobId').value = job.jobId;
             document.getElementById('reg').value = job.reg;
@@ -314,8 +311,7 @@
             saveBtn.innerText = "💾 บันทึกการแก้ไข";
             saveBtn.className = "btn btn-warning w-100 py-3 fw-bold shadow";
             
-            // แจ้งเตือนว่าดึงสำเร็จ
-            Swal.fire('ดึงข้อมูลสำเร็จ', 'คุณสามารถแก้ไขทะเบียน เบอร์โทร ประเภทรถ หรือแนบรูปใหม่ได้เลย', 'success');
+            Swal.fire('ดึงข้อมูลสำเร็จ', 'คอลัมน์ Y ว่างเปล่า สามารถแก้ไขข้อมูลได้เลยครับ', 'success');
 
         } catch (e) {
             btn.innerText = oldText; btn.disabled = false;
