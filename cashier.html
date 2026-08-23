@@ -311,10 +311,11 @@
 
     async function calculatePreview() {
         let engine = document.getElementById('engineVal').value;
-        // 🌟 เพิ่มการดักจับเลขบัตรประชาชน 13 หลัก
         let idCard = document.getElementById('idCard').value;
+        // 🌟 ดึงข้อความจาก Label มาใช้ในการแจ้งเตือนแบบไดนามิก
+        let engineLabel = document.getElementById('engineLabel').innerText; 
         
-        if(!engine) return Swal.fire('','กรุณาระบุข้อมูลเครื่องยนต์ (CC)','warning');
+        if(!engine) return Swal.fire('','กรุณาระบุข้อมูล' + engineLabel,'warning');
         if(!idCard || idCard.trim().length !== 13) return Swal.fire('','กรุณากรอกเลขประจำตัวประชาชนให้ครบ 13 หลัก','warning');
 
         let payload = {
@@ -323,7 +324,7 @@
           jobId: document.getElementById('jobId').value,
           carType: document.getElementById('cType').value,
           engineVal: engine,
-          idCard: idCard, // 🌟 ส่งข้อมูลบัตร ปชช. กลับไปหลังบ้าน
+          idCard: idCard, 
           regDay: document.getElementById('regDay').value,
           regMonth: document.getElementById('regMonth').value,
           regYearBE: document.getElementById('regYear').value,
