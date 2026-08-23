@@ -72,9 +72,8 @@
         <h2 style="margin-top: 0; color:#0d6efd;">ระบบออกใบเสร็จตรวจสภาพรถรายเดือน</h2>
         <select id="branchPicker">
             <option value="ทั้งหมด">ดึงข้อมูลทุกสาขา</option>
-            <option value="สาขาท่าแฉลบ">สาขาท่าแฉลบ</option>
-            <option value="สาขามะขาม">สาขามะขาม</option>
             <option value="สาขาพระยืน">สาขาพระยืน</option>
+            <option value="สาขาท่าใหม่">สาขาท่าใหม่</option>
         </select>
         <input type="month" id="monthPicker" required>
         <button class="btn btn-primary" onclick="loadReceiptData()">🔍 ดึงข้อมูลใบเสร็จ</button>
@@ -87,18 +86,21 @@
         <h2 style="margin-top: 0; color:#198754;">รายงานสรุปยอดขาย พ.ร.บ. ประจำเดือน</h2>
         <select id="branchPickerReport">
             <option value="ทั้งหมด">รายงานทุกสาขา</option>
-            <option value="สาขาท่าแฉลบ">สาขาท่าแฉลบ</option>
-            <option value="สาขามะขาม">สาขามะขาม</option>
             <option value="สาขาพระยืน">สาขาพระยืน</option>
+            <option value="สาขาท่าใหม่">สาขาท่าใหม่</option>
         </select>
         <input type="month" id="monthPickerReport" required>
         
         <div class="car-type-filters">
             <b>เลือกประเภทรถ: </b>
-            <label><input type="checkbox" class="car-chk" value="จักรยานยนต์" checked> จักรยานยนต์</label>
+            <label><input type="checkbox" class="car-chk" value="รถจักรยานยนต์" checked> จักรยานยนต์</label>
             <label><input type="checkbox" class="car-chk" value="รถเก๋ง" checked> รถเก๋ง</label>
+            <label><input type="checkbox" class="car-chk" value="รถเก๋ง / 4 ประตู (รย.1)" checked> 4ประตู จดเก๋ง</label>
+            <label><input type="checkbox" class="car-chk" value="4 ประตู / 3 ตอน ( เกิน 2000 )" checked> 4ประตู 3ตอน เกิน 2000</label>
             <label><input type="checkbox" class="car-chk" value="รถกระบะ" checked> รถกระบะ</label>
+            <label><input type="checkbox" class="car-chk" value="รถกระบะ (เกิน 2000 กก.)" checked> รถกระบะ (เกิน 2000 กก.)</label>
             <label><input type="checkbox" class="car-chk" value="รถตู้" checked> รถตู้</label>
+            <label><input type="checkbox" class="car-chk" value="รถตู้ (เกิน 2000 กก.)" checked> รถตู้ (เกิน 2000 กก.)</label>
         </div>
 
         <button class="btn btn-primary" onclick="loadPrbReport()" style="margin-top: 15px;">🔍 ดึงรายงาน Statement</button>
