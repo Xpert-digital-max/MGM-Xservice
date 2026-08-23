@@ -40,6 +40,16 @@
         <h3 class="text-center text-primary fw-bold">🚗 แผนกรับรถ</h3>
         <hr>
         <div id="ui">
+
+          <!-- 🌟 ส่วนค้นหาคิวเพื่อแก้ไข -->
+          <div class="input-group mb-4">
+            <input type="text" id="searchQueue" class="form-control border-primary" placeholder="🔎 ค้นหาเลขคิว / ทะเบียน เพื่อแก้ไข">
+            <button class="btn btn-outline-primary fw-bold" onclick="searchQueueData()">ค้นหา</button>
+          </div>
+          <!-- 🌟 ซ่อน ID และแถวไว้สำหรับอัปเดต -->
+          <input type="hidden" id="editRowIndex" value="">
+          <input type="hidden" id="editJobId" value="">
+
           <label class="fw-bold text-danger">สาขาที่รับรถ</label>
           <select id="branch" class="form-select mb-3 border-danger">
             <option value="สาขาพระยืน">สาขาพระยืน</option>
@@ -83,7 +93,7 @@
 
           <div id="fileList" class="file-preview mb-3"></div>
           
-          <button type="button" class="btn btn-primary w-100 py-3 fw-bold shadow" onclick="sendData()">ออกบัตรคิว</button>
+          <button type="button" id="btnSubmitQueue" class="btn btn-primary w-100 py-3 fw-bold shadow" onclick="sendData()">ออกบัตรคิว</button>
         </div>
         
         <div id="res" class="text-center" style="display:none;">
@@ -250,6 +260,70 @@
         list.innerHTML += `<div class="file-item"><span>📎 ${file.name}</span><button class="btn btn-danger btn-sm" onclick="removeFile(${index})">x</button></div>`;
       });
     }
+
+    // 🌟 ระบบค้นหาคิวเดิม เพื่อดึงมาแก้
+    async function searchQueueData() {
+        let keyword = document.getElementById('searchQueue').value.trim();
+        if (!keyword) return Swal.fire('แจ้งเตือน', 'กรุณากรอกเลขคิว ทะเบียน หรือ Job ID', 'warning');
+        
+        let branch = document.getElementById('branch').value;
+        let btn = document.querySelector('.btn-outline-primary');
+        let oldText = btn.innerText;
+        btn.innerText = '⏳'; btn.disabled = true;
+
+        try {
+            const response = await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch })
+            });
+            const res = await response.json();
+            btn.innerText = oldText; btn.disabled = false;
+
+            if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบข้อมูลคิวนี้ในสาขาที่เลือก', 'info');
+
+            if (res.jobs.length > 1) {
+                let options = {};
+                res.jobs.forEach(item => {
+                    options[item.jobId] = item.reg + " (" + item.status + ")";
+                });
+                Swal.fire({
+                    title: 'เลือกรายการที่ต้องการแก้ไข', input: 'select', inputOptions: options, showCancelButton: true
+                }).then((choice) => {
+                    if (choice.isConfirmed) { document.getElementById('searchQueue').value = choice.value; searchQueueData(); }
+                });
+            } else {
+                let job = res.jobs[0];
+                
+                // 🌟 ตรวจสอบว่ามีการลงการเงินไปแล้วหรือยัง (เช็คยอด, สถานะบิล)
+                if (job.total > 0 || (job.savedTor > 0) || job.status === 'ส่งใบเสนอราคาแล้ว' || job.status === 'กำลังดำเนินการที่ขนส่ง') {
+                    return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการประเมินราคา หรือ รับชำระเงินไปแล้ว<br><small class="text-danger">(' + job.status + ')</small>', 'error');
+                }
+
+                // 🌟 นำข้อมูลมาใส่ฟอร์มเพื่อแก้ไข
+                document.getElementById('editRowIndex').value = job.rowIndex;
+                document.getElementById('editJobId').value = job.jobId;
+                document.getElementById('reg').value = job.reg;
+                document.getElementById('phone').value = job.phone;
+                
+                let selType = document.getElementById('carType');
+                for(let i=0; i<selType.options.length; i++) {
+                    if(selType.options[i].value === job.carType) { selType.selectedIndex = i; break; }
+                }
+
+                // เปลี่ยนปุ่มเป็นสีเหลืองเพื่อเตือนว่ากำลังแก้ไข
+                let saveBtn = document.getElementById('btnSubmitQueue');
+                saveBtn.innerText = "💾 บันทึกการแก้ไข";
+                saveBtn.className = "btn btn-warning w-100 py-3 fw-bold shadow";
+                
+                // แจ้งเตือนว่าดึงสำเร็จ
+                Swal.fire('ดึงข้อมูลสำเร็จ', 'คุณสามารถแก้ไขทะเบียน เบอร์โทร ประเภทรถ หรือแนบรูปใหม่ได้เลย', 'success');
+            }
+
+        } catch (e) {
+            btn.innerText = oldText; btn.disabled = false;
+            Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + e.message, 'error');
+        }
+    }
     
     function removeFile(index) { processedFiles.splice(index, 1); updateFileList(); }
     
@@ -261,7 +335,7 @@
       
       if(!reg || !phone) return Swal.fire('ข้อมูลไม่ครบ','กรุณากรอก ทะเบียน และ เบอร์โทร','warning');
       
-      const btn = document.querySelector('#ui button.btn-primary');
+      const btn = document.querySelector('#ui button.btn-primary') || document.querySelector('#btnSubmitQueue');
       btn.disabled = true; btn.innerText = "⏳ กำลังบันทึก...";
       
       let payload = {
@@ -270,7 +344,9 @@
           reg: reg,
           phone: phone,
           carType: carType,
-          files: processedFiles 
+          files: processedFiles,
+          editRowIndex: document.getElementById('editRowIndex').value, // 🌟 ส่ง Index ไป (ถ้าเป็นการแก้ไข)
+          editJobId: document.getElementById('editJobId').value // 🌟 ส่ง JobID เก่าไป 
       };
       
       try {
@@ -295,15 +371,21 @@
           }
       } catch(e) {
           Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + e, 'error');
-          btn.disabled = false; btn.innerText = "ออกบัตรคิว";
+          btn.disabled = false; btn.innerText = document.getElementById('editRowIndex').value ? "💾 บันทึกการแก้ไข" : "ออกบัตรคิว";
       }
     }
     
     function resetForm() {
-       document.getElementById('reg').value = ''; document.getElementById('phone').value = '';
+       document.getElementById('reg').value = ''; 
+       document.getElementById('phone').value = ''; 
+       document.getElementById('searchQueue').value = ''; 
+       document.getElementById('editRowIndex').value = ''; 
+       document.getElementById('editJobId').value = ''; 
+       document.getElementById('btnSubmitQueue').innerText = 'ออกบัตรคิว'; 
+       document.getElementById('btnSubmitQueue').className = 'btn btn-primary w-100 py-3 fw-bold shadow';
        processedFiles = []; updateFileList();
        document.getElementById('res').style.display = 'none'; document.getElementById('ui').style.display = 'block';
-       const btn = document.querySelector('#ui button.btn-primary'); btn.disabled = false; btn.innerText = "ออกบัตรคิว";
+       const btn = document.getElementById('btnSubmitQueue'); btn.disabled = false;
     }
   </script>
 </body>
