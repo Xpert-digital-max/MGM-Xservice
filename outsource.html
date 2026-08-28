@@ -126,7 +126,13 @@
       .then(data => {
         if(data.status === "success") {
             alert("บันทึกข้อมูลเรียบร้อยแล้ว!");
-            liff.closeWindow(); // ปิดหน้าต่าง LINE อัตโนมัติ
+            
+            // 🌟 แก้ไขตรงนี้: ให้ล้างฟอร์มแทนการปิดหน้าต่าง
+            document.getElementById("outsourceForm").reset(); 
+            btn.innerText = "💾 บันทึกข้อมูลงาน"; // คืนสถานะปุ่ม
+            btn.disabled = false; // ปลดล็อกปุ่มให้กดใหม่ได้
+            window.scrollTo(0, 0); // เลื่อนหน้าจอกลับขึ้นไปข้างบนสุด
+            
         } else {
             alert("เกิดข้อผิดพลาด: " + data.message);
             btn.innerText = "💾 บันทึกข้อมูลงาน";
