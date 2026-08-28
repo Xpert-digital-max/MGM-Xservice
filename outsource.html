@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Outsource Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
+  <!-- 🌟 ดึงลิงก์จาก config.js ของคุณมาใช้ -->
+  <script src="config.js"></script>
+  
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; padding: 20px; display: flex; justify-content: center; }
+    .form-container { background: white; width: 100%; max-width: 500px; border-radius: 10px; padding: 25px; box-sizing: border-box; }
+    input, select, textarea, button { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
+    button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h2>อัปเดตงาน Outsource</h2>
+    <form id="outsourceForm" onsubmit="submitForm(event)">
+      <input type="hidden" id="userId" name="userId">
+      <input type="hidden" id="outsourceName" name="outsourceName">
+      
+      <p style="color:#2980b9; font-weight:bold;">👤 เข้าสู่ระบบโดย: <span id="displayName">กำลังเชื่อมต่อ LINE...</span></p>
+
+      <label>ทะเบียนรถ</label>
+      <input type="text" name="plate" required placeholder="เช่น 1ก-9999">
+
+      <label>ชื่อลูกค้า</label>
+      <input type="text" name="customerName" required placeholder="ชื่อ-นามสกุล">
+
+      <label>เบอร์โทรศัพท์ลูกค้า</label>
+      <input type="text" name="phone" required placeholder="08XXXXXXXX">
+
+      <label>สถานะงานปัจจุบัน</label>
+      <select name="status" required>
+        <option value="" disabled selected>-- เลือกสถานะ --</option>
+        <option value="รอทัก">⏳ รอทัก (ได้ข้อมูลมาใหม่)</option>
+        <option value="เสนอราคา">📝 เสนอราคาแล้ว (รอตัดสินใจ)</option>
+        <option value="ปิดการขาย">✅ ปิดการขาย (รอโอนเงิน)</option>
+        <option value="ลูกค้าปฏิเสธ">❌ ลูกค้าปฏิเสธ / ทำที่อื่นแล้ว</option>
+      </select>
+
+      <label>ยอดเบี้ยรวมภาษี (Gross) - บาท</label>
+      <input type="number" name="grossPremium" placeholder="ระบุยอดเงิน (ถ้ามี)">
+
+      <label>วันที่ต้องการให้ระบบแจ้งเตือนกลับ</label>
+      <input type="date" name="followUpDate" required>
+
+      <label>หมายเหตุเพิ่มเติม</label>
+      <textarea name="note" rows="2" placeholder="รายละเอียดอื่นๆ"></textarea>
+
+      <button type="submit" id="btnSubmit">💾 บันทึกข้อมูลงาน</button>
+    </form>
+  </div>
+
+  <script>
+    // 🌟 ขั้นตอนที่ 1: ดึง LIFF ID จาก Google Sheets (ผ่าน GAS_API_URL ใน config.js) ทันทีที่เปิดหน้าเว็บ
+    fetch(GAS_API_URL + "?action=getSettings")
+      .then(response => response.json())
+      .then(config => {
+          var liffId = config.OUTSOURCE_LIFF_ID;
+          if (!liffId) {
+              alert("ยังไม่ได้ตั้งค่า OUTSOURCE_LIFF_ID ในแท็บ Settings ของ Google Sheets");
+              return;
+          }
+          // เริ่มต้นรัน LIFF ด้วย ID ที่ดึงมา
+          initLiff(liffId);
+      })
+      .catch(err => console.error("Error loading config:", err));
+
+    function initLiff(liffId) {
+      liff.init({ liffId: liffId }).then(() => {
+          if (liff.isLoggedIn()) {
+              liff.getProfile().then(profile => {
+                  document.getElementById('userId').value = profile.userId;
+                  document.getElementById('outsourceName').value = profile.displayName;
+                  document.getElementById('displayName').innerText = profile.displayName;
+              });
+          } else {
+              liff.login();
+          }
+      }).catch(err => {
+          console.log("LIFF Initialization failed: " + err);
+      });
+    }
+
+    // 🌟 ขั้นตอนที่ 2: กดปุ่มบันทึก ยิงข้อมูลไปบันทึกใน Google Sheets (ผ่าน doPost)
+    function submitForm(event) {
+      event.preventDefault();
+      var btn = document.getElementById("btnSubmit");
+      btn.innerText = "กำลังบันทึก... ⏳";
+      btn.disabled = true;
+
+      var formData = new FormData(document.getElementById("outsourceForm"));
+      var dataObj = {};
+      formData.forEach((value, key) => { dataObj[key] = value; });
+
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify(dataObj)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.status === "success") {
+            alert("บันทึกข้อมูลเรียบร้อยแล้ว!");
+            liff.closeWindow(); // ปิดหน้าต่าง LINE อัตโนมัติ
+        } else {
+            alert("เกิดข้อผิดพลาด: " + data.message);
+            btn.innerText = "💾 บันทึกข้อมูลงาน";
+            btn.disabled = false;
+        }
+      })
+      .catch(error => {
+        alert("Connection Error: " + error);
+        btn.innerText = "💾 บันทึกข้อมูลงาน";
+        btn.disabled = false;
+      });
+    }
+  </script>
+</body>
+</html>
