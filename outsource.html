@@ -36,10 +36,25 @@
       <label>เบอร์โทรศัพท์ลูกค้า</label>
       <input type="text" name="phone" required placeholder="08XXXXXXXX">
 
+      <label>บริษัทประกัน (ถ้ามี)</label>
+      <input type="text" name="insuranceCompany" placeholder="เช่น วิริยะ, อินทร, หรือเว้นว่าง">
+
+      <label>ประเภทประกัน</label>
+      <select name="insuranceType" required>
+        <option value="" disabled selected>-- เลือกประเภทประกัน --</option>
+        <option value="ประเภท 1">ประเภท 1</option>
+        <option value="ประเภท 2">ประเภท 2</option>
+        <option value="ประเภท 2+">ประเภท 2+</option>
+        <option value="ประเภท 3">ประเภท 3</option>
+        <option value="ประเภท 3+">ประเภท 3+</option>
+        <option value="พ.ร.บ.">พ.ร.บ.</option>
+        <option value="ประกันอื่นๆ">ประกันอื่นๆ</option>
+      </select>
+
       <label>สถานะงานปัจจุบัน</label>
       <select name="status" required>
         <option value="" disabled selected>-- เลือกสถานะ --</option>
-        <option value="รอทัก">⏳ รอทัก (ได้ข้อมูลมาใหม่)</option>
+        <option value="รอทัก">⏳ ทักเตือนแล้ว (รายใหม่อยู่ระหว่างติดตาม)</option>
         <option value="เสนอราคา">📝 เสนอราคาแล้ว (รอตัดสินใจ)</option>
         <option value="ปิดการขาย">✅ ปิดการขาย (รอโอนเงิน)</option>
         <option value="ลูกค้าปฏิเสธ">❌ ลูกค้าปฏิเสธ / ทำที่อื่นแล้ว</option>
@@ -89,7 +104,7 @@
       });
     }
 
-    // 🌟 ขั้นตอนที่ 2: กดปุ่มบันทึก ยิงข้อมูลไปบันทึกใน Google Sheets (ผ่าน doPost)
+    // 🌟 ขั้นตอนที่ 2: กดปุ่มบันทึก ยิงข้อมูลไปบันทึกใน Google Sheets
     function submitForm(event) {
       event.preventDefault();
       var btn = document.getElementById("btnSubmit");
@@ -99,6 +114,9 @@
       var formData = new FormData(document.getElementById("outsourceForm"));
       var dataObj = {};
       formData.forEach((value, key) => { dataObj[key] = value; });
+      
+      // 🌟 [สำคัญ] เพิ่ม action ให้ตรงกับระบบหลังบ้าน
+      dataObj.action = "saveOutsourceData";
 
       fetch(GAS_API_URL, {
         method: 'POST',
