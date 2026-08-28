@@ -11,7 +11,6 @@
     body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 15px; display: flex; justify-content: center; }
     .container { background: white; width: 100%; max-width: 500px; border-radius: 10px; padding: 20px; box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
     
-    /* Styles สำหรับ Dashboard */
     .user-header { text-align: center; margin-bottom: 20px; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
     .task-card { background: #fff; border: 1px solid #e0e0e0; border-left: 5px solid #3498db; border-radius: 6px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
     .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
@@ -19,17 +18,20 @@
     .task-detail { font-size: 13px; color: #7f8c8d; margin-bottom: 3px; }
     .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; background: #fef9e7; color: #f39c12; margin-top: 5px;}
     
-    /* Styles สำหรับ Form */
     input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
     input:focus, select:focus { outline: none; border-color: #3498db; }
     label { font-weight: 600; font-size: 14px; color: #34495e; display: block; margin-bottom: 4px; }
     
-    /* Buttons */
     .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 15px; transition: 0.3s; }
     .btn-primary { background-color: #27ae60; color: white; }
     .btn-primary:hover { background-color: #219150; }
     .btn-secondary { background-color: #3498db; color: white; margin-bottom: 15px; }
     .btn-outline { background-color: transparent; border: 1px solid #7f8c8d; color: #7f8c8d; margin-top: 10px; }
+    
+    /* Search Box Styles */
+    .search-container { display: flex; gap: 8px; margin-bottom: 15px; }
+    .search-container input { margin-bottom: 0; flex: 1; }
+    .search-container button { margin-bottom: 0; width: auto; padding: 10px 15px; }
     
     #loadingMsg { text-align: center; color: #3498db; font-weight: bold; padding: 20px 0; }
     #emptyMsg { text-align: center; color: #95a5a6; padding: 20px 0; display: none; }
@@ -49,28 +51,31 @@
     <div id="dashboardView">
       <button class="btn btn-secondary" onclick="openNewForm()">➕ เพิ่มงานใหม่</button>
       
+      <!-- 🌟 [เพิ่มใหม่] ช่องค้นหา -->
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="ค้นหา ทะเบียน, เบอร์โทร, ชื่อลูกค้า..." onkeypress="handleEnter(event)">
+        <button class="btn btn-secondary" onclick="executeSearch()">🔍 ค้นหา</button>
+      </div>
+
       <h4 style="color:#2c3e50; margin-bottom: 10px;">📋 งานที่กำลังติดตาม:</h4>
       <div id="loadingMsg">กำลังโหลดข้อมูลงาน... ⏳</div>
-      <div id="emptyMsg">🎉 เยี่ยมมาก! ไม่มีงานค้างในระบบ</div>
+      <div id="emptyMsg">ไม่พบรายการงานที่ค้นหา หรือ ไม่มีงานค้างครับ 🎉</div>
       
-      <div id="taskList">
-        <!-- การ์ดงานจะถูกสร้างอัตโนมัติที่นี่ -->
-      </div>
+      <div id="taskList"></div>
     </div>
 
     <!-- ========================================== -->
-    <!-- 📝 ส่วนที่ 2: หน้าแบบฟอร์ม (ซ่อนไว้ตอนแรก) -->
+    <!-- 📝 ส่วนที่ 2: หน้าแบบฟอร์ม -->
     <!-- ========================================== -->
     <div id="formView" style="display: none;">
       <h3 id="formTitle" style="color:#2c3e50; text-align:center; margin-top:0;">เพิ่มงานใหม่</h3>
       
       <form id="outsourceForm" onsubmit="submitForm(event)">
-        <!-- Hidden Inputs สำหรับควบคุมระบบ -->
         <input type="hidden" id="userId" name="userId">
         <input type="hidden" id="outsourceName" name="outsourceName">
-        <input type="hidden" id="actionType" name="action">       <!-- บอกระบบว่าคือ save หรือ update -->
-        <input type="hidden" id="rowIndex" name="rowIndex">       <!-- ใช้ตอน update เพื่อชี้เป้าแถว -->
-        <input type="hidden" id="oldFollowUp" name="oldFollowUp"> <!-- เก็บวันที่เดิมกรณีไม่ได้เลือกใหม่ -->
+        <input type="hidden" id="actionType" name="action">       
+        <input type="hidden" id="rowIndex" name="rowIndex">       
+        <input type="hidden" id="oldFollowUp" name="oldFollowUp"> 
 
         <label>ทะเบียนรถ</label>
         <input type="text" id="plate" name="plate" required placeholder="เช่น 1ก-9999">
@@ -122,9 +127,8 @@
   </div>
 
   <script>
-    let myTasks = []; // ตัวแปรเก็บข้อมูลงานทั้งหมดของ User นี้
+    let myTasks = []; 
 
-    // 🌟 1. เริ่มต้นระบบ: ดึง LIFF ID
     fetch(GAS_API_URL + "?action=getSettings")
       .then(response => response.json())
       .then(config => {
@@ -139,8 +143,6 @@
                   document.getElementById('userId').value = profile.userId;
                   document.getElementById('outsourceName').value = profile.displayName;
                   document.getElementById('displayName').innerText = profile.displayName;
-                  
-                  // เมื่อได้ Profile แล้ว ให้ไปดึงข้อมูลงานจากชีต
                   loadMyTasks(profile.userId);
               });
           } else {
@@ -149,7 +151,6 @@
       });
     }
 
-    // 🌟 2. ดึงข้อมูลงานจากชีต (API: getMyTasks)
     function loadMyTasks(userId) {
       document.getElementById("loadingMsg").style.display = "block";
       document.getElementById("taskList").innerHTML = "";
@@ -163,15 +164,45 @@
         document.getElementById("loadingMsg").style.display = "none";
         if(data.status === "success") {
           myTasks = data.data;
+          document.getElementById("searchInput").value = ""; // เคลียร์ช่องค้นหา
           renderTasks(myTasks);
         }
       });
     }
 
-    // 🌟 3. สร้างการ์ดแสดงรายการงาน
+    // 🌟 [เพิ่มใหม่] ฟังก์ชันค้นหาข้อมูล
+    function executeSearch() {
+      const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
+      
+      // ถ้าช่องค้นหาว่างเปล่า ให้แสดงข้อมูลทั้งหมดที่มี
+      if (keyword === "") {
+        renderTasks(myTasks);
+        return;
+      }
+      
+      // กรองข้อมูลจาก ทะเบียน, ชื่อลูกค้า หรือ เบอร์โทร
+      const filteredTasks = myTasks.filter(task => {
+        const plateMatch = String(task.plate).toLowerCase().includes(keyword);
+        const nameMatch = String(task.customerName).toLowerCase().includes(keyword);
+        const phoneMatch = String(task.phone).toLowerCase().includes(keyword);
+        return plateMatch || nameMatch || phoneMatch;
+      });
+      
+      renderTasks(filteredTasks);
+    }
+
+    // 🌟 [เพิ่มใหม่] ตัวช่วยให้กดปุ่ม Enter ในช่องค้นหาได้เลย
+    function handleEnter(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        executeSearch();
+      }
+    }
+
     function renderTasks(tasks) {
       const listDiv = document.getElementById("taskList");
       const emptyMsg = document.getElementById("emptyMsg");
+      listDiv.innerHTML = ""; // ล้างหน้าจอเก่าก่อน
       
       if(tasks.length === 0) {
         emptyMsg.style.display = "block";
@@ -179,12 +210,11 @@
       }
       emptyMsg.style.display = "none";
 
-      tasks.forEach((task, index) => {
-        // สร้าง HTML Card
+      tasks.forEach((task) => {
         let card = document.createElement("div");
         card.className = "task-card";
-        // เมื่อกดที่การ์ด ให้เปิดฟอร์มอัปเดต
-        card.onclick = () => openEditForm(index);
+        // เปลี่ยนวิธีส่งค่า ให้ค้นหา index จาก myTasks ตัวหลัก
+        card.onclick = () => openEditForm(myTasks.indexOf(task));
         
         card.innerHTML = `
           <div class="task-title">🚗 ${task.plate}</div>
@@ -197,12 +227,10 @@
       });
     }
 
-    // 🌟 4. เปิดฟอร์มสำหรับ "เพิ่มงานใหม่"
     function openNewForm() {
-      document.getElementById("outsourceForm").reset(); // ล้างข้อมูล
-      document.getElementById("actionType").value = "saveOutsourceData"; // สั่ง Save
+      document.getElementById("outsourceForm").reset(); 
+      document.getElementById("actionType").value = "saveOutsourceData"; 
       
-      // ปลดล็อกช่องที่ห้ามแก้ตอนอัปเดต
       document.getElementById("plate").readOnly = false;
       document.getElementById("customerName").readOnly = false;
       document.getElementById("phone").readOnly = false;
@@ -213,17 +241,14 @@
       toggleView('form');
     }
 
-    // 🌟 5. เปิดฟอร์มสำหรับ "อัปเดตงานเดิม"
     function openEditForm(arrayIndex) {
       const task = myTasks[arrayIndex];
       document.getElementById("outsourceForm").reset();
       
-      // กำหนดค่าตั้งต้น
-      document.getElementById("actionType").value = "updateOutsourceData"; // สั่ง Update
-      document.getElementById("rowIndex").value = task.rowIndex; // แถวที่จะอัปเดต
+      document.getElementById("actionType").value = "updateOutsourceData"; 
+      document.getElementById("rowIndex").value = task.rowIndex; 
       document.getElementById("oldFollowUp").value = task.followUpDate;
       
-      // เติมข้อมูลเดิมลงฟอร์ม
       document.getElementById("plate").value = task.plate;
       document.getElementById("customerName").value = task.customerName;
       document.getElementById("phone").value = task.phone;
@@ -233,12 +258,10 @@
       document.getElementById("status").value = task.status;
       document.getElementById("note").value = task.note;
 
-      // ล็อกช่องที่ไม่ควรให้แก้ (เพื่อความปลอดภัยของ Data)
       document.getElementById("plate").readOnly = true;
       document.getElementById("customerName").readOnly = true;
       document.getElementById("phone").readOnly = true;
       
-      // ระบบวันที่
       document.getElementById("followUpDate").required = false;
       document.getElementById("dateHint").style.display = "block";
       document.getElementById("showOldDate").innerText = task.followUpDate;
@@ -247,7 +270,6 @@
       toggleView('form');
     }
 
-    // 🌟 6. ส่งข้อมูลไปเซิร์ฟเวอร์
     function submitForm(event) {
       event.preventDefault();
       var btn = document.getElementById("btnSubmit");
@@ -269,7 +291,6 @@
             btn.innerText = "💾 บันทึกข้อมูลงาน";
             btn.disabled = false;
             
-            // กลับหน้าหลักและโหลดข้อมูลใหม่
             backToDashboard();
             loadMyTasks(document.getElementById('userId').value);
         } else {
@@ -280,7 +301,6 @@
       });
     }
 
-    // 🔄 ตัวช่วยสลับหน้าจอ
     function toggleView(view) {
       if(view === 'form') {
         document.getElementById("dashboardView").style.display = "none";
