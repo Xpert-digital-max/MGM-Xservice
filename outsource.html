@@ -13,7 +13,6 @@
     
     .user-header { text-align: center; margin-bottom: 20px; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
     .task-card { background: #fff; border: 1px solid #e0e0e0; border-left: 5px solid #3498db; border-radius: 6px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-    .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     .task-title { font-weight: 600; color: #2c3e50; font-size: 16px; margin-bottom: 5px; }
     .task-detail { font-size: 13px; color: #7f8c8d; margin-bottom: 3px; }
     .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; background: #fef9e7; color: #f39c12; margin-top: 5px;}
@@ -24,49 +23,46 @@
     
     .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 15px; transition: 0.3s; }
     .btn-primary { background-color: #27ae60; color: white; }
-    .btn-primary:hover { background-color: #219150; }
     .btn-secondary { background-color: #3498db; color: white; margin-bottom: 15px; }
     .btn-outline { background-color: transparent; border: 1px solid #7f8c8d; color: #7f8c8d; margin-top: 10px; }
     
-    /* Search Box Styles */
     .search-container { display: flex; gap: 8px; margin-bottom: 15px; }
     .search-container input { margin-bottom: 0; flex: 1; }
     .search-container button { margin-bottom: 0; width: auto; padding: 10px 15px; }
     
-    #loadingMsg { text-align: center; color: #3498db; font-weight: bold; padding: 20px 0; }
-    #emptyMsg { text-align: center; color: #95a5a6; padding: 20px 0; display: none; }
+    #loadingMsg { text-align: center; color: #3498db; font-weight: bold; padding: 20px 0; display: none; }
+    #emptyMsg { text-align: center; color: #7f8c8d; padding: 20px 0; font-size: 14px; }
+    
+    .admin-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 6px; margin-bottom: 15px; display: none; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="user-header">
-      <h3 style="margin:0;">ระบบจัดการงาน Outsource</h3>
+      <h3 style="margin:0;" id="mainTitle">ระบบจัดการงาน Outsource</h3>
       <p style="margin:5px 0 0 0; font-size:14px; color:#7f8c8d;">👤 <span id="displayName">กำลังเชื่อมต่อ LINE...</span></p>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 📊 ส่วนที่ 1: หน้า Dashboard (แสดงรายการงาน) -->
-    <!-- ========================================== -->
+    <!-- 📊 Dashboard -->
     <div id="dashboardView">
       <button class="btn btn-secondary" onclick="openNewForm()">➕ เพิ่มงานใหม่</button>
       
-      <!-- 🌟 [เพิ่มใหม่] ช่องค้นหา -->
       <div class="search-container">
-        <input type="text" id="searchInput" placeholder="ค้นหา ทะเบียน, เบอร์โทร, ชื่อลูกค้า..." onkeypress="handleEnter(event)">
+        <input type="text" id="searchInput" placeholder="ค้นหา ทะเบียน, เบอร์โทร, ลูกค้า..." onkeypress="handleEnter(event)">
         <button class="btn btn-secondary" onclick="executeSearch()">🔍 ค้นหา</button>
       </div>
 
-      <h4 style="color:#2c3e50; margin-bottom: 10px;">📋 งานที่กำลังติดตาม:</h4>
-      <div id="loadingMsg">กำลังโหลดข้อมูลงาน... ⏳</div>
-      <div id="emptyMsg">ไม่พบรายการงานที่ค้นหา หรือ ไม่มีงานค้างครับ 🎉</div>
+      <h4 style="color:#2c3e50; margin-bottom: 10px;">📋 รายการงาน:</h4>
+      
+      <!-- 🌟 ข้อความแสดงผลเริ่มต้น -->
+      <div id="loadingMsg">กำลังค้นหาข้อมูล... ⏳</div>
+      <div id="emptyMsg">💡 พิมพ์ข้อมูลที่ต้องการค้นหาแล้วกดปุ่ม "ค้นหา"<br>(หากเว้นว่างไว้ จะแสดงงานทั้งหมด)</div>
       
       <div id="taskList"></div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 📝 ส่วนที่ 2: หน้าแบบฟอร์ม -->
-    <!-- ========================================== -->
+    <!-- 📝 Form -->
     <div id="formView" style="display: none;">
       <h3 id="formTitle" style="color:#2c3e50; text-align:center; margin-top:0;">เพิ่มงานใหม่</h3>
       
@@ -85,6 +81,30 @@
 
         <label>เบอร์โทรศัพท์ลูกค้า</label>
         <input type="text" id="phone" name="phone" required placeholder="08XXXXXXXX">
+
+        <div id="adminSection" class="admin-box">
+          <h4 style="margin-top:0; color:#f39c12;">👑 ส่วนของแอดมิน (คำนวณส่วนแบ่ง)</h4>
+          <label>เบี้ยสุทธิ (ไม่รวมภาษี-อากร)</label>
+          <input type="number" id="netPremium" name="netPremium" placeholder="ระบุเบี้ยสุทธิ (ถ้ามี)" oninput="calcComm()">
+          
+          <label>% คอมมิชชั่น (จาก บ.ประกัน)</label>
+          <input type="number" id="commissionPct" name="commissionPct" placeholder="เช่น 15" oninput="calcComm()">
+          
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+              <label>การตลาด 10%</label>
+              <input type="text" id="marketingFee" name="marketingFee" readonly style="background:#f4f6f6;">
+            </div>
+            <div style="flex:1;">
+              <label>ส่วนกลาง 10%</label>
+              <input type="text" id="centralFee" name="centralFee" readonly style="background:#f4f6f6;">
+            </div>
+            <div style="flex:1;">
+              <label>Outsource 40%</label>
+              <input type="text" id="outsourceShare" name="outsourceShare" readonly style="background:#eafaf1; color:#27ae60; font-weight:bold;">
+            </div>
+          </div>
+        </div>
 
         <label>บริษัทประกัน (ถ้ามี)</label>
         <input type="text" id="insuranceCompany" name="insuranceCompany" placeholder="เช่น วิริยะ, อินทร">
@@ -128,7 +148,9 @@
 
   <script>
     let myTasks = []; 
+    let isAdmin = false; 
 
+    // เริ่มต้นระบบ LIFF
     fetch(GAS_API_URL + "?action=getSettings")
       .then(response => response.json())
       .then(config => {
@@ -143,7 +165,7 @@
                   document.getElementById('userId').value = profile.userId;
                   document.getElementById('outsourceName').value = profile.displayName;
                   document.getElementById('displayName').innerText = profile.displayName;
-                  loadMyTasks(profile.userId);
+                  // 🌟 แก้ไข: ไม่ดึงข้อมูลอัตโนมัติแล้ว ปล่อยให้หน้าจอสะอาดจนกว่าจะกดปุ่มค้นหา
               });
           } else {
               liff.login();
@@ -151,10 +173,16 @@
       });
     }
 
-    function loadMyTasks(userId) {
+    // 🌟 ย้ายระบบดึงข้อมูลจากหลังบ้าน มารวมไว้ในปุ่มค้นหา
+    function executeSearch() {
+      const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
+      const userId = document.getElementById('userId').value;
+      
       document.getElementById("loadingMsg").style.display = "block";
+      document.getElementById("emptyMsg").style.display = "none";
       document.getElementById("taskList").innerHTML = "";
       
+      // ดึงข้อมูลใหม่จาก Google Sheets ทุกครั้งที่กดค้นหา
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "getMyTasks", userId: userId })
@@ -162,63 +190,68 @@
       .then(res => res.json())
       .then(data => {
         document.getElementById("loadingMsg").style.display = "none";
+        
         if(data.status === "success") {
-          myTasks = data.data;
-          document.getElementById("searchInput").value = ""; // เคลียร์ช่องค้นหา
-          renderTasks(myTasks);
+          myTasks = data.data; // เก็บไว้ใช้ตอนอัปเดต
+          isAdmin = data.isAdmin; 
+          
+          if(isAdmin) {
+             document.getElementById("mainTitle").innerText = "👑 แดชบอร์ดผู้ดูแลระบบ";
+          }
+          
+          // กรองข้อมูลตามที่ค้นหา
+          let filteredTasks = myTasks;
+          if (keyword !== "") {
+            filteredTasks = myTasks.filter(task => {
+              return String(task.plate).toLowerCase().includes(keyword) || 
+                     String(task.customerName).toLowerCase().includes(keyword) || 
+                     String(task.phone).toLowerCase().includes(keyword);
+            });
+          }
+          
+          renderTasks(filteredTasks);
         }
       });
     }
 
-    // 🌟 [เพิ่มใหม่] ฟังก์ชันค้นหาข้อมูล
-    function executeSearch() {
-      const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
+    function calcComm() {
+      let net = parseFloat(document.getElementById('netPremium').value) || 0;
+      let pct = parseFloat(document.getElementById('commissionPct').value) || 0;
+      let totalComm = net * (pct / 100);
       
-      // ถ้าช่องค้นหาว่างเปล่า ให้แสดงข้อมูลทั้งหมดที่มี
-      if (keyword === "") {
-        renderTasks(myTasks);
-        return;
-      }
-      
-      // กรองข้อมูลจาก ทะเบียน, ชื่อลูกค้า หรือ เบอร์โทร
-      const filteredTasks = myTasks.filter(task => {
-        const plateMatch = String(task.plate).toLowerCase().includes(keyword);
-        const nameMatch = String(task.customerName).toLowerCase().includes(keyword);
-        const phoneMatch = String(task.phone).toLowerCase().includes(keyword);
-        return plateMatch || nameMatch || phoneMatch;
-      });
-      
-      renderTasks(filteredTasks);
+      document.getElementById('marketingFee').value = (totalComm * 0.10).toFixed(2);
+      document.getElementById('centralFee').value = (totalComm * 0.10).toFixed(2);
+      document.getElementById('outsourceShare').value = (totalComm * 0.40).toFixed(2);
     }
 
-    // 🌟 [เพิ่มใหม่] ตัวช่วยให้กดปุ่ม Enter ในช่องค้นหาได้เลย
     function handleEnter(event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        executeSearch();
-      }
+      if (event.key === "Enter") { event.preventDefault(); executeSearch(); }
     }
 
     function renderTasks(tasks) {
       const listDiv = document.getElementById("taskList");
       const emptyMsg = document.getElementById("emptyMsg");
-      listDiv.innerHTML = ""; // ล้างหน้าจอเก่าก่อน
+      listDiv.innerHTML = ""; 
       
       if(tasks.length === 0) {
         emptyMsg.style.display = "block";
+        emptyMsg.innerHTML = "❌ ไม่พบรายการงานที่ตรงกับคำค้นหา";
         return;
       }
-      emptyMsg.style.display = "none";
 
       tasks.forEach((task) => {
         let card = document.createElement("div");
         card.className = "task-card";
-        // เปลี่ยนวิธีส่งค่า ให้ค้นหา index จาก myTasks ตัวหลัก
-        card.onclick = () => openEditForm(myTasks.indexOf(task));
         
+        // เวลาส่งแก้ไข ให้อ้างอิง index จาก myTasks ตัวหลักเสมอ
+        const originalIndex = myTasks.indexOf(task);
+        card.onclick = () => openEditForm(originalIndex);
+        
+        let ownerTag = isAdmin ? `<span style="color:#2980b9; font-weight:bold;">[${task.outsourceName}]</span> ` : "";
+
         card.innerHTML = `
           <div class="task-title">🚗 ${task.plate}</div>
-          <div class="task-detail">👤 ${task.customerName} | 📞 ${task.phone}</div>
+          <div class="task-detail">👤 ${ownerTag}${task.customerName} | 📞 ${task.phone}</div>
           <div class="task-detail">🛡️ ${task.insuranceType || "-"} (${task.insuranceCompany || "-"})</div>
           <div class="status-badge">${task.status}</div>
           <div style="font-size:12px; color:#c0392b; margin-top:5px; text-align:right;">⏰ นัดเตือน: ${task.followUpDate}</div>
@@ -237,6 +270,9 @@
       document.getElementById("followUpDate").required = true;
       document.getElementById("dateHint").style.display = "none";
       
+      document.getElementById("adminSection").style.display = "none";
+      disableAdminInputs(true);
+
       document.getElementById("formTitle").innerText = "➕ เพิ่มงานใหม่";
       toggleView('form');
     }
@@ -266,8 +302,29 @@
       document.getElementById("dateHint").style.display = "block";
       document.getElementById("showOldDate").innerText = task.followUpDate;
 
+      if (isAdmin) {
+        document.getElementById("adminSection").style.display = "block";
+        disableAdminInputs(false);
+        document.getElementById("netPremium").value = task.netPremium;
+        document.getElementById("commissionPct").value = task.commissionPct;
+        document.getElementById("marketingFee").value = task.marketingFee;
+        document.getElementById("centralFee").value = task.centralFee;
+        document.getElementById("outsourceShare").value = task.outsourceShare;
+      } else {
+        document.getElementById("adminSection").style.display = "none";
+        disableAdminInputs(true);
+      }
+
       document.getElementById("formTitle").innerText = "✏️ อัปเดตสถานะงาน";
       toggleView('form');
+    }
+
+    function disableAdminInputs(isDisable) {
+        document.getElementById("netPremium").disabled = isDisable;
+        document.getElementById("commissionPct").disabled = isDisable;
+        document.getElementById("marketingFee").disabled = isDisable;
+        document.getElementById("centralFee").disabled = isDisable;
+        document.getElementById("outsourceShare").disabled = isDisable;
     }
 
     function submitForm(event) {
@@ -290,9 +347,8 @@
             alert("บันทึกข้อมูลเรียบร้อยแล้ว!");
             btn.innerText = "💾 บันทึกข้อมูลงาน";
             btn.disabled = false;
-            
             backToDashboard();
-            loadMyTasks(document.getElementById('userId').value);
+            executeSearch(); // 🌟 บันทึกเสร็จ ให้โหลดข้อมูลค้นหาซ้ำอีกรอบอัตโนมัติ
         } else {
             alert("เกิดข้อผิดพลาด: " + data.message);
             btn.innerText = "💾 บันทึกข้อมูลงาน";
@@ -312,9 +368,7 @@
       }
     }
     
-    function backToDashboard() {
-      toggleView('dashboard');
-    }
+    function backToDashboard() { toggleView('dashboard'); }
   </script>
 </body>
 </html>
