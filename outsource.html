@@ -3,90 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Outsource Portal</title>
+  <title>Outsource Portal - Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  
-  <!-- 🌟 ดึงลิงก์จาก config.js ของคุณมาใช้ -->
   <script src="config.js"></script>
-  
   <style>
-    body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; padding: 20px; display: flex; justify-content: center; }
-    .form-container { background: white; width: 100%; max-width: 500px; border-radius: 10px; padding: 25px; box-sizing: border-box; }
-    input, select, textarea, button { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
-    button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; }
+    body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 15px; display: flex; justify-content: center; }
+    .container { background: white; width: 100%; max-width: 500px; border-radius: 10px; padding: 20px; box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    
+    /* Styles สำหรับ Dashboard */
+    .user-header { text-align: center; margin-bottom: 20px; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+    .task-card { background: #fff; border: 1px solid #e0e0e0; border-left: 5px solid #3498db; border-radius: 6px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+    .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .task-title { font-weight: 600; color: #2c3e50; font-size: 16px; margin-bottom: 5px; }
+    .task-detail { font-size: 13px; color: #7f8c8d; margin-bottom: 3px; }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; background: #fef9e7; color: #f39c12; margin-top: 5px;}
+    
+    /* Styles สำหรับ Form */
+    input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
+    input:focus, select:focus { outline: none; border-color: #3498db; }
+    label { font-weight: 600; font-size: 14px; color: #34495e; display: block; margin-bottom: 4px; }
+    
+    /* Buttons */
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 15px; transition: 0.3s; }
+    .btn-primary { background-color: #27ae60; color: white; }
+    .btn-primary:hover { background-color: #219150; }
+    .btn-secondary { background-color: #3498db; color: white; margin-bottom: 15px; }
+    .btn-outline { background-color: transparent; border: 1px solid #7f8c8d; color: #7f8c8d; margin-top: 10px; }
+    
+    #loadingMsg { text-align: center; color: #3498db; font-weight: bold; padding: 20px 0; }
+    #emptyMsg { text-align: center; color: #95a5a6; padding: 20px 0; display: none; }
   </style>
 </head>
 <body>
 
-  <div class="form-container">
-    <h2>อัปเดตงาน Outsource</h2>
-    <form id="outsourceForm" onsubmit="submitForm(event)">
-      <input type="hidden" id="userId" name="userId">
-      <input type="hidden" id="outsourceName" name="outsourceName">
+  <div class="container">
+    <div class="user-header">
+      <h3 style="margin:0;">ระบบจัดการงาน Outsource</h3>
+      <p style="margin:5px 0 0 0; font-size:14px; color:#7f8c8d;">👤 <span id="displayName">กำลังเชื่อมต่อ LINE...</span></p>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 📊 ส่วนที่ 1: หน้า Dashboard (แสดงรายการงาน) -->
+    <!-- ========================================== -->
+    <div id="dashboardView">
+      <button class="btn btn-secondary" onclick="openNewForm()">➕ เพิ่มงานใหม่</button>
       
-      <p style="color:#2980b9; font-weight:bold;">👤 เข้าสู่ระบบโดย: <span id="displayName">กำลังเชื่อมต่อ LINE...</span></p>
+      <h4 style="color:#2c3e50; margin-bottom: 10px;">📋 งานที่กำลังติดตาม:</h4>
+      <div id="loadingMsg">กำลังโหลดข้อมูลงาน... ⏳</div>
+      <div id="emptyMsg">🎉 เยี่ยมมาก! ไม่มีงานค้างในระบบ</div>
+      
+      <div id="taskList">
+        <!-- การ์ดงานจะถูกสร้างอัตโนมัติที่นี่ -->
+      </div>
+    </div>
 
-      <label>ทะเบียนรถ</label>
-      <input type="text" name="plate" required placeholder="เช่น 1ก-9999">
+    <!-- ========================================== -->
+    <!-- 📝 ส่วนที่ 2: หน้าแบบฟอร์ม (ซ่อนไว้ตอนแรก) -->
+    <!-- ========================================== -->
+    <div id="formView" style="display: none;">
+      <h3 id="formTitle" style="color:#2c3e50; text-align:center; margin-top:0;">เพิ่มงานใหม่</h3>
+      
+      <form id="outsourceForm" onsubmit="submitForm(event)">
+        <!-- Hidden Inputs สำหรับควบคุมระบบ -->
+        <input type="hidden" id="userId" name="userId">
+        <input type="hidden" id="outsourceName" name="outsourceName">
+        <input type="hidden" id="actionType" name="action">       <!-- บอกระบบว่าคือ save หรือ update -->
+        <input type="hidden" id="rowIndex" name="rowIndex">       <!-- ใช้ตอน update เพื่อชี้เป้าแถว -->
+        <input type="hidden" id="oldFollowUp" name="oldFollowUp"> <!-- เก็บวันที่เดิมกรณีไม่ได้เลือกใหม่ -->
 
-      <label>ชื่อลูกค้า</label>
-      <input type="text" name="customerName" required placeholder="ชื่อ-นามสกุล">
+        <label>ทะเบียนรถ</label>
+        <input type="text" id="plate" name="plate" required placeholder="เช่น 1ก-9999">
 
-      <label>เบอร์โทรศัพท์ลูกค้า</label>
-      <input type="text" name="phone" required placeholder="08XXXXXXXX">
+        <label>ชื่อลูกค้า</label>
+        <input type="text" id="customerName" name="customerName" required placeholder="ชื่อ-นามสกุล">
 
-      <label>บริษัทประกัน (ถ้ามี)</label>
-      <input type="text" name="insuranceCompany" placeholder="เช่น วิริยะ, อินทร, หรือเว้นว่าง">
+        <label>เบอร์โทรศัพท์ลูกค้า</label>
+        <input type="text" id="phone" name="phone" required placeholder="08XXXXXXXX">
 
-      <label>ประเภทประกัน</label>
-      <select name="insuranceType" required>
-        <option value="" disabled selected>-- เลือกประเภทประกัน --</option>
-        <option value="ประเภท 1">ประเภท 1</option>
-        <option value="ประเภท 2">ประเภท 2</option>
-        <option value="ประเภท 2+">ประเภท 2+</option>
-        <option value="ประเภท 3">ประเภท 3</option>
-        <option value="ประเภท 3+">ประเภท 3+</option>
-        <option value="พ.ร.บ.">พ.ร.บ.</option>
-        <option value="ประกันอื่นๆ">ประกันอื่นๆ</option>
-      </select>
+        <label>บริษัทประกัน (ถ้ามี)</label>
+        <input type="text" id="insuranceCompany" name="insuranceCompany" placeholder="เช่น วิริยะ, อินทร">
 
-      <label>สถานะงานปัจจุบัน</label>
-      <select name="status" required>
-        <option value="" disabled selected>-- เลือกสถานะ --</option>
-        <option value="รอทัก">⏳ ทักเตือนแล้ว (รายใหม่อยู่ระหว่างติดตาม)</option>
-        <option value="เสนอราคา">📝 เสนอราคาแล้ว (รอตัดสินใจ)</option>
-        <option value="ปิดการขาย">✅ ปิดการขาย (รอโอนเงิน)</option>
-        <option value="ลูกค้าปฏิเสธ">❌ ลูกค้าปฏิเสธ / ทำที่อื่นแล้ว</option>
-      </select>
+        <label>ประเภทประกัน</label>
+        <select id="insuranceType" name="insuranceType" required>
+          <option value="" disabled selected>-- เลือกประเภทประกัน --</option>
+          <option value="ประเภท 1">ประเภท 1</option>
+          <option value="ประเภท 2">ประเภท 2</option>
+          <option value="ประเภท 2+">ประเภท 2+</option>
+          <option value="ประเภท 3">ประเภท 3</option>
+          <option value="ประเภท 3+">ประเภท 3+</option>
+          <option value="พ.ร.บ.">พ.ร.บ.</option>
+          <option value="ประกันอื่นๆ">ประกันอื่นๆ</option>
+        </select>
 
-      <label>ยอดเบี้ยรวมภาษี (Gross) - บาท</label>
-      <input type="number" name="grossPremium" placeholder="ระบุยอดเงิน (ถ้ามี)">
+        <label>สถานะงานปัจจุบัน</label>
+        <select id="status" name="status" required>
+          <option value="" disabled selected>-- เลือกสถานะ --</option>
+          <option value="รอทัก">⏳ ทักเตือนแล้ว (รอติดตาม)</option>
+          <option value="เสนอราคา">📝 เสนอราคาแล้ว (รอตัดสินใจ)</option>
+          <option value="ปิดการขาย">✅ ปิดการขาย (รอโอนเงิน)</option>
+          <option value="ลูกค้าปฏิเสธ">❌ ลูกค้าปฏิเสธ / ทำที่อื่นแล้ว</option>
+        </select>
 
-      <label>วันที่ต้องการให้ระบบแจ้งเตือนกลับ</label>
-      <input type="date" name="followUpDate" required>
+        <label>ยอดเบี้ยรวมภาษี (Gross) - บาท</label>
+        <input type="number" id="grossPremium" name="grossPremium" placeholder="ระบุยอดเงิน (ถ้ามี)">
 
-      <label>หมายเหตุเพิ่มเติม</label>
-      <textarea name="note" rows="2" placeholder="รายละเอียดอื่นๆ"></textarea>
+        <label>วันที่ต้องการให้ระบบแจ้งเตือนกลับ</label>
+        <input type="date" id="followUpDate" name="followUpDate">
+        <p id="dateHint" style="font-size:12px; color:#e74c3c; margin-top:-10px; display:none;">* วันที่เดิม: <span id="showOldDate"></span> (ถ้าไม่เปลี่ยนให้เว้นว่างไว้)</p>
 
-      <button type="submit" id="btnSubmit">💾 บันทึกข้อมูลงาน</button>
-    </form>
+        <label>หมายเหตุเพิ่มเติม</label>
+        <textarea id="note" name="note" rows="2" placeholder="รายละเอียดอื่นๆ"></textarea>
+
+        <button type="submit" id="btnSubmit" class="btn btn-primary">💾 บันทึกข้อมูลงาน</button>
+        <button type="button" class="btn btn-outline" onclick="backToDashboard()">🔙 ยกเลิก / กลับหน้าหลัก</button>
+      </form>
+    </div>
   </div>
 
   <script>
-    // 🌟 ขั้นตอนที่ 1: ดึง LIFF ID จาก Google Sheets (ผ่าน GAS_API_URL ใน config.js) ทันทีที่เปิดหน้าเว็บ
+    let myTasks = []; // ตัวแปรเก็บข้อมูลงานทั้งหมดของ User นี้
+
+    // 🌟 1. เริ่มต้นระบบ: ดึง LIFF ID
     fetch(GAS_API_URL + "?action=getSettings")
       .then(response => response.json())
       .then(config => {
-          var liffId = config.OUTSOURCE_LIFF_ID;
-          if (!liffId) {
-              alert("ยังไม่ได้ตั้งค่า OUTSOURCE_LIFF_ID ในแท็บ Settings ของ Google Sheets");
-              return;
-          }
-          // เริ่มต้นรัน LIFF ด้วย ID ที่ดึงมา
-          initLiff(liffId);
-      })
-      .catch(err => console.error("Error loading config:", err));
+          if (!config.OUTSOURCE_LIFF_ID) return alert("ยังไม่ได้ตั้งค่า OUTSOURCE_LIFF_ID");
+          initLiff(config.OUTSOURCE_LIFF_ID);
+      }).catch(err => console.error(err));
 
     function initLiff(liffId) {
       liff.init({ liffId: liffId }).then(() => {
@@ -95,16 +139,115 @@
                   document.getElementById('userId').value = profile.userId;
                   document.getElementById('outsourceName').value = profile.displayName;
                   document.getElementById('displayName').innerText = profile.displayName;
+                  
+                  // เมื่อได้ Profile แล้ว ให้ไปดึงข้อมูลงานจากชีต
+                  loadMyTasks(profile.userId);
               });
           } else {
               liff.login();
           }
-      }).catch(err => {
-          console.log("LIFF Initialization failed: " + err);
       });
     }
 
-    // 🌟 ขั้นตอนที่ 2: กดปุ่มบันทึก ยิงข้อมูลไปบันทึกใน Google Sheets
+    // 🌟 2. ดึงข้อมูลงานจากชีต (API: getMyTasks)
+    function loadMyTasks(userId) {
+      document.getElementById("loadingMsg").style.display = "block";
+      document.getElementById("taskList").innerHTML = "";
+      
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "getMyTasks", userId: userId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("loadingMsg").style.display = "none";
+        if(data.status === "success") {
+          myTasks = data.data;
+          renderTasks(myTasks);
+        }
+      });
+    }
+
+    // 🌟 3. สร้างการ์ดแสดงรายการงาน
+    function renderTasks(tasks) {
+      const listDiv = document.getElementById("taskList");
+      const emptyMsg = document.getElementById("emptyMsg");
+      
+      if(tasks.length === 0) {
+        emptyMsg.style.display = "block";
+        return;
+      }
+      emptyMsg.style.display = "none";
+
+      tasks.forEach((task, index) => {
+        // สร้าง HTML Card
+        let card = document.createElement("div");
+        card.className = "task-card";
+        // เมื่อกดที่การ์ด ให้เปิดฟอร์มอัปเดต
+        card.onclick = () => openEditForm(index);
+        
+        card.innerHTML = `
+          <div class="task-title">🚗 ${task.plate}</div>
+          <div class="task-detail">👤 ${task.customerName} | 📞 ${task.phone}</div>
+          <div class="task-detail">🛡️ ${task.insuranceType || "-"} (${task.insuranceCompany || "-"})</div>
+          <div class="status-badge">${task.status}</div>
+          <div style="font-size:12px; color:#c0392b; margin-top:5px; text-align:right;">⏰ นัดเตือน: ${task.followUpDate}</div>
+        `;
+        listDiv.appendChild(card);
+      });
+    }
+
+    // 🌟 4. เปิดฟอร์มสำหรับ "เพิ่มงานใหม่"
+    function openNewForm() {
+      document.getElementById("outsourceForm").reset(); // ล้างข้อมูล
+      document.getElementById("actionType").value = "saveOutsourceData"; // สั่ง Save
+      
+      // ปลดล็อกช่องที่ห้ามแก้ตอนอัปเดต
+      document.getElementById("plate").readOnly = false;
+      document.getElementById("customerName").readOnly = false;
+      document.getElementById("phone").readOnly = false;
+      document.getElementById("followUpDate").required = true;
+      document.getElementById("dateHint").style.display = "none";
+      
+      document.getElementById("formTitle").innerText = "➕ เพิ่มงานใหม่";
+      toggleView('form');
+    }
+
+    // 🌟 5. เปิดฟอร์มสำหรับ "อัปเดตงานเดิม"
+    function openEditForm(arrayIndex) {
+      const task = myTasks[arrayIndex];
+      document.getElementById("outsourceForm").reset();
+      
+      // กำหนดค่าตั้งต้น
+      document.getElementById("actionType").value = "updateOutsourceData"; // สั่ง Update
+      document.getElementById("rowIndex").value = task.rowIndex; // แถวที่จะอัปเดต
+      document.getElementById("oldFollowUp").value = task.followUpDate;
+      
+      // เติมข้อมูลเดิมลงฟอร์ม
+      document.getElementById("plate").value = task.plate;
+      document.getElementById("customerName").value = task.customerName;
+      document.getElementById("phone").value = task.phone;
+      document.getElementById("insuranceCompany").value = task.insuranceCompany;
+      document.getElementById("insuranceType").value = task.insuranceType;
+      document.getElementById("grossPremium").value = task.grossPremium;
+      document.getElementById("status").value = task.status;
+      document.getElementById("note").value = task.note;
+
+      // ล็อกช่องที่ไม่ควรให้แก้ (เพื่อความปลอดภัยของ Data)
+      document.getElementById("plate").readOnly = true;
+      document.getElementById("customerName").readOnly = true;
+      document.getElementById("phone").readOnly = true;
+      
+      // ระบบวันที่
+      document.getElementById("followUpDate").required = false;
+      document.getElementById("dateHint").style.display = "block";
+      document.getElementById("showOldDate").innerText = task.followUpDate;
+
+      document.getElementById("formTitle").innerText = "✏️ อัปเดตสถานะงาน";
+      toggleView('form');
+    }
+
+    // 🌟 6. ส่งข้อมูลไปเซิร์ฟเวอร์
     function submitForm(event) {
       event.preventDefault();
       var btn = document.getElementById("btnSubmit");
@@ -114,9 +257,6 @@
       var formData = new FormData(document.getElementById("outsourceForm"));
       var dataObj = {};
       formData.forEach((value, key) => { dataObj[key] = value; });
-      
-      // 🌟 [สำคัญ] เพิ่ม action ให้ตรงกับระบบหลังบ้าน
-      dataObj.action = "saveOutsourceData";
 
       fetch(GAS_API_URL, {
         method: 'POST',
@@ -126,24 +266,34 @@
       .then(data => {
         if(data.status === "success") {
             alert("บันทึกข้อมูลเรียบร้อยแล้ว!");
+            btn.innerText = "💾 บันทึกข้อมูลงาน";
+            btn.disabled = false;
             
-            // 🌟 แก้ไขตรงนี้: ให้ล้างฟอร์มแทนการปิดหน้าต่าง
-            document.getElementById("outsourceForm").reset(); 
-            btn.innerText = "💾 บันทึกข้อมูลงาน"; // คืนสถานะปุ่ม
-            btn.disabled = false; // ปลดล็อกปุ่มให้กดใหม่ได้
-            window.scrollTo(0, 0); // เลื่อนหน้าจอกลับขึ้นไปข้างบนสุด
-            
+            // กลับหน้าหลักและโหลดข้อมูลใหม่
+            backToDashboard();
+            loadMyTasks(document.getElementById('userId').value);
         } else {
             alert("เกิดข้อผิดพลาด: " + data.message);
             btn.innerText = "💾 บันทึกข้อมูลงาน";
             btn.disabled = false;
         }
-      })
-      .catch(error => {
-        alert("Connection Error: " + error);
-        btn.innerText = "💾 บันทึกข้อมูลงาน";
-        btn.disabled = false;
       });
+    }
+
+    // 🔄 ตัวช่วยสลับหน้าจอ
+    function toggleView(view) {
+      if(view === 'form') {
+        document.getElementById("dashboardView").style.display = "none";
+        document.getElementById("formView").style.display = "block";
+        window.scrollTo(0, 0);
+      } else {
+        document.getElementById("dashboardView").style.display = "block";
+        document.getElementById("formView").style.display = "none";
+      }
+    }
+    
+    function backToDashboard() {
+      toggleView('dashboard');
     }
   </script>
 </body>
