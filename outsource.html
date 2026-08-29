@@ -83,8 +83,8 @@
 
         <div id="adminSection" class="admin-box">
           <h4 style="margin-top:0; color:#f39c12;">👑 ส่วนของแอดมิน (คำนวณส่วนแบ่ง)</h4>
-          <label>เบี้ยสุทธิ (ไม่รวมภาษี-อากร)</label>
-          <input type="number" id="netPremium" name="netPremium" placeholder="ระบุเบี้ยสุทธิ (ถ้ามี)" oninput="calcComm()">
+          <label>เบี้ยสุทธิ (คำนวณอัตโนมัติจากเบี้ยรวม)</label>
+          <input type="text" id="netPremium" name="netPremium" readonly style="background:#f4f6f6;" placeholder="ระบบจะคำนวณให้...">
           
           <label>% คอมมิชชั่น (จาก บ.ประกัน)</label>
           <input type="number" id="commissionPct" name="commissionPct" placeholder="เช่น 15" oninput="calcComm()">
@@ -130,7 +130,7 @@
         </select>
 
         <label>ยอดเบี้ยรวมภาษี (Gross) - บาท</label>
-        <input type="number" id="grossPremium" name="grossPremium" placeholder="ระบุยอดเงิน (ถ้ามี)">
+        <input type="number" id="grossPremium" name="grossPremium" placeholder="ระบุยอดเงิน (ถ้ามี)" oninput="calcComm()">
 
         <label>วันที่ต้องการให้ระบบแจ้งเตือนกลับ</label>
         <input type="date" id="followUpDate" name="followUpDate">
@@ -213,13 +213,20 @@
     }
 
     function calcComm() {
-      let net = parseFloat(document.getElementById('netPremium').value) || 0;
+      // ดึงเบี้ยรวมมาหาร 1.07428 เพื่อหาเบี้ยสุทธิก่อน
+      let gross = parseFloat(document.getElementById('grossPremium').value) || 0;
+      let net = gross > 0 ? (gross / 1.07428) : 0;
+      
+      // แสดงผลเบี้ยสุทธิบนหน้าจอ
+      document.getElementById('netPremium').value = net > 0 ? net.toFixed(2) : "";
+
+      // นำเบี้ยสุทธิไปคำนวณคอมมิชชั่นต่อ
       let pct = parseFloat(document.getElementById('commissionPct').value) || 0;
       let totalComm = net * (pct / 100);
       
-      document.getElementById('marketingFee').value = (totalComm * 0.10).toFixed(2);
-      document.getElementById('centralFee').value = (totalComm * 0.10).toFixed(2);
-      document.getElementById('outsourceShare').value = (totalComm * 0.40).toFixed(2);
+      document.getElementById('marketingFee').value = totalComm > 0 ? (totalComm * 0.10).toFixed(2) : "";
+      document.getElementById('centralFee').value = totalComm > 0 ? (totalComm * 0.10).toFixed(2) : "";
+      document.getElementById('outsourceShare').value = totalComm > 0 ? (totalComm * 0.40).toFixed(2) : "";
     }
 
     function handleEnter(event) {
