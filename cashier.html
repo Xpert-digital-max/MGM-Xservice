@@ -571,15 +571,24 @@
     
     function setDefaultDate() { 
         let d = new Date();
-        let t = d.toISOString().split('T')[0]; 
         
+        // 🌟 แก้ปัญหา Timezone: ดึงวันที่และเวลาตามเครื่อง (Local Time) ของผู้ใช้งานจริงๆ
+        let year = d.getFullYear();
+        let month = String(d.getMonth() + 1).padStart(2, '0');
+        let day = String(d.getDate()).padStart(2, '0');
+        let t = `${year}-${month}-${day}`; 
+        
+        // ตั้งค่าวัดเริ่มต้นของ พ.ร.บ.
         let prbInput = document.getElementById('prbStartDate');
         prbInput.value = t;  
-        prbInput.min = t;    
+        prbInput.min = t; // 🌟 ล็อกไม่ให้กดเลือกวันย้อนหลัง
         
-        document.getElementById('insStartDate').value = t; 
+        // ตั้งค่าวัดเริ่มต้นของ ประกัน
+        let insStartInput = document.getElementById('insStartDate');
+        insStartInput.value = t; 
+        insStartInput.min = t; // 🌟 ล็อกไม่ให้กดเลือกวันย้อนหลัง
         
-        // 🌟 ตั้งค่าเริ่มต้นให้วันสิ้นสุดเป็นปีหน้า
+        // 🌟 ตั้งค่าวันสิ้นสุดเป็นปีหน้าแบบอัตโนมัติ
         d.setFullYear(d.getFullYear() + 1);
         let nextYear = d.getFullYear();
         let nextMonth = String(d.getMonth() + 1).padStart(2, '0');
