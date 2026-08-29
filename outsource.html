@@ -209,6 +209,26 @@
                   document.getElementById('userId').value = profile.userId;
                   document.getElementById('outsourceName').value = profile.displayName;
                   document.getElementById('displayName').innerText = profile.displayName;
+
+                  // 🌟 ให้ระบบวิ่งไปถามหลังบ้านทันทีว่าคนนี้คือ Admin ใช่หรือไม่
+                  fetch(GAS_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "checkRole", userId: profile.userId })
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                    isAdmin = data.isAdmin;
+                    
+                    // ถ้าเป็นแอดมิน ให้เปลี่ยนชื่อหัวเว็บและโชว์ปุ่มสีส้มทันที
+                    if(isAdmin) {
+                       document.getElementById("mainTitle").innerText = "👑 แดชบอร์ดผู้ดูแลระบบ";
+                       document.getElementById("btnAdminPayment").style.display = "block";
+                    } else {
+                       document.getElementById("mainTitle").innerText = "ระบบจัดการงาน Outsource";
+                       document.getElementById("btnAdminPayment").style.display = "none";
+                    }
+                  });
+
               });
           } else {
               liff.login();
