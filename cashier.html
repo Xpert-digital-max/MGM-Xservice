@@ -61,7 +61,6 @@
                   <option value="รถกระบะ (รย.3)">รถกระบะ (รย.3)</option>
                   <option value="รถกระบะ (เกิน 2000 กก.)">รถกระบะ (เกิน 2000 กก.)</option>
                   <option value="รถตู้ (เกิน 2000 กก.)">รถตู้ (เกิน 2000 กก.)</option>
-                  <!-- 🌟 เพิ่มประเภทรถใหม่ตามที่ต้องการ -->
                   <option value="4 ประตู / 3 ตอน ( เกิน 2000 )">4 ประตู / 3 ตอน ( เกิน 2000 )</option>
                   <option value="รถจักรยานยนต์">รถจักรยานยนต์</option>
                   <option value="รถอื่นๆ">รถอื่นๆ</option>
@@ -110,6 +109,7 @@
               <select id="insType" class="form-select" onchange="toggleIns()">
                 <option value="- ไม่ทำเพิ่ม -">- ไม่ทำเพิ่ม -</option>
                 <option value="ประเภท 1">ประเภท 1</option>
+                <option value="ประเภท 1+ พลัส">ประเภท 1+ พลัส</option>
                 <option value="ประเภท 2+ พลัส">ประเภท 2+ พลัส</option>
                 <option value="ประเภท 2">ประเภท 2</option>
                 <option value="ประเภท 3+ พลัส">ประเภท 3+ พลัส</option>
@@ -120,7 +120,8 @@
             </div>
             
             <div id="insDateSection" class="row g-2 mt-2" style="display:none">
-                <div class="col-6"><label class="small">วันเริ่ม</label><input type="date" id="insStartDate" class="form-control form-control-sm"></div>
+                <!-- 🌟 เพิ่ม onchange="autoSetEndDate()" ตรงช่องวันเริ่ม -->
+                <div class="col-6"><label class="small">วันเริ่ม</label><input type="date" id="insStartDate" class="form-control form-control-sm" onchange="autoSetEndDate()"></div>
                 <div class="col-6"><label class="small">วันสิ้นสุด</label><input type="date" id="insEndDate" class="form-control form-control-sm"></div>
             </div>
             <div class="col-6 mt-2"><input type="number" id="insPrice" class="form-control" placeholder="ราคาประกัน"></div>
@@ -554,13 +555,37 @@
     function toggleCarType() { let t = document.getElementById('cType').value; let lbl = document.getElementById('engineLabel'); if(t.includes('รย.3') || t.includes('กระบะ')) lbl.innerText = "น้ำหนักรถ (กก.)"; else if(t.includes('รย.2') || t.includes('ตู้')) lbl.innerText = "จำนวนที่นั่ง"; else lbl.innerText = "เครื่องยนต์ (CC)"; autoCheckTor(); }
     function autoCheckTor() { let yInput = document.getElementById('regYear').value; if(!yInput || yInput.length < 4) return; let yearBE = parseInt(yInput); let currentYearBE = new Date().getFullYear() + 543; let age = currentYearBE - yearBE; document.getElementById('carAgeText').innerText = "อายุรถ: " + age + " ปี"; let type = document.getElementById('cType').value; let torCheck = document.getElementById('doTor'); let limit = 7; if(type.includes("จักรยานยนต์")) limit = 5; if (age >= limit) torCheck.checked = true; }
     
+    // 🌟 ฟังก์ชันคำนวณวันสิ้นสุดอัตโนมัติ (บวก 1 ปี)
+    function autoSetEndDate() {
+        const startDateInput = document.getElementById("insStartDate").value;
+        const endDateInput = document.getElementById("insEndDate");
+        if (startDateInput) {
+            let date = new Date(startDateInput);
+            date.setFullYear(date.getFullYear() + 1);
+            let year = date.getFullYear();
+            let month = String(date.getMonth() + 1).padStart(2, '0');
+            let day = String(date.getDate()).padStart(2, '0');
+            endDateInput.value = `${year}-${month}-${day}`;
+        }
+    }
+    
     function setDefaultDate() { 
-        let t = new Date().toISOString().split('T')[0]; 
+        let d = new Date();
+        let t = d.toISOString().split('T')[0]; 
+        
         let prbInput = document.getElementById('prbStartDate');
         prbInput.value = t;  
         prbInput.min = t;    
+        
         document.getElementById('insStartDate').value = t; 
-        document.getElementById('insEndDate').value = t; 
+        
+        // 🌟 ตั้งค่าเริ่มต้นให้วันสิ้นสุดเป็นปีหน้า
+        d.setFullYear(d.getFullYear() + 1);
+        let nextYear = d.getFullYear();
+        let nextMonth = String(d.getMonth() + 1).padStart(2, '0');
+        let nextDay = String(d.getDate()).padStart(2, '0');
+        document.getElementById('insEndDate').value = `${nextYear}-${nextMonth}-${nextDay}`;
+        
         document.getElementById('regYear').value = new Date().getFullYear()+543; 
         document.getElementById('regMonth').innerHTML = `<option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>`; 
         togglePrbDate(); 
