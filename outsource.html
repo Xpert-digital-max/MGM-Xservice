@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Outsource Portal - Dashboard</title>
+  <title>Outsource Portal</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="config.js"></script>
@@ -23,6 +23,7 @@
     .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 15px; transition: 0.3s; }
     .btn-primary { background-color: #27ae60; color: white; }
     .btn-secondary { background-color: #3498db; color: white; margin-bottom: 15px; }
+    .btn-warning { background-color: #f39c12; color: white; margin-bottom: 15px; display: none; }
     .btn-outline { background-color: transparent; border: 1px solid #7f8c8d; color: #7f8c8d; margin-top: 10px; }
     
     .search-container { display: flex; gap: 8px; margin-bottom: 15px; }
@@ -32,9 +33,18 @@
     #loadingMsg { text-align: center; color: #3498db; font-weight: bold; padding: 20px 0; display: none; }
     #emptyMsg { text-align: center; color: #7f8c8d; padding: 20px 0; font-size: 14px; }
     .admin-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 6px; margin-bottom: 15px; display: none; }
-    
-    /* สไตล์กล่องโชว์เงิน Outsource */
     .money-badge { display: inline-block; background: #eafaf1; color: #27ae60; font-weight: bold; font-size: 13px; padding: 4px 10px; border-radius: 4px; margin-top: 8px; border: 1px solid #a9dfbf; }
+    
+    /* สไตล์ระบบทำจ่าย */
+    .tab-container { display: flex; border-bottom: 2px solid #ecf0f1; margin-bottom: 15px; }
+    .tab-btn { flex: 1; text-align: center; padding: 10px; cursor: pointer; font-weight: bold; color: #7f8c8d; }
+    .tab-btn.active { color: #3498db; border-bottom: 3px solid #3498db; margin-bottom: -2px; }
+    
+    .pay-item { display: flex; align-items: center; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
+    .pay-item input[type="checkbox"] { width: 20px; height: 20px; margin: 0 15px 0 0; cursor: pointer; }
+    .pay-info { flex: 1; }
+    .pay-amount { font-weight: bold; color: #27ae60; font-size: 16px; }
+    .floating-total { background: #2c3e50; color: white; padding: 15px; border-radius: 8px; text-align: center; position: sticky; bottom: 10px; margin-top: 20px; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
   </style>
 </head>
 <body>
@@ -45,9 +55,11 @@
       <p style="margin:5px 0 0 0; font-size:14px; color:#7f8c8d;">👤 <span id="displayName">กำลังเชื่อมต่อ LINE...</span></p>
     </div>
 
-    <!-- 📊 Dashboard -->
     <div id="dashboardView">
-      <button class="btn btn-secondary" onclick="openNewForm()">➕ เพิ่มงานใหม่</button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="openNewForm()">➕ เพิ่มงานใหม่</button>
+        <button id="btnAdminPayment" class="btn btn-warning" style="flex:1;" onclick="openPaymentSystem()">💰 ทำจ่ายค่าคอม</button>
+      </div>
       
       <div class="search-container">
         <input type="text" id="searchInput" placeholder="ค้นหา ทะเบียน, เบอร์โทร, ลูกค้า..." onkeypress="handleEnter(event)">
@@ -62,7 +74,33 @@
       <div id="taskList"></div>
     </div>
 
-    <!-- 📝 Form -->
+    <div id="paymentSystemView" style="display: none;">
+      <h3 style="color:#2c3e50; text-align:center; margin-top:0;">💰 ระบบทำจ่ายค่าคอมมิชชั่น</h3>
+      
+      <div class="tab-container">
+        <div id="tabPending" class="tab-btn active" onclick="switchPaymentTab('pending')">รอทำจ่าย</div>
+        <div id="tabHistory" class="tab-btn" onclick="switchPaymentTab('history')">ประวัติทำจ่าย</div>
+      </div>
+
+      <div id="paymentLoading" style="text-align:center; padding:20px; color:#3498db;">กำลังโหลดข้อมูล... ⏳</div>
+
+      <div id="pendingContainer" style="display:none;">
+        <div id="pendingList"></div>
+        <div id="floatingTotalBox" class="floating-total">
+          <div style="font-size:14px; opacity:0.8;">ยอดโอนรวมที่เลือก</div>
+          <div style="font-size:22px; font-weight:bold; margin-bottom:10px;" id="displayTotalPayout">0 บาท</div>
+          <button class="btn btn-primary" onclick="confirmPayment()">โอนเงิน & ส่งแจ้งเตือน</button>
+        </div>
+      </div>
+
+      <div id="historyContainer" style="display:none;">
+        <input type="text" id="historySearch" placeholder="พิมพ์ค้นหาชื่อ หรือ ทะเบียน..." oninput="filterHistory()" style="background:#f9f9f9;">
+        <div id="historyList"></div>
+      </div>
+
+      <button class="btn btn-outline" style="margin-top:20px;" onclick="backToDashboard()">🔙 กลับหน้าหลัก</button>
+    </div>
+
     <div id="formView" style="display: none;">
       <h3 id="formTitle" style="color:#2c3e50; text-align:center; margin-top:0;">เพิ่มงานใหม่</h3>
       
@@ -82,11 +120,10 @@
         <label>เบอร์โทรศัพท์ลูกค้า</label>
         <input type="text" id="phone" name="phone" required placeholder="08XXXXXXXX">
 
-        <!-- 👑 กล่องแอดมินสำหรับกรอกค่าคอม (โชว์เฉพาะคนที่มี Active ใน Config) -->
         <div id="adminSection" class="admin-box">
           <h4 style="margin-top:0; color:#f39c12;">👑 ส่วนของแอดมิน (ใส่ค่าคอมมิชชั่น)</h4>
           <label>เบี้ยสุทธิ (คำนวณอัตโนมัติจากเบี้ยรวม)</label>
-          <input type="text" id="netPremium" name="netPremium" readonly style="background:#f4f6f6;" placeholder="ระบบจะคำนวณให้...">
+          <input type="text" id="netPremium" name="netPremium" readonly style="background:#f4f6f6;">
           
           <label>% คอมมิชชั่น (จาก บ.ประกัน)</label>
           <input type="number" id="commissionPct" name="commissionPct" placeholder="เช่น 15" oninput="calcComm()">
@@ -136,7 +173,7 @@
 
         <label>วันที่ต้องการให้ระบบแจ้งเตือนกลับ</label>
         <input type="date" id="followUpDate" name="followUpDate">
-        <p id="dateHint" style="font-size:12px; color:#e74c3c; margin-top:-10px; display:none;">* วันที่เดิม: <span id="showOldDate"></span> (ถ้าไม่เปลี่ยนให้เว้นว่างไว้)</p>
+        <p id="dateHint" style="font-size:12px; color:#e74c3c; margin-top:-10px; display:none;">* วันที่เดิม: <span id="showOldDate"></span></p>
 
         <label>ลิงก์แชตลูกค้า (ถ้ามี)</label>
         <input type="url" id="chatLink" name="chatLink" placeholder="วาง URL แชต เช่น https://line.me/...">
@@ -153,6 +190,10 @@
   <script>
     let myTasks = []; 
     let isAdmin = false; 
+
+    // ตัวแปรสำหรับระบบทำจ่าย
+    let rawPending = [];
+    let rawHistory = [];
 
     fetch(GAS_API_URL + "?action=getSettings")
       .then(response => response.json())
@@ -175,6 +216,9 @@
       });
     }
 
+    // ==========================================
+    // 🔍 1. ระบบค้นหาหลัก (Dashboard เดิม)
+    // ==========================================
     function executeSearch() {
       const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
       const userId = document.getElementById('userId').value;
@@ -197,6 +241,7 @@
           
           if(isAdmin) {
              document.getElementById("mainTitle").innerText = "👑 แดชบอร์ดผู้ดูแลระบบ";
+             document.getElementById("btnAdminPayment").style.display = "block"; // 🌟 เปิดปุ่มทำจ่ายให้แอดมิน
           }
           
           let filteredTasks = myTasks;
@@ -207,27 +252,9 @@
                      String(task.phone).toLowerCase().includes(keyword);
             });
           }
-          
           renderTasks(filteredTasks);
         }
       });
-    }
-
-    function calcComm() {
-      let gross = parseFloat(document.getElementById('grossPremium').value) || 0;
-      let net = gross > 0 ? (gross / 1.07428) : 0;
-      document.getElementById('netPremium').value = net > 0 ? net.toFixed(2) : "";
-
-      let pct = parseFloat(document.getElementById('commissionPct').value) || 0;
-      let totalComm = net * (pct / 100);
-      
-      document.getElementById('marketingFee').value = totalComm > 0 ? (totalComm * 0.10).toFixed(2) : "";
-      document.getElementById('centralFee').value = totalComm > 0 ? (totalComm * 0.10).toFixed(2) : "";
-      document.getElementById('outsourceShare').value = totalComm > 0 ? (totalComm * 0.40).toFixed(2) : "";
-    }
-
-    function handleEnter(event) {
-      if (event.key === "Enter") { event.preventDefault(); executeSearch(); }
     }
 
     function renderTasks(tasks) {
@@ -250,10 +277,9 @@
         let ownerTag = isAdmin ? `<span style="color:#2980b9; font-weight:bold;">[${task.outsourceName}]</span> ` : "";
         let chatIcon = task.chatLink ? ` <span style="font-size:12px;">💬</span>` : "";
         
-        // 🌟 แสดงส่วนแบ่งให้ Outsource เห็นถ้ามีข้อมูลการคำนวณแล้ว
         let moneyBadge = "";
         if (task.outsourceShare && task.outsourceShare !== "") {
-            moneyBadge = `<br><div class="money-badge">💰 ส่วนแบ่งของคุณ: ${task.outsourceShare} บาท</div>`;
+            moneyBadge = `<br><div class="money-badge">💰 ส่วนแบ่ง: ${task.outsourceShare} บ.</div>`;
         }
 
         card.innerHTML = `
@@ -266,6 +292,167 @@
         `;
         listDiv.appendChild(card);
       });
+    }
+
+    // ==========================================
+    // 💰 2. ระบบตะกร้าทำจ่าย (แอดมิน)
+    // ==========================================
+    function openPaymentSystem() {
+      document.getElementById("dashboardView").style.display = "none";
+      document.getElementById("paymentSystemView").style.display = "block";
+      
+      document.getElementById("paymentLoading").style.display = "block";
+      document.getElementById("pendingContainer").style.display = "none";
+      document.getElementById("historyContainer").style.display = "none";
+
+      const userId = document.getElementById('userId').value;
+      
+      // ดึงข้อมูลทำจ่าย
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "getAdminPaymentTasks", userId: userId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("paymentLoading").style.display = "none";
+        if(data.status === "success") {
+          rawPending = data.data.pending;
+          rawHistory = data.data.history;
+          
+          switchPaymentTab('pending'); // เริ่มต้นที่แท็บรอจ่าย
+        }
+      });
+    }
+
+    function switchPaymentTab(tab) {
+      document.getElementById("tabPending").className = tab === 'pending' ? "tab-btn active" : "tab-btn";
+      document.getElementById("tabHistory").className = tab === 'history' ? "tab-btn active" : "tab-btn";
+      
+      document.getElementById("pendingContainer").style.display = tab === 'pending' ? "block" : "none";
+      document.getElementById("historyContainer").style.display = tab === 'history' ? "block" : "none";
+      
+      if (tab === 'pending') renderPendingList();
+      if (tab === 'history') filterHistory();
+    }
+
+    function renderPendingList() {
+      const listDiv = document.getElementById("pendingList");
+      listDiv.innerHTML = "";
+      
+      if(rawPending.length === 0) {
+        listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#7f8c8d;'>ไม่มีรายการรอทำจ่ายครับ 🎉</div>";
+        document.getElementById("floatingTotalBox").style.display = "none";
+        return;
+      }
+      
+      document.getElementById("floatingTotalBox").style.display = "block";
+
+      rawPending.forEach((item, idx) => {
+        let div = document.createElement("div");
+        div.className = "pay-item";
+        
+        // แนบข้อมูลไว้ใน value ของ Checkbox เพื่อดึงไปใช้ตอนกดโอน
+        const valueData = JSON.stringify(item).replace(/"/g, '&quot;'); 
+        
+        div.innerHTML = `
+          <input type="checkbox" class="payment-chk" value="${valueData}" onchange="calculatePayout()">
+          <div class="pay-info">
+            <div style="font-weight:bold; color:#2c3e50;">👤 ${item.outsourceName}</div>
+            <div style="font-size:12px; color:#7f8c8d;">🚗 ${item.plate}</div>
+          </div>
+          <div class="pay-amount">${item.outsourceShare} ฿</div>
+        `;
+        listDiv.appendChild(div);
+      });
+      calculatePayout();
+    }
+
+    // คำนวณยอดรวมเมื่อแอดมินติ๊กถูก
+    function calculatePayout() {
+      let total = 0;
+      let checkboxes = document.querySelectorAll('.payment-chk:checked');
+      checkboxes.forEach(chk => {
+        let item = JSON.parse(chk.value.replace(/&quot;/g, '"'));
+        total += parseFloat(item.outsourceShare) || 0;
+      });
+      document.getElementById("displayTotalPayout").innerText = total.toLocaleString() + " บาท";
+    }
+
+    // กดยืนยันโอนเงิน
+    function confirmPayment() {
+      let checkboxes = document.querySelectorAll('.payment-chk:checked');
+      if(checkboxes.length === 0) return alert("โปรดเลือกอย่างน้อย 1 รายการเพื่อทำจ่าย");
+      
+      if(!confirm("ยืนยันการทำจ่าย และส่งสลิปแจ้งเตือนให้ Outsource ใช่หรือไม่?")) return;
+      
+      let itemsToPay = [];
+      checkboxes.forEach(chk => {
+        itemsToPay.push(JSON.parse(chk.value.replace(/&quot;/g, '"')));
+      });
+
+      document.getElementById("floatingTotalBox").innerHTML = "กำลังประมวลผลและส่ง LINE... ⏳";
+
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "processAdminPayments", adminId: document.getElementById('userId').value, items: itemsToPay })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("✅ ทำจ่ายและแจ้งเตือนสำเร็จเรียบร้อย!");
+        openPaymentSystem(); // รีโหลดหน้าระบบทำจ่ายใหม่
+      });
+    }
+
+    // 📜 ค้นหาในหน้าประวัติ
+    function filterHistory() {
+      const keyword = document.getElementById("historySearch").value.trim().toLowerCase();
+      const listDiv = document.getElementById("historyList");
+      listDiv.innerHTML = "";
+
+      let filtered = rawHistory;
+      if (keyword !== "") {
+        filtered = rawHistory.filter(h => String(h.outsourceName).toLowerCase().includes(keyword) || String(h.plate).toLowerCase().includes(keyword) || String(h.payDate).includes(keyword));
+      }
+
+      if(filtered.length === 0) {
+        listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#7f8c8d;'>ไม่พบประวัติครับ</div>";
+        return;
+      }
+
+      filtered.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "pay-item";
+        div.style.background = "#f4f6f6";
+        div.innerHTML = `
+          <div class="pay-info">
+            <div style="font-weight:bold; color:#7f8c8d;">👤 ${item.outsourceName}</div>
+            <div style="font-size:12px; color:#95a5a6;">🚗 ${item.plate} | 📅 จ่ายเมื่อ: ${item.payDate}</div>
+          </div>
+          <div style="font-weight:bold; color:#7f8c8d;">${item.outsourceShare} ฿</div>
+        `;
+        listDiv.appendChild(div);
+      });
+    }
+
+
+    // ==========================================
+    // 📝 3. ระบบฟอร์ม (เปิด-ปิด-คำนวณ)
+    // ==========================================
+    function calcComm() {
+      let gross = parseFloat(document.getElementById('grossPremium').value) || 0;
+      let net = gross > 0 ? (gross / 1.07428) : 0;
+      document.getElementById('netPremium').value = net > 0 ? net.toFixed(2) : "";
+
+      let pct = parseFloat(document.getElementById('commissionPct').value) || 0;
+      let totalComm = net * (pct / 100);
+      
+      document.getElementById('marketingFee').value = totalComm > 0 ? (totalComm * 0.10).toFixed(2) : "";
+      document.getElementById('centralFee').value = totalComm > 0 ? (totalComm * 0.10).toFixed(2) : "";
+      document.getElementById('outsourceShare').value = totalComm > 0 ? (totalComm * 0.40).toFixed(2) : "";
+    }
+
+    function handleEnter(event) {
+      if (event.key === "Enter") { event.preventDefault(); executeSearch(); }
     }
 
     function openNewForm() {
@@ -311,7 +498,6 @@
       document.getElementById("dateHint").style.display = "block";
       document.getElementById("showOldDate").innerText = task.followUpDate;
 
-      // ถ้ามีสิทธิ์ แอดมิน ให้แสดงกล่องกรอกค่าคอม
       if (isAdmin) {
         document.getElementById("adminSection").style.display = "block";
         disableAdminInputs(false);
@@ -368,16 +554,11 @@
     }
 
     function toggleView(view) {
-      if(view === 'form') {
-        document.getElementById("dashboardView").style.display = "none";
-        document.getElementById("formView").style.display = "block";
-        window.scrollTo(0, 0);
-      } else {
-        document.getElementById("dashboardView").style.display = "block";
-        document.getElementById("formView").style.display = "none";
-      }
+      document.getElementById("dashboardView").style.display = view === 'dashboard' ? "block" : "none";
+      document.getElementById("formView").style.display = view === 'form' ? "block" : "none";
+      document.getElementById("paymentSystemView").style.display = "none";
+      window.scrollTo(0, 0);
     }
-    
     function backToDashboard() { toggleView('dashboard'); }
   </script>
 </body>
