@@ -55,7 +55,6 @@
 
       <h4 style="color:#2c3e50; margin-bottom: 10px;">📋 รายการงาน:</h4>
       
-      <!-- 🌟 ข้อความแสดงผลเริ่มต้น -->
       <div id="loadingMsg">กำลังค้นหาข้อมูล... ⏳</div>
       <div id="emptyMsg">💡 พิมพ์ข้อมูลที่ต้องการค้นหาแล้วกดปุ่ม "ค้นหา"<br>(หากเว้นว่างไว้ จะแสดงงานทั้งหมด)</div>
       
@@ -137,6 +136,10 @@
         <input type="date" id="followUpDate" name="followUpDate">
         <p id="dateHint" style="font-size:12px; color:#e74c3c; margin-top:-10px; display:none;">* วันที่เดิม: <span id="showOldDate"></span> (ถ้าไม่เปลี่ยนให้เว้นว่างไว้)</p>
 
+        <!-- 🌟 เพิ่มช่องเก็บลิงก์แชต -->
+        <label>ลิงก์แชตลูกค้า (ถ้ามี)</label>
+        <input type="url" id="chatLink" name="chatLink" placeholder="วาง URL แชต เช่น https://line.me/...">
+
         <label>หมายเหตุเพิ่มเติม</label>
         <textarea id="note" name="note" rows="2" placeholder="รายละเอียดอื่นๆ"></textarea>
 
@@ -150,7 +153,6 @@
     let myTasks = []; 
     let isAdmin = false; 
 
-    // เริ่มต้นระบบ LIFF
     fetch(GAS_API_URL + "?action=getSettings")
       .then(response => response.json())
       .then(config => {
@@ -165,7 +167,6 @@
                   document.getElementById('userId').value = profile.userId;
                   document.getElementById('outsourceName').value = profile.displayName;
                   document.getElementById('displayName').innerText = profile.displayName;
-                  // 🌟 แก้ไข: ไม่ดึงข้อมูลอัตโนมัติแล้ว ปล่อยให้หน้าจอสะอาดจนกว่าจะกดปุ่มค้นหา
               });
           } else {
               liff.login();
@@ -173,7 +174,6 @@
       });
     }
 
-    // 🌟 ย้ายระบบดึงข้อมูลจากหลังบ้าน มารวมไว้ในปุ่มค้นหา
     function executeSearch() {
       const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
       const userId = document.getElementById('userId').value;
@@ -182,7 +182,6 @@
       document.getElementById("emptyMsg").style.display = "none";
       document.getElementById("taskList").innerHTML = "";
       
-      // ดึงข้อมูลใหม่จาก Google Sheets ทุกครั้งที่กดค้นหา
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "getMyTasks", userId: userId })
@@ -192,14 +191,13 @@
         document.getElementById("loadingMsg").style.display = "none";
         
         if(data.status === "success") {
-          myTasks = data.data; // เก็บไว้ใช้ตอนอัปเดต
+          myTasks = data.data; 
           isAdmin = data.isAdmin; 
           
           if(isAdmin) {
              document.getElementById("mainTitle").innerText = "👑 แดชบอร์ดผู้ดูแลระบบ";
           }
           
-          // กรองข้อมูลตามที่ค้นหา
           let filteredTasks = myTasks;
           if (keyword !== "") {
             filteredTasks = myTasks.filter(task => {
@@ -242,15 +240,14 @@
       tasks.forEach((task) => {
         let card = document.createElement("div");
         card.className = "task-card";
-        
-        // เวลาส่งแก้ไข ให้อ้างอิง index จาก myTasks ตัวหลักเสมอ
         const originalIndex = myTasks.indexOf(task);
         card.onclick = () => openEditForm(originalIndex);
         
         let ownerTag = isAdmin ? `<span style="color:#2980b9; font-weight:bold;">[${task.outsourceName}]</span> ` : "";
+        let chatIcon = task.chatLink ? ` <span style="font-size:12px;">💬</span>` : "";
 
         card.innerHTML = `
-          <div class="task-title">🚗 ${task.plate}</div>
+          <div class="task-title">🚗 ${task.plate}${chatIcon}</div>
           <div class="task-detail">👤 ${ownerTag}${task.customerName} | 📞 ${task.phone}</div>
           <div class="task-detail">🛡️ ${task.insuranceType || "-"} (${task.insuranceCompany || "-"})</div>
           <div class="status-badge">${task.status}</div>
@@ -292,6 +289,7 @@
       document.getElementById("insuranceType").value = task.insuranceType;
       document.getElementById("grossPremium").value = task.grossPremium;
       document.getElementById("status").value = task.status;
+      document.getElementById("chatLink").value = task.chatLink || ""; // 🌟 เติมลิงก์แชต
       document.getElementById("note").value = task.note;
 
       document.getElementById("plate").readOnly = true;
@@ -348,7 +346,7 @@
             btn.innerText = "💾 บันทึกข้อมูลงาน";
             btn.disabled = false;
             backToDashboard();
-            executeSearch(); // 🌟 บันทึกเสร็จ ให้โหลดข้อมูลค้นหาซ้ำอีกรอบอัตโนมัติ
+            executeSearch(); 
         } else {
             alert("เกิดข้อผิดพลาด: " + data.message);
             btn.innerText = "💾 บันทึกข้อมูลงาน";
