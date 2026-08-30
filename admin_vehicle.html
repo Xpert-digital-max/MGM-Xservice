@@ -221,6 +221,16 @@
       if (tab === 'pending') loadPendingComm();
     }
 
+    // 🌟 ฟังก์ชันคำนวณหาวันที่ของปีหน้า (บวก 1 ปีจากวันนี้)
+    function getNextYearDate() {
+       let d = new Date();
+       d.setFullYear(d.getFullYear() + 1); // บวกไป 1 ปี
+       let year = d.getFullYear();
+       let month = String(d.getMonth() + 1).padStart(2, '0');
+       let day = String(d.getDate()).padStart(2, '0');
+       return `${year}-${month}-${day}`;
+    }
+
     function searchVehicle() {
       let kw = document.getElementById("searchInput").value.trim();
       
@@ -284,8 +294,11 @@
                document.getElementById("insType").value = "";
                document.getElementById("grossPremium").value = "";
                document.getElementById("commissionPct").value = "";
-               document.getElementById("insExpiry").value = "";
+               
+               // 🌟 ดึงวันที่ล่วงหน้า 1 ปีมาใส่เป็นค่าเริ่มต้น สำหรับงานใหม่
+               document.getElementById("insExpiry").value = getNextYearDate();
                document.getElementById("oldInsExpiry").value = "";
+               
                calcComm();
             }
         }
@@ -307,8 +320,12 @@
         document.getElementById("commissionPct").value = d.commissionPct || "";
         document.getElementById("oldInsExpiry").value = d.insExpiry || "";
         
-        if (d.insExpiry) document.getElementById("insExpiry").value = convertDateToInput(d.insExpiry);
-        else document.getElementById("insExpiry").value = "";
+        // 🌟 ถ้าข้อมูลเดิมมีวันหมดอายุอยู่แล้ว ให้แสดงวันเดิม แต่ถ้าไม่มีให้โชว์วันที่ล่วงหน้า 1 ปี
+        if (d.insExpiry) {
+            document.getElementById("insExpiry").value = convertDateToInput(d.insExpiry);
+        } else {
+            document.getElementById("insExpiry").value = getNextYearDate();
+        }
         
         calcComm();
     }
