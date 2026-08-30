@@ -69,7 +69,7 @@
     <!-- ========================================== -->
     <div id="searchView">
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="พิมพ์ทะเบียนรถ (เช่น กค1234)">
+        <input type="text" id="searchInput" placeholder="พิมพ์ทะเบียน หรือ เบอร์โทร">
         <button class="btn btn-primary" onclick="searchVehicle()">ค้นหา</button>
       </div>
 
@@ -183,12 +183,10 @@
         body: JSON.stringify({ action: "checkRoleVehicle", userId: userId })
       }).then(res => res.json()).then(data => {
         
-        // 1. เช็คสิทธิ์เข้าใช้งานหน้าเว็บ (จากคอลัมน์ admin_vehicle.html)
         if(data.canAccess) {
            document.getElementById("loadingScreen").style.display = "none";
            document.getElementById("mainApp").style.display = "block";
            
-           // 2. เช็คสิทธิ์ระดับหัวหน้า (จากคอลัมน์ Admin_Outsource)
            if (data.canManageComm) {
                document.getElementById("tabCart").style.display = "block";
                document.getElementById("commSection").style.display = "block";
@@ -208,50 +206,98 @@
       if (tab === 'cart') loadPaymentCart();
     }
 
+    // ฟังก์ชันค้นหาใหม่
     function searchVehicle() {
-      let plate = document.getElementById("searchInput").value.trim();
-      if(!plate) return Swal.fire("","กรุณาพิมพ์ทะเบียนรถก่อนค้นหา","warning");
+      let kw = document.getElementById("searchInput").value.trim();
       
       Swal.fire({ title: 'กำลังค้นหา...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       fetch(GAS_API_URL, {
         method: 'POST',
-        body: JSON.stringify({ action: "searchMasterVehicle", plate: plate })
+        body: JSON.stringify({ action: "searchMasterVehicle", plate: kw }) 
       }).then(res => res.json()).then(res => {
         Swal.close();
-        document.getElementById("formSection").style.display = "block";
-        document.getElementById("plate").value = plate;
         
-        if (res.data.found) {
-            let d = res.data;
-            document.getElementById("formStatus").innerText = "📝 พบข้อมูลเดิม (กำลังแก้ไข)";
-            document.getElementById("formStatus").style.color = "#1565c0";
+        if (res.data && res.data.found) {
+            let matches = res.data.data;
             
-            document.getElementById("rowIndex").value = d.rowIndex;
-            document.getElementById("phone").value = d.phone || "";
-            document.getElementById("insCompany").value = d.insCompany || "";
-            document.getElementById("insType").value = d.insType || "";
-            document.getElementById("grossPremium").value = d.grossPremium || "";
-            document.getElementById("commissionPct").value = d.commissionPct || "";
-            document.getElementById("oldInsExpiry").value = d.insExpiry || "";
-            
-            if (d.insExpiry) document.getElementById("insExpiry").value = convertDateToInput(d.insExpiry);
-            calcComm();
+            if (matches.length === 1) {
+                fillForm(matches[0]);
+            } else {
+                let options = {};
+                matches.forEach(m => {
+                    options[m.rowIndex] = m.plate + " (เบอร์: " + (m.phone || "-") + ")";
+                });
+                
+                Swal.fire({
+                    title: 'พบข้อมูลหลายรายการ',
+                    text: 'กรุณาเลือกรถที่ต้องการจัดการ',
+                    input: 'select',
+                    inputOptions: options,
+                    showCancelButton: true,
+                    confirmButtonText: 'เลือกคันนี้',
+                    cancelButtonText: 'ยกเลิก'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let selectedRow = parseInt(result.value);
+                        let selectedData = matches.find(m => m.rowIndex === selectedRow);
+                        fillForm(selectedData);
+                    }
+                });
+            }
         } else {
-            document.getElementById("formStatus").innerText = "✨ ทะเบียนใหม่ (กำลังเพิ่มข้อมูล)";
-            document.getElementById("formStatus").style.color = "#2e7d32";
-            
-            document.getElementById("rowIndex").value = "0";
-            document.getElementById("phone").value = "";
-            document.getElementById("insCompany").value = "";
-            document.getElementById("insType").value = "";
-            document.getElementById("grossPremium").value = "";
-            document.getElementById("commissionPct").value = "";
-            document.getElementById("insExpiry").value = "";
-            document.getElementById("oldInsExpiry").value = "";
-            calcComm();
+            if (kw === "") {
+               Swal.fire("ไม่พบข้อมูล","ไม่มีข้อมูลในระบบเลยครับ","warning");
+            } else {
+               document.getElementById("formSection").style.display = "block";
+               document.getElementById("formStatus").innerText = "✨ ทะเบียนใหม่ (กำลังเพิ่มข้อมูล)";
+               document.getElementById("formStatus").style.color = "#2e7d32";
+               
+               document.getElementById("rowIndex").value = "0";
+               
+               // ตรวจสอบว่าที่พิมพ์มาเป็นเบอร์โทรหรือทะเบียน (ถ้าเป็นตัวเลขล้วนให้ใส่ช่องเบอร์โทร)
+               if (/^\d+$/.test(kw.replace(/[-\s]/g, ''))) {
+                   document.getElementById("plate").value = "";
+                   document.getElementById("plate").readOnly = false;
+                   document.getElementById("plate").placeholder = "กรุณาระบุทะเบียนรถ";
+                   document.getElementById("phone").value = kw;
+               } else {
+                   document.getElementById("plate").value = kw;
+                   document.getElementById("plate").readOnly = true;
+                   document.getElementById("phone").value = "";
+               }
+               
+               document.getElementById("insCompany").value = "";
+               document.getElementById("insType").value = "";
+               document.getElementById("grossPremium").value = "";
+               document.getElementById("commissionPct").value = "";
+               document.getElementById("insExpiry").value = "";
+               document.getElementById("oldInsExpiry").value = "";
+               calcComm();
+            }
         }
       });
+    }
+
+    function fillForm(d) {
+        document.getElementById("formSection").style.display = "block";
+        document.getElementById("formStatus").innerText = "📝 พบข้อมูลเดิม (กำลังแก้ไข)";
+        document.getElementById("formStatus").style.color = "#1565c0";
+        
+        document.getElementById("rowIndex").value = d.rowIndex;
+        document.getElementById("plate").value = d.plate;
+        document.getElementById("plate").readOnly = true;
+        document.getElementById("phone").value = d.phone || "";
+        document.getElementById("insCompany").value = d.insCompany || "";
+        document.getElementById("insType").value = d.insType || "";
+        document.getElementById("grossPremium").value = d.grossPremium || "";
+        document.getElementById("commissionPct").value = d.commissionPct || "";
+        document.getElementById("oldInsExpiry").value = d.insExpiry || "";
+        
+        if (d.insExpiry) document.getElementById("insExpiry").value = convertDateToInput(d.insExpiry);
+        else document.getElementById("insExpiry").value = "";
+        
+        calcComm();
     }
 
     function convertDateToInput(ddmmyyyy) {
@@ -275,10 +321,15 @@
     }
 
     function saveVehicle() {
+      let plateVal = document.getElementById("plate").value.trim();
+      if(!plateVal) {
+          return Swal.fire("ข้อมูลไม่ครบ", "กรุณาระบุทะเบียนรถ", "warning");
+      }
+
       let payload = {
          action: "saveMasterVehicle",
          rowIndex: document.getElementById("rowIndex").value,
-         plate: document.getElementById("plate").value,
+         plate: plateVal,
          phone: document.getElementById("phone").value,
          insCompany: document.getElementById("insCompany").value,
          insType: document.getElementById("insType").value,
@@ -286,7 +337,7 @@
          commissionPct: document.getElementById("commissionPct").value,
          insExpiry: document.getElementById("insExpiry").value,
          oldInsExpiry: document.getElementById("oldInsExpiry").value,
-         adminName: adminName // ชื่อไลน์ของผู้ที่กดบันทึก
+         adminName: adminName
       };
 
       let btn = document.getElementById("btnSave");
