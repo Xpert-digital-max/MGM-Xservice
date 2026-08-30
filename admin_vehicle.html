@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Vehicle Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="config.js"></script>
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f0f2f5; margin: 0; padding: 15px; }
+    .container { background: white; max-width: 600px; margin: 0 auto; border-radius: 12px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .header-title { text-align: center; color: #1a237e; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; margin-bottom: 20px; }
+    
+    .tab-container { display: flex; border-bottom: 2px solid #ecf0f1; margin-bottom: 20px; }
+    .tab-btn { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-weight: bold; color: #7f8c8d; transition: 0.3s; }
+    .tab-btn.active { color: #1a237e; border-bottom: 3px solid #1a237e; margin-bottom: -2px; }
+    
+    input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
+    input:focus, select:focus { outline: none; border-color: #1a237e; }
+    label { font-weight: 600; font-size: 14px; color: #34495e; display: block; margin-bottom: 4px; }
+    
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 15px; transition: 0.3s; }
+    .btn-primary { background-color: #1a237e; color: white; margin-bottom: 10px; }
+    .btn-success { background-color: #2e7d32; color: white; margin-bottom: 10px; }
+    .btn-outline { background-color: transparent; border: 1px solid #7f8c8d; color: #7f8c8d; }
+    
+    .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+    .search-box input { margin-bottom: 0; }
+    .search-box button { width: auto; padding: 0 20px; margin-bottom: 0; }
+    
+    .calc-box { background: #e8eaf6; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #c5cae9; }
+    .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    
+    .pay-item { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+    .pay-item input[type="checkbox"] { width: 22px; height: 22px; margin: 0 15px 0 0; cursor: pointer; }
+    .pay-info { flex: 1; }
+    .badge-mkt { display: inline-block; background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-right: 5px; }
+    .badge-cen { display: inline-block; background: #fbe9e7; color: #d84315; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-right: 5px; }
+    .badge-mgr { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    
+    .floating-total { background: #1a237e; color: white; padding: 15px; border-radius: 8px; text-align: center; position: sticky; bottom: 10px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    
+    #loadingScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
+  </style>
+</head>
+<body>
+
+  <div id="loadingScreen">
+    <h3 style="color:#1a237e;">กำลังตรวจสอบสิทธิ์... ⏳</h3>
+  </div>
+
+  <div class="container" id="mainApp" style="display:none;">
+    <div class="header-title">
+      <h2 style="margin:0;">👑 Admin Vehicle CRM</h2>
+      <p style="margin:5px 0 0 0; font-size:14px; color:#7f8c8d;">👤 <span id="displayName">Admin</span></p>
+    </div>
+
+    <!-- แท็บเมนู -->
+    <div class="tab-container">
+      <div id="tabSearch" class="tab-btn active" onclick="switchTab('search')">🔍 ฐานข้อมูลรถ</div>
+      <div id="tabCart" class="tab-btn" onclick="switchTab('cart')">💰 ตะกร้าทำจ่าย</div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 🔍 แท็บ 1: ค้นหา & จัดการฐานข้อมูลรถ -->
+    <!-- ========================================== -->
+    <div id="searchView">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="พิมพ์ทะเบียนรถ (เช่น กค1234)">
+        <button class="btn btn-primary" onclick="searchVehicle()">ค้นหา</button>
+      </div>
+
+      <div id="formSection" style="display: none;">
+        <h4 id="formStatus" style="color:#2e7d32; text-align:center; margin-top:0;">📝 พบข้อมูลเดิม (กำลังแก้ไข)</h4>
+        
+        <input type="hidden" id="rowIndex">
+        <input type="hidden" id="oldInsExpiry">
+
+        <label>ทะเบียนรถ</label>
+        <input type="text" id="plate" readonly style="background:#f4f6f6; font-weight:bold;">
+        
+        <label>เบอร์โทรศัพท์ (ใส่ 0 นำหน้าให้ครบ)</label>
+        <input type="text" id="phone" placeholder="08XXXXXXXX">
+
+        <div class="calc-grid">
+          <div>
+            <label>บริษัทประกัน</label>
+            <input type="text" id="insCompany" placeholder="เช่น วิริยะ">
+          </div>
+          <div>
+            <label>ประเภทประกัน</label>
+            <select id="insType">
+              <option value="">- เลือกระบุ -</option>
+              <option value="ประเภท 1">ประเภท 1</option>
+              <option value="ประเภท 1+ พลัส">ประเภท 1+ พลัส</option>
+              <option value="ประเภท 2+ พลัส">ประเภท 2+ พลัส</option>
+              <option value="ประเภท 2">ประเภท 2</option>
+              <option value="ประเภท 3+ พลัส">ประเภท 3+ พลัส</option>
+              <option value="ประเภท 3">ประเภท 3</option>
+              <option value="ประกันอื่นๆ">ประกันอื่นๆ</option>
+              <option value="พ.ร.บ.">พ.ร.บ.</option>
+            </select>
+          </div>
+        </div>
+
+        <label>วันหมดอายุประกัน (ปีหน้า)</label>
+        <input type="date" id="insExpiry">
+
+        <div class="calc-box">
+          <h4 style="margin-top:0; color:#1a237e;">💰 ส่วนคำนวณเบี้ย & ค่าคอมมิชชั่น</h4>
+          
+          <label>เบี้ยรวมภาษี (Gross)</label>
+          <input type="number" id="grossPremium" placeholder="ยอดรวมทั้งหมด" oninput="calcComm()">
+          
+          <div class="calc-grid">
+            <div><label>เบี้ยสุทธิ (Net)</label><input type="text" id="netPremium" readonly style="background:#fff;"></div>
+            <div><label>% คอมมิชชั่น</label><input type="number" id="commissionPct" placeholder="เช่น 15" oninput="calcComm()"></div>
+          </div>
+          
+          <div style="font-size:12px; color:#7f8c8d; margin-bottom:5px;">ส่วนแบ่งผลประโยชน์:</div>
+          <div class="calc-grid">
+            <div><label class="badge-mkt">การตลาด 10%</label><input type="text" id="mktFee" readonly style="background:#fff;"></div>
+            <div><label class="badge-cen">ส่วนกลาง 5%</label><input type="text" id="centralFee" readonly style="background:#fff;"></div>
+            <div><label class="badge-mgr">Manager 5%</label><input type="text" id="managerFee" readonly style="background:#fff;"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-success" id="btnSave" onclick="saveVehicle()">💾 บันทึกเข้าระบบ</button>
+        <button class="btn btn-outline" onclick="resetForm()">ยกเลิก</button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 💰 แท็บ 2: ตะกร้าทำจ่าย -->
+    <!-- ========================================== -->
+    <div id="cartView" style="display: none;">
+      <div id="cartLoading" style="text-align:center; padding:20px; color:#1a237e; display:none;">กำลังโหลดรายการ... ⏳</div>
+      <div id="cartList"></div>
+      
+      <div id="floatingTotalBox" class="floating-total" style="display: none;">
+        <div style="font-size:14px; opacity:0.9;">สรุปยอดโอนที่เลือก</div>
+        <div style="display:flex; justify-content:space-around; margin: 10px 0;">
+           <div><small>การตลาด</small><br><b id="sumMkt" style="font-size:18px;">0</b></div>
+           <div><small>ส่วนกลาง</small><br><b id="sumCen" style="font-size:18px;">0</b></div>
+           <div><small>Manager</small><br><b id="sumMgr" style="font-size:18px;">0</b></div>
+        </div>
+        <button class="btn btn-success" style="background:#4caf50; border:none;" onclick="confirmPayment()">ยืนยันทำจ่าย & ส่ง LINE</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let adminName = "";
+    let adminId = "";
+    let rawPending = [];
+
+    // เริ่มต้น LIFF และตรวจสอบสิทธิ์
+    fetch(GAS_API_URL + "?action=getSettings")
+      .then(res => res.json())
+      .then(config => {
+          if (!config.OUTSOURCE_LIFF_ID) return alert("ยังไม่ได้ตั้งค่า LIFF ID");
+          liff.init({ liffId: config.OUTSOURCE_LIFF_ID }).then(() => {
+              if (liff.isLoggedIn()) {
+                  liff.getProfile().then(profile => {
+                      adminId = profile.userId;
+                      adminName = profile.displayName;
+                      document.getElementById('displayName').innerText = adminName;
+                      checkAdminRole(adminId);
+                  });
+              } else {
+                  liff.login();
+              }
+          });
+      });
+
+    function checkAdminRole(userId) {
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "checkRole", userId: userId })
+      }).then(res => res.json()).then(data => {
+        if(data.isAdmin) {
+           document.getElementById("loadingScreen").style.display = "none";
+           document.getElementById("mainApp").style.display = "block";
+        } else {
+           document.getElementById("loadingScreen").innerHTML = "<h3 style='color:#c0392b;'>❌ คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h3>";
+        }
+      });
+    }
+
+    function switchTab(tab) {
+      document.getElementById("tabSearch").className = tab === 'search' ? "tab-btn active" : "tab-btn";
+      document.getElementById("tabCart").className = tab === 'cart' ? "tab-btn active" : "tab-btn";
+      document.getElementById("searchView").style.display = tab === 'search' ? "block" : "none";
+      document.getElementById("cartView").style.display = tab === 'cart' ? "block" : "none";
+      
+      if (tab === 'cart') loadPaymentCart();
+    }
+
+    // ==========================================
+    // ส่วนที่ 1: ค้นหา & บันทึก
+    // ==========================================
+    function searchVehicle() {
+      let plate = document.getElementById("searchInput").value.trim();
+      if(!plate) return Swal.fire("","กรุณาพิมพ์ทะเบียนรถก่อนค้นหา","warning");
+      
+      Swal.fire({ title: 'กำลังค้นหา...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "searchMasterVehicle", plate: plate })
+      }).then(res => res.json()).then(res => {
+        Swal.close();
+        document.getElementById("formSection").style.display = "block";
+        document.getElementById("plate").value = plate;
+        
+        if (res.data.found) {
+            let d = res.data;
+            document.getElementById("formStatus").innerText = "📝 พบข้อมูลเดิม (กำลังแก้ไข)";
+            document.getElementById("formStatus").style.color = "#1565c0";
+            
+            document.getElementById("rowIndex").value = d.rowIndex;
+            document.getElementById("phone").value = d.phone || "";
+            document.getElementById("insCompany").value = d.insCompany || "";
+            document.getElementById("insType").value = d.insType || "";
+            document.getElementById("grossPremium").value = d.grossPremium || "";
+            document.getElementById("commissionPct").value = d.commissionPct || "";
+            document.getElementById("oldInsExpiry").value = d.insExpiry || "";
+            
+            if (d.insExpiry) document.getElementById("insExpiry").value = convertDateToInput(d.insExpiry);
+            calcComm();
+        } else {
+            document.getElementById("formStatus").innerText = "✨ ทะเบียนใหม่ (กำลังเพิ่มข้อมูล)";
+            document.getElementById("formStatus").style.color = "#2e7d32";
+            
+            document.getElementById("rowIndex").value = "0";
+            document.getElementById("phone").value = "";
+            document.getElementById("insCompany").value = "";
+            document.getElementById("insType").value = "";
+            document.getElementById("grossPremium").value = "";
+            document.getElementById("commissionPct").value = "";
+            document.getElementById("insExpiry").value = "";
+            document.getElementById("oldInsExpiry").value = "";
+            calcComm();
+        }
+      });
+    }
+
+    function convertDateToInput(ddmmyyyy) {
+       if(!ddmmyyyy) return "";
+       let p = ddmmyyyy.split("/");
+       if(p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
+       return ddmmyyyy;
+    }
+
+    function calcComm() {
+      let gross = parseFloat(document.getElementById('grossPremium').value) || 0;
+      let net = gross > 0 ? (gross / 1.07428) : 0;
+      document.getElementById('netPremium').value = net > 0 ? net.toFixed(2) : "";
+
+      let pct = parseFloat(document.getElementById('commissionPct').value) || 0;
+      let totalComm = net * (pct / 100);
+      
+      document.getElementById('mktFee').value = totalComm > 0 ? (totalComm * 0.10).toFixed(2) : "";
+      document.getElementById('centralFee').value = totalComm > 0 ? (totalComm * 0.05).toFixed(2) : "";
+      document.getElementById('managerFee').value = totalComm > 0 ? (totalComm * 0.05).toFixed(2) : "";
+    }
+
+    function saveVehicle() {
+      let payload = {
+         action: "saveMasterVehicle",
+         rowIndex: document.getElementById("rowIndex").value,
+         plate: document.getElementById("plate").value,
+         phone: document.getElementById("phone").value,
+         insCompany: document.getElementById("insCompany").value,
+         insType: document.getElementById("insType").value,
+         grossPremium: document.getElementById("grossPremium").value,
+         commissionPct: document.getElementById("commissionPct").value,
+         insExpiry: document.getElementById("insExpiry").value,
+         oldInsExpiry: document.getElementById("oldInsExpiry").value,
+         adminName: adminName
+      };
+
+      let btn = document.getElementById("btnSave");
+      btn.innerText = "กำลังบันทึก...⏳"; btn.disabled = true;
+
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      }).then(res => res.json()).then(data => {
+         btn.innerText = "💾 บันทึกเข้าระบบ"; btn.disabled = false;
+         Swal.fire("สำเร็จ","บันทึกข้อมูลเรียบร้อยแล้ว","success");
+         resetForm();
+      });
+    }
+
+    function resetForm() {
+      document.getElementById("formSection").style.display = "none";
+      document.getElementById("searchInput").value = "";
+    }
+
+    // ==========================================
+    // ส่วนที่ 2: ตะกร้าทำจ่าย
+    // ==========================================
+    function loadPaymentCart() {
+      document.getElementById("cartLoading").style.display = "block";
+      document.getElementById("cartList").innerHTML = "";
+      document.getElementById("floatingTotalBox").style.display = "none";
+
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "getAdminVehiclePaymentTasks" })
+      }).then(res => res.json()).then(data => {
+        document.getElementById("cartLoading").style.display = "none";
+        if(data.status === "success") {
+           rawPending = data.data.pending;
+           renderCart();
+        }
+      });
+    }
+
+    function renderCart() {
+      const listDiv = document.getElementById("cartList");
+      if(rawPending.length === 0) {
+        listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#7f8c8d;'>🎉 เคลียร์ยอดครบแล้ว ไม่มีค้างจ่ายครับ</div>";
+        return;
+      }
+      
+      document.getElementById("floatingTotalBox").style.display = "block";
+
+      rawPending.forEach((item) => {
+        let div = document.createElement("div");
+        div.className = "pay-item";
+        const valData = JSON.stringify(item).replace(/"/g, '&quot;'); 
+        
+        div.innerHTML = `
+          <input type="checkbox" class="chk-pay" value="${valData}" onchange="calcTotalCart()">
+          <div class="pay-info">
+            <div style="font-weight:bold; color:#1a237e;">🚗 ${item.plate}</div>
+            <div style="font-size:12px; color:#7f8c8d; margin-bottom:5px;">👤 คีย์โดย: ${item.staffName}</div>
+            <div>
+               <span class="badge-mkt">การตลาด ${item.mktFee}</span>
+               <span class="badge-cen">กลาง ${item.centralFee}</span>
+               <span class="badge-mgr">Mgr ${item.managerFee}</span>
+            </div>
+          </div>
+        `;
+        listDiv.appendChild(div);
+      });
+      calcTotalCart();
+    }
+
+    function calcTotalCart() {
+      let tMkt = 0, tCen = 0, tMgr = 0;
+      document.querySelectorAll('.chk-pay:checked').forEach(chk => {
+         let item = JSON.parse(chk.value.replace(/&quot;/g, '"'));
+         tMkt += item.mktFee;
+         tCen += item.centralFee;
+         tMgr += item.managerFee;
+      });
+      document.getElementById("sumMkt").innerText = tMkt.toLocaleString();
+      document.getElementById("sumCen").innerText = tCen.toLocaleString();
+      document.getElementById("sumMgr").innerText = tMgr.toLocaleString();
+    }
+
+    function confirmPayment() {
+      let chk = document.querySelectorAll('.chk-pay:checked');
+      if(chk.length === 0) return Swal.fire("","กรุณาเลือกรายการที่ต้องการทำจ่าย","warning");
+      
+      Swal.fire({
+        title: 'ยืนยันทำจ่าย?',
+        text: `คุณกำลังทำจ่ายจำนวน ${chk.length} คัน ระบบจะส่ง LINE แจ้งเตือนยอดอัตโนมัติ`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'ยืนยันโอนเงิน',
+        cancelButtonText: 'ยกเลิก'
+      }).then((res) => {
+        if(res.isConfirmed) {
+           let itemsToPay = [];
+           chk.forEach(c => itemsToPay.push(JSON.parse(c.value.replace(/&quot;/g, '"'))));
+           
+           document.getElementById("floatingTotalBox").innerHTML = "กำลังประมวลผลและส่ง LINE... ⏳";
+           
+           fetch(GAS_API_URL, {
+             method: 'POST',
+             body: JSON.stringify({ action: "processAdminVehiclePayments", items: itemsToPay })
+           }).then(r => r.json()).then(d => {
+              Swal.fire("สำเร็จ!","ทำจ่ายและแจ้งเตือนเรียบร้อย","success");
+              loadPaymentCart();
+           });
+        }
+      });
+    }
+  </script>
+</body>
+</html>
