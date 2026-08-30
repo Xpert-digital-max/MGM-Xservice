@@ -13,7 +13,7 @@
     .container { background: white; max-width: 600px; margin: 0 auto; border-radius: 12px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
     .header-title { text-align: center; color: #1a237e; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; margin-bottom: 20px; }
     
-    .tab-container { display: flex; border-bottom: 2px solid #ecf0f1; margin-bottom: 20px; }
+    .tab-container { display: flex; border-bottom: 2px solid #ecf0f1; margin-bottom: 20px; overflow-x: auto; white-space: nowrap; }
     .tab-btn { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-weight: bold; color: #7f8c8d; transition: 0.3s; font-size: 14px;}
     .tab-btn.active { color: #1a237e; border-bottom: 3px solid #1a237e; margin-bottom: -2px; }
     
@@ -59,17 +59,18 @@
 
     <!-- แท็บเมนู -->
     <div class="tab-container">
-      <div id="tabSearch" class="tab-btn active" onclick="switchTab('search')">🔍 ค้นหา</div>
-      
-      <!-- 🌟 แท็บพิเศษสำหรับแอดมิน -->
-      <div id="tabPending" class="tab-btn" onclick="switchTab('pending')" style="display:none; color:#d35400;">📝 รอใส่ค่าคอม</div>
-      <div id="tabCart" class="tab-btn" onclick="switchTab('cart')" style="display:none;">💰 รอทำจ่าย</div>
+      <!-- ซ่อนค้นหาไว้ก่อน จะโชว์เฉพาะคนที่มีสิทธิ์ -->
+      <div id="tabSearch" class="tab-btn" onclick="switchTab('search')" style="display:none;">🔍 ค้นหา</div>
+      <div id="tabPending" class="tab-btn" onclick="switchTab('pending')" style="display:none; color:#d35400;">📝 ใส่ค่าคอม</div>
+      <div id="tabCart" class="tab-btn" onclick="switchTab('cart')" style="display:none;">💰 ทำจ่าย</div>
+      <!-- แท็บรายงานจะแสดงให้ทุกคนที่มีชื่อในระบบ -->
+      <div id="tabReport" class="tab-btn" onclick="switchTab('report')" style="display:none; color:#1565c0;">📊 รายงาน</div>
     </div>
 
     <!-- ========================================== -->
     <!-- 🔍 แท็บ 1: ค้นหา & จัดการฐานข้อมูลรถ -->
     <!-- ========================================== -->
-    <div id="searchView">
+    <div id="searchView" style="display: none;">
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="พิมพ์ทะเบียน หรือ เบอร์โทร">
         <button class="btn btn-primary" onclick="searchVehicle()">ค้นหา</button>
@@ -111,10 +112,8 @@
         <label>วันหมดอายุประกัน (ปีหน้า)</label>
         <input type="date" id="insExpiry">
 
-        <!-- กล่องคำนวณค่าคอม จะซ่อน/แสดง ตามสิทธิ์ Admin_Outsource -->
         <div class="calc-box" id="commSection" style="display:none;">
           <h4 style="margin-top:0; color:#1a237e;">💰 ส่วนคำนวณเบี้ย & ค่าคอมมิชชั่น</h4>
-          
           <label>เบี้ยรวมภาษี (Gross)</label>
           <input type="number" id="grossPremium" placeholder="ยอดรวมทั้งหมด" oninput="calcComm()">
           
@@ -162,6 +161,37 @@
       </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- 📊 แท็บ 4: รายงาน (สำหรับทุกคนที่ลงทะเบียน) -->
+    <!-- ========================================== -->
+    <div id="reportView" style="display: none;">
+      <h4 style="color:#1a237e; text-align:center; margin-top:0;">📊 รายงานยอดขายตามวันที่บันทึก</h4>
+      <div class="calc-box">
+        <div class="calc-grid">
+           <div>
+             <label>ตั้งแต่วันที่</label>
+             <input type="date" id="reportStartDate">
+           </div>
+           <div>
+             <label>ถึงวันที่</label>
+             <input type="date" id="reportEndDate">
+           </div>
+        </div>
+        <button class="btn btn-primary" style="margin-bottom:0;" onclick="generateReport()">ค้นหารายงาน</button>
+      </div>
+
+      <div id="reportResult" style="display:none; margin-top:20px;">
+         <div class="calc-box" style="text-align:center; background:#fff; border: 1px solid #1a237e;">
+            <h3 style="margin-top:0; color:#2e7d32;">สรุปยอดขาย (<span id="reportCount">0</span> คัน)</h3>
+            <div style="font-size:14px; color:#7f8c8d; margin-bottom:5px;">ยอดเบี้ยประกันรวม (Gross)</div>
+            <div style="font-size:28px; font-weight:bold; color:#1a237e;" id="reportGross">0</div>
+            <hr style="border:0; border-top:1px dashed #c5cae9; margin:15px 0;">
+            <div style="font-size:14px; color:#7f8c8d; margin-bottom:5px;">ยอดเบี้ยสุทธิรวม (Net)</div>
+            <div style="font-size:28px; font-weight:bold; color:#d35400;" id="reportNet">0</div>
+         </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -193,17 +223,35 @@
         body: JSON.stringify({ action: "checkRoleVehicle", userId: userId })
       }).then(res => res.json()).then(data => {
         
-        if(data.canAccess) {
+        // ถ้าลงทะเบียนในระบบ จะเปิดให้เข้าถึงแอปได้
+        if(data.isRegistered) {
            document.getElementById("loadingScreen").style.display = "none";
            document.getElementById("mainApp").style.display = "block";
            
+           // 🌟 เปิดแท็บรายงานให้ "ทุกคน" เห็น
+           document.getElementById("tabReport").style.display = "block";
+           
+           // 🌟 เช็คสิทธิ์พนักงาน (ค้นหาและบันทึก)
+           if(data.canAccess) {
+               document.getElementById("tabSearch").style.display = "block";
+           }
+           
+           // 🌟 เช็คสิทธิ์แอดมิน (จัดการเงิน)
            if (data.canManageComm) {
                document.getElementById("tabPending").style.display = "block";
                document.getElementById("tabCart").style.display = "block";
                document.getElementById("commSection").style.display = "block";
            }
+           
+           // 🌟 กำหนดหน้าแรกที่เปิดมาเจอ
+           if (data.canAccess) {
+               switchTab('search'); // มีสิทธิ์บันทึก ไปหน้าค้นหา
+           } else {
+               switchTab('report'); // มีแค่ชื่อ ไปหน้ารายงานเลย
+           }
+           
         } else {
-           document.getElementById("loadingScreen").innerHTML = "<h3 style='color:#c0392b;'>❌ คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h3>";
+           document.getElementById("loadingScreen").innerHTML = "<h3 style='color:#c0392b;'>❌ คุณไม่ได้ลงทะเบียนในระบบ</h3>";
         }
       });
     }
@@ -212,19 +260,20 @@
       document.getElementById("tabSearch").className = tab === 'search' ? "tab-btn active" : "tab-btn";
       document.getElementById("tabPending").className = tab === 'pending' ? "tab-btn active" : "tab-btn";
       document.getElementById("tabCart").className = tab === 'cart' ? "tab-btn active" : "tab-btn";
+      document.getElementById("tabReport").className = tab === 'report' ? "tab-btn active" : "tab-btn";
       
       document.getElementById("searchView").style.display = tab === 'search' ? "block" : "none";
       document.getElementById("pendingView").style.display = tab === 'pending' ? "block" : "none";
       document.getElementById("cartView").style.display = tab === 'cart' ? "block" : "none";
+      document.getElementById("reportView").style.display = tab === 'report' ? "block" : "none";
       
       if (tab === 'cart') loadPaymentCart();
       if (tab === 'pending') loadPendingComm();
     }
 
-    // 🌟 ฟังก์ชันคำนวณหาวันที่ของปีหน้า (บวก 1 ปีจากวันนี้)
     function getNextYearDate() {
        let d = new Date();
-       d.setFullYear(d.getFullYear() + 1); // บวกไป 1 ปี
+       d.setFullYear(d.getFullYear() + 1); 
        let year = d.getFullYear();
        let month = String(d.getMonth() + 1).padStart(2, '0');
        let day = String(d.getDate()).padStart(2, '0');
@@ -233,18 +282,14 @@
 
     function searchVehicle() {
       let kw = document.getElementById("searchInput").value.trim();
-      
       Swal.fire({ title: 'กำลังค้นหา...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "searchMasterVehicle", plate: kw }) 
       }).then(res => res.json()).then(res => {
         Swal.close();
-        
         if (res.data && res.data.found) {
             let matches = res.data.data;
-            
             if (matches.length === 1) {
                 fillForm(matches[0]);
             } else {
@@ -252,7 +297,6 @@
                 matches.forEach(m => {
                     options[m.rowIndex] = m.plate + " (เบอร์: " + (m.phone || "-") + ")";
                 });
-                
                 Swal.fire({
                     title: 'พบข้อมูลหลายรายการ',
                     text: 'กรุณาเลือกรถที่ต้องการจัดการ',
@@ -276,7 +320,6 @@
                document.getElementById("formSection").style.display = "block";
                document.getElementById("formStatus").innerText = "✨ ทะเบียนใหม่ (กำลังเพิ่มข้อมูล)";
                document.getElementById("formStatus").style.color = "#2e7d32";
-               
                document.getElementById("rowIndex").value = "0";
                
                if (/^\d+$/.test(kw.replace(/[-\s]/g, ''))) {
@@ -294,11 +337,8 @@
                document.getElementById("insType").value = "";
                document.getElementById("grossPremium").value = "";
                document.getElementById("commissionPct").value = "";
-               
-               // 🌟 ดึงวันที่ล่วงหน้า 1 ปีมาใส่เป็นค่าเริ่มต้น สำหรับงานใหม่
                document.getElementById("insExpiry").value = getNextYearDate();
                document.getElementById("oldInsExpiry").value = "";
-               
                calcComm();
             }
         }
@@ -309,7 +349,6 @@
         document.getElementById("formSection").style.display = "block";
         document.getElementById("formStatus").innerText = "📝 พบข้อมูลเดิม (กำลังแก้ไข)";
         document.getElementById("formStatus").style.color = "#1565c0";
-        
         document.getElementById("rowIndex").value = d.rowIndex;
         document.getElementById("plate").value = d.plate;
         document.getElementById("plate").readOnly = true;
@@ -319,14 +358,8 @@
         document.getElementById("grossPremium").value = d.grossPremium || "";
         document.getElementById("commissionPct").value = d.commissionPct || "";
         document.getElementById("oldInsExpiry").value = d.insExpiry || "";
-        
-        // 🌟 ถ้าข้อมูลเดิมมีวันหมดอายุอยู่แล้ว ให้แสดงวันเดิม แต่ถ้าไม่มีให้โชว์วันที่ล่วงหน้า 1 ปี
-        if (d.insExpiry) {
-            document.getElementById("insExpiry").value = convertDateToInput(d.insExpiry);
-        } else {
-            document.getElementById("insExpiry").value = getNextYearDate();
-        }
-        
+        if (d.insExpiry) document.getElementById("insExpiry").value = convertDateToInput(d.insExpiry);
+        else document.getElementById("insExpiry").value = getNextYearDate();
         calcComm();
     }
 
@@ -340,14 +373,9 @@
     function calcComm() {
       let gross = parseFloat(document.getElementById('grossPremium').value) || 0;
       let net = gross > 0 ? (gross / 1.07428) : 0;
-      
-      // ปัดเศษเบี้ยสุทธิทิ้ง
       document.getElementById('netPremium').value = net > 0 ? Math.floor(net) : "";
-
       let pct = parseFloat(document.getElementById('commissionPct').value) || 0;
       let totalComm = net * (pct / 100);
-      
-      // 🌟 ใช้ Math.floor ปัดเศษค่าคอมมิชชั่นทิ้งทั้งหมด
       document.getElementById('mktFee').value = totalComm > 0 ? Math.floor(totalComm * 0.10) : "";
       document.getElementById('centralFee').value = totalComm > 0 ? Math.floor(totalComm * 0.05) : "";
       document.getElementById('managerFee').value = totalComm > 0 ? Math.floor(totalComm * 0.05) : "";
@@ -355,9 +383,7 @@
 
     function saveVehicle() {
       let plateVal = document.getElementById("plate").value.trim();
-      if(!plateVal) {
-          return Swal.fire("ข้อมูลไม่ครบ", "กรุณาระบุทะเบียนรถ", "warning");
-      }
+      if(!plateVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาระบุทะเบียนรถ", "warning");
 
       let payload = {
          action: "saveMasterVehicle",
@@ -391,7 +417,6 @@
       document.getElementById("searchInput").value = "";
     }
 
-    // 🌟 ระบบดึงงานรอใส่ค่าคอม
     function loadPendingComm() {
       document.getElementById("pendingLoading").style.display = "block";
       document.getElementById("pendingList").innerHTML = "";
@@ -408,7 +433,6 @@
              document.getElementById("pendingList").innerHTML = "<div style='text-align:center; padding:20px; color:#7f8c8d;'>🎉 ไม่มีรายการตกหล่นครับ ทุกคันใส่ค่าคอมครบแล้ว</div>";
              return;
            }
-           
            let html = "";
            list.forEach(item => {
              html += `
@@ -455,14 +479,11 @@
         listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#7f8c8d;'>🎉 เคลียร์ยอดครบแล้ว ไม่มีค้างจ่ายครับ</div>";
         return;
       }
-      
       document.getElementById("floatingTotalBox").style.display = "block";
-
       rawPending.forEach((item) => {
         let div = document.createElement("div");
         div.className = "pay-item";
         const valData = JSON.stringify(item).replace(/"/g, '&quot;'); 
-        
         div.innerHTML = `
           <input type="checkbox" class="chk-pay" value="${valData}" onchange="calcTotalCart()">
           <div class="pay-info">
@@ -508,9 +529,7 @@
         if(res.isConfirmed) {
            let itemsToPay = [];
            chk.forEach(c => itemsToPay.push(JSON.parse(c.value.replace(/&quot;/g, '"'))));
-           
            document.getElementById("floatingTotalBox").innerHTML = "กำลังประมวลผลและส่ง LINE... ⏳";
-           
            fetch(GAS_API_URL, {
              method: 'POST',
              body: JSON.stringify({ action: "processAdminVehiclePayments", items: itemsToPay })
@@ -520,6 +539,29 @@
            });
         }
       });
+    }
+
+    function generateReport() {
+       let sd = document.getElementById("reportStartDate").value;
+       let ed = document.getElementById("reportEndDate").value;
+       
+       if(!sd || !ed) return Swal.fire("","กรุณาเลือกช่วงวันที่ให้ครบถ้วน","warning");
+       if(new Date(sd) > new Date(ed)) return Swal.fire("","วันที่เริ่มต้นต้องน้อยกว่าหรือเท่ากับวันที่สิ้นสุด","warning");
+
+       Swal.fire({ title: 'กำลังคำนวณยอดขาย...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+       
+       fetch(GAS_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: "getVehicleReport", startDate: sd, endDate: ed })
+       }).then(res => res.json()).then(data => {
+          Swal.close();
+          if(data.status === "success") {
+             document.getElementById("reportResult").style.display = "block";
+             document.getElementById("reportCount").innerText = data.count.toLocaleString();
+             document.getElementById("reportGross").innerText = data.totalGross.toLocaleString() + " ฿";
+             document.getElementById("reportNet").innerText = data.totalNet.toLocaleString() + " ฿";
+          }
+       });
     }
   </script>
 </body>
