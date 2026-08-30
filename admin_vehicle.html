@@ -323,14 +323,17 @@
     function calcComm() {
       let gross = parseFloat(document.getElementById('grossPremium').value) || 0;
       let net = gross > 0 ? (gross / 1.07428) : 0;
-      document.getElementById('netPremium').value = net > 0 ? net.toFixed(2) : "";
+      
+      // ปัดเศษเบี้ยสุทธิทิ้ง
+      document.getElementById('netPremium').value = net > 0 ? Math.floor(net) : "";
 
       let pct = parseFloat(document.getElementById('commissionPct').value) || 0;
       let totalComm = net * (pct / 100);
       
-      document.getElementById('mktFee').value = totalComm > 0 ? (totalComm * 0.10).toFixed(2) : "";
-      document.getElementById('centralFee').value = totalComm > 0 ? (totalComm * 0.05).toFixed(2) : "";
-      document.getElementById('managerFee').value = totalComm > 0 ? (totalComm * 0.05).toFixed(2) : "";
+      // 🌟 ใช้ Math.floor ปัดเศษค่าคอมมิชชั่นทิ้งทั้งหมด
+      document.getElementById('mktFee').value = totalComm > 0 ? Math.floor(totalComm * 0.10) : "";
+      document.getElementById('centralFee').value = totalComm > 0 ? Math.floor(totalComm * 0.05) : "";
+      document.getElementById('managerFee').value = totalComm > 0 ? Math.floor(totalComm * 0.05) : "";
     }
 
     function saveVehicle() {
