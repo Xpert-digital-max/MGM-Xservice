@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Vehicle Portal</title>
+  <title>Vehicle Database CRM</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -53,14 +53,15 @@
 
   <div class="container" id="mainApp" style="display:none;">
     <div class="header-title">
-      <h2 style="margin:0;">👑 Admin Vehicle CRM</h2>
-      <p style="margin:5px 0 0 0; font-size:14px; color:#7f8c8d;">👤 <span id="displayName">Admin</span></p>
+      <h2 style="margin:0;">🚗 ระบบฐานข้อมูลลูกค้า</h2>
+      <p style="margin:5px 0 0 0; font-size:14px; color:#7f8c8d;">👤 <span id="displayName">Loading...</span></p>
     </div>
 
     <!-- แท็บเมนู -->
     <div class="tab-container">
       <div id="tabSearch" class="tab-btn active" onclick="switchTab('search')">🔍 ฐานข้อมูลรถ</div>
-      <div id="tabCart" class="tab-btn" onclick="switchTab('cart')">💰 ตะกร้าทำจ่าย</div>
+      <!-- แท็บนี้จะซ่อน/แสดง ตามสิทธิ์ Admin_Outsource -->
+      <div id="tabCart" class="tab-btn" onclick="switchTab('cart')" style="display:none;">💰 ตะกร้าทำจ่าย</div>
     </div>
 
     <!-- ========================================== -->
@@ -108,7 +109,8 @@
         <label>วันหมดอายุประกัน (ปีหน้า)</label>
         <input type="date" id="insExpiry">
 
-        <div class="calc-box">
+        <!-- กล่องคำนวณค่าคอม จะซ่อน/แสดง ตามสิทธิ์ Admin_Outsource -->
+        <div class="calc-box" id="commSection" style="display:none;">
           <h4 style="margin-top:0; color:#1a237e;">💰 ส่วนคำนวณเบี้ย & ค่าคอมมิชชั่น</h4>
           
           <label>เบี้ยรวมภาษี (Gross)</label>
@@ -133,7 +135,7 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- 💰 แท็บ 2: ตะกร้าทำจ่าย -->
+    <!-- 💰 แท็บ 2: ตะกร้าทำจ่าย (เฉพาะแอดมิน) -->
     <!-- ========================================== -->
     <div id="cartView" style="display: none;">
       <div id="cartLoading" style="text-align:center; padding:20px; color:#1a237e; display:none;">กำลังโหลดรายการ... ⏳</div>
@@ -157,7 +159,6 @@
     let adminId = "";
     let rawPending = [];
 
-    // เริ่มต้น LIFF และตรวจสอบสิทธิ์
     fetch(GAS_API_URL + "?action=getSettings")
       .then(res => res.json())
       .then(config => {
@@ -179,11 +180,19 @@
     function checkAdminRole(userId) {
       fetch(GAS_API_URL, {
         method: 'POST',
-        body: JSON.stringify({ action: "checkRole", userId: userId })
+        body: JSON.stringify({ action: "checkRoleVehicle", userId: userId })
       }).then(res => res.json()).then(data => {
-        if(data.isAdmin) {
+        
+        // 1. เช็คสิทธิ์เข้าใช้งานหน้าเว็บ (จากคอลัมน์ admin_vehicle.html)
+        if(data.canAccess) {
            document.getElementById("loadingScreen").style.display = "none";
            document.getElementById("mainApp").style.display = "block";
+           
+           // 2. เช็คสิทธิ์ระดับหัวหน้า (จากคอลัมน์ Admin_Outsource)
+           if (data.canManageComm) {
+               document.getElementById("tabCart").style.display = "block";
+               document.getElementById("commSection").style.display = "block";
+           }
         } else {
            document.getElementById("loadingScreen").innerHTML = "<h3 style='color:#c0392b;'>❌ คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h3>";
         }
@@ -199,9 +208,6 @@
       if (tab === 'cart') loadPaymentCart();
     }
 
-    // ==========================================
-    // ส่วนที่ 1: ค้นหา & บันทึก
-    // ==========================================
     function searchVehicle() {
       let plate = document.getElementById("searchInput").value.trim();
       if(!plate) return Swal.fire("","กรุณาพิมพ์ทะเบียนรถก่อนค้นหา","warning");
@@ -280,7 +286,7 @@
          commissionPct: document.getElementById("commissionPct").value,
          insExpiry: document.getElementById("insExpiry").value,
          oldInsExpiry: document.getElementById("oldInsExpiry").value,
-         adminName: adminName
+         adminName: adminName // ชื่อไลน์ของผู้ที่กดบันทึก
       };
 
       let btn = document.getElementById("btnSave");
@@ -301,9 +307,6 @@
       document.getElementById("searchInput").value = "";
     }
 
-    // ==========================================
-    // ส่วนที่ 2: ตะกร้าทำจ่าย
-    // ==========================================
     function loadPaymentCart() {
       document.getElementById("cartLoading").style.display = "block";
       document.getElementById("cartList").innerHTML = "";
@@ -339,7 +342,7 @@
           <input type="checkbox" class="chk-pay" value="${valData}" onchange="calcTotalCart()">
           <div class="pay-info">
             <div style="font-weight:bold; color:#1a237e;">🚗 ${item.plate}</div>
-            <div style="font-size:12px; color:#7f8c8d; margin-bottom:5px;">👤 คีย์โดย: ${item.staffName}</div>
+            <div style="font-size:12px; color:#7f8c8d; margin-bottom:5px;">👤 ผู้ดูแล: ${item.staffName}</div>
             <div>
                <span class="badge-mkt">การตลาด ${item.mktFee}</span>
                <span class="badge-cen">กลาง ${item.centralFee}</span>
