@@ -92,6 +92,12 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึกข้อมูล...';
 
+            // ดึงค่าเบอร์โทรและจัดการให้มี 0 นำหน้าเสมอ (กรณีคนพิมพ์ตกเลข 0)
+            let rawPhone = document.getElementById('phone').value.trim();
+            if (rawPhone.length === 9 && !rawPhone.startsWith('0')) {
+                rawPhone = '0' + rawPhone;
+            }
+
             // เตรียมข้อมูลส่งไปหา Google Apps Script
             const payload = {
                 action: "submitAgentRegistration",
@@ -100,7 +106,7 @@
                 pictureUrl: lineProfile.pictureUrl,
                 fullName: document.getElementById('fullName').value,
                 nickname: document.getElementById('nickname').value,
-                phone: document.getElementById('phone').value
+                phone: rawPhone // ส่งเบอร์ที่จัดการเลข 0 แล้ว
             };
 
             try {
