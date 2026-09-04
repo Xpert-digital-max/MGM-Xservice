@@ -62,12 +62,9 @@
     </div>
 
     <script>
-        // 🌟 1. ใส่ LIFF ID สำหรับหน้าสมัครตัวแทน (สร้างใหม่จาก LINE Developers)
-        const AGENT_LIFF_ID = "ใส่_LIFF_ID_สมัครตัวแทนตรงนี้"; 
-        
         let lineProfile = {};
 
-        // เริ่มต้นการทำงานของ LIFF
+        // 🌟 เริ่มต้นการทำงานของ LIFF (ตัวแปร AGENT_LIFF_ID จะถูกดึงมาจาก config.js โดยอัตโนมัติ)
         window.onload = () => {
             liff.init({ liffId: AGENT_LIFF_ID }).then(() => {
                 if (liff.isLoggedIn()) {
@@ -107,7 +104,7 @@
             };
 
             try {
-                // GAS_API_URL ดึงมาจากไฟล์ config.js ของคุณ
+                // 🌟 GAS_API_URL ดึงมาจากไฟล์ config.js
                 const response = await fetch(GAS_API_URL, {
                     method: 'POST',
                     body: JSON.stringify(payload)
