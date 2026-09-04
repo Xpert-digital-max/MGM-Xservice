@@ -1,144 +1,203 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ลงทะเบียนตัวแทนพาร์ทเนอร์</title>
-    
-    <!-- Bootstrap & Tailwind สำหรับความสวยงาม -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- SweetAlert2 & LINE LIFF -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    
-    <!-- 🌟 ดึงตัวแปรจาก config.js ของคุณ -->
-    <script src="config.js"></script>
-
-    <style>
-        body { background-color: #f0f2f5; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .container-box { width: 100%; max-width: 450px; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
-        .bg-premium { background: linear-gradient(135deg, #1A365D 0%, #2A4365 100%); }
-        .btn-premium { background-color: #1A365D; color: white; font-weight: bold; transition: 0.3s; }
-        .btn-premium:hover { background-color: #12284C; color: white; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ลงทะเบียนตัวแทน - มิสเตอร์เอ็กซ์ Group</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
+    .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+  </style>
 </head>
-<body>
-
-    <div class="container-box">
-        <!-- ส่วนหัว -->
-        <div class="bg-premium p-4 text-center text-white">
-            <h4 class="fw-bold mb-1">สมัครตัวแทนพาร์ทเนอร์</h4>
-            <p class="small mb-0" style="color: #cbd5e1;">กรอกข้อมูลเพื่อรับสิทธิประโยชน์ที่คุ้มค่ากว่า</p>
-        </div>
-
-        <!-- ฟอร์มรับสมัคร -->
-        <form id="agentForm" class="p-4 space-y-4">
-            
-            <div class="d-flex justify-content-center mb-3">
-                <img id="profileImage" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="rounded-circle border shadow-sm" style="width: 80px; height: 80px; object-fit: cover;" alt="Profile">
-            </div>
-
-            <div>
-                <label class="form-label small fw-bold text-secondary mb-1">ชื่อ - นามสกุล (จริง)</label>
-                <input type="text" id="fullName" required class="form-control" placeholder="ระบุชื่อและนามสกุล">
-            </div>
-            
-            <div>
-                <label class="form-label small fw-bold text-secondary mb-1">ชื่อเล่น</label>
-                <input type="text" id="nickname" required class="form-control" placeholder="ระบุชื่อเล่น">
-            </div>
-
-            <div>
-                <label class="form-label small fw-bold text-secondary mb-1">เบอร์โทรศัพท์</label>
-                <input type="tel" id="phone" required pattern="[0-9]{10}" class="form-control" placeholder="08XXXXXXXX" maxlength="10">
-            </div>
-
-            <button type="submit" id="submitBtn" class="btn btn-premium w-100 btn-lg rounded-pill mt-4 shadow-sm">
-                ยืนยันการสมัคร
-            </button>
-        </form>
+<body class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-900 to-blue-600">
+  
+  <div class="w-full max-w-md glass-card rounded-2xl shadow-2xl p-8 relative overflow-hidden">
+    <div class="text-center mb-6">
+      <h1 class="text-4xl font-bold text-blue-900 mb-2">มิสเตอร์เอ็กซ์ Group</h1>
+      <p class="text-gray-600 font-medium">ระบบบริหารจัดการตัวแทนพาร์ทเนอร์</p>
     </div>
 
-    <script>
-        let lineProfile = {};
+    <!-- ส่วน Loading -->
+    <div id="loadingSection" class="text-center py-10">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600 mx-auto mb-4"></div>
+      <p class="text-gray-600">กำลังตรวจสอบข้อมูล...</p>
+    </div>
 
-        // 🌟 เริ่มต้นการทำงานของ LIFF (ตัวแปร AGENT_LIFF_ID จะถูกดึงมาจาก config.js โดยอัตโนมัติ)
-        window.onload = () => {
-            liff.init({ liffId: AGENT_LIFF_ID }).then(() => {
-                if (liff.isLoggedIn()) {
-                    liff.getProfile().then(profile => {
-                        lineProfile = profile;
-                        document.getElementById('profileImage').src = profile.pictureUrl || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-                    });
-                } else {
-                    liff.login();
-                }
-            }).catch(err => {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ LINE ได้', 'error');
-            });
-        };
+    <!-- ส่วนแสดงสถานะ (กรณีสมัครแล้ว) -->
+    <div id="statusSection" class="hidden text-center py-6">
+      <div id="statusIcon" class="text-6xl mb-4"></div>
+      <h2 id="statusTitle" class="text-2xl font-bold mb-2"></h2>
+      <p id="statusDesc" class="text-gray-600 mb-6"></p>
+      
+      <div class="bg-gray-50 p-4 rounded-xl border text-left mb-6">
+        <p class="text-sm text-gray-500 mb-1">รหัสตัวแทนของคุณ:</p>
+        <p id="agentCodeDisplay" class="text-xl font-bold text-blue-800"></p>
+        <p id="agentNameDisplay" class="text-md text-gray-700 mt-1"></p>
+      </div>
 
-        // จัดการเมื่อกดปุ่มยืนยัน
-        document.getElementById('agentForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+      <!-- 🟢 พื้นที่สำหรับปุ่มกด (เปลี่ยนตามสถานะ) -->
+      <div id="actionButtons"></div>
+    </div>
+
+    <!-- ส่วนฟอร์มลงทะเบียน (กรณียังไม่สมัคร) -->
+    <div id="registerSection" class="hidden">
+      <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mb-6 rounded-r">
+        <p class="text-sm text-blue-800">กรุณากรอกข้อมูลเพื่อลงทะเบียนเข้าร่วมเป็นพาร์ทเนอร์</p>
+      </div>
+
+      <form id="registerForm" onsubmit="submitRegistration(event)">
+        <div class="mb-4">
+          <label class="block text-gray-700 font-semibold mb-2">ชื่อ - นามสกุล (จริง) *</label>
+          <input type="text" id="fullName" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required placeholder="เช่น สมชาย ใจดี">
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 font-semibold mb-2">ชื่อเล่น *</label>
+          <input type="text" id="nickname" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required placeholder="เช่น ชาย">
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-700 font-semibold mb-2">เบอร์โทรศัพท์ *</label>
+          <input type="tel" id="phone" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required placeholder="เช่น 0812345678" pattern="[0-9]{9,10}" maxlength="10">
+        </div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-bold py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
+          📝 ยืนยันการลงทะเบียน
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ ใส่ลิงก์ Web App (GAS Exec) ของคุณตรงนี้
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyzFxHS2LMwdh0d2BvggdBiUMDY79wRQr_xfJLBUzo8RB9XbxPQIWaNe6S8PpvGeAJDmw/exec"; 
+    
+    let userProfile = {};
+    let refUserId = "";
+    let AGENT_REG_LIFF_URL = ""; 
+    let QUOTATION_LIFF_URL = ""; 
+
+    window.onload = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      refUserId = urlParams.get('ref') || "";
+
+      try {
+        const configResponse = await fetch(GAS_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: "getConfig" })
+        }).then(res => res.json());
+
+        if (configResponse.success) {
+          AGENT_REG_LIFF_URL = configResponse.data.AGENT_REG_LIFF_URL;
+          QUOTATION_LIFF_URL = configResponse.data.QUOTATION_LIFF_URL; 
+          
+          if (!AGENT_REG_LIFF_URL) return Swal.fire('ตั้งค่าไม่สมบูรณ์', 'ไม่พบ AGENT_REG_LIFF_URL ในแท็บ Settings', 'error');
+        } else {
+          return Swal.fire('ข้อผิดพลาด', 'ดึงข้อมูล Settings ไม่สำเร็จ', 'error');
+        }
+
+        // ดึง LIFF ID จาก URL หรือแปลงจาก LIFF URL ที่ได้มา
+        // (ตัวอย่างนี้ดึง LIFF ID จากโครงสร้างมาตรฐาน liff.line.me/ID)
+        const liffIdMatch = AGENT_REG_LIFF_URL.match(/liff\.line\.me\/([^\/]+)/);
+        const liffId = liffIdMatch ? liffIdMatch[1] : AGENT_REG_LIFF_URL;
+
+        await liff.init({ liffId: liffId });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+        userProfile = await liff.getProfile();
+        checkStatus(userProfile.userId);
+        
+      } catch (err) {
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ LINE ได้', 'error');
+      }
+    };
+
+    function checkStatus(userId) {
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "checkAgentStatus", userId: userId })
+      }).then(res => res.json()).then(res => {
+        document.getElementById('loadingSection').classList.add('hidden');
+        
+        if (res.isRegistered) {
+          document.getElementById('statusSection').classList.remove('hidden');
+          document.getElementById('agentCodeDisplay').innerText = res.agentCode;
+          document.getElementById('agentNameDisplay').innerText = res.fullName;
+
+          const btnContainer = document.getElementById('actionButtons');
+
+          if (res.quotationStatus === "NonActive") {
+            document.getElementById('statusIcon').innerText = "⏳";
+            document.getElementById('statusTitle').innerText = "รอการอนุมัติสิทธิ์";
+            document.getElementById('statusTitle').className = "text-2xl font-bold mb-2 text-yellow-600";
+            document.getElementById('statusDesc').innerText = "ระบบได้รับข้อมูลของคุณแล้ว กรุณารอแอดมินตรวจสอบและอนุมัติสิทธิ์การใช้งานครับ";
             
-            if(!lineProfile.userId) {
-                return Swal.fire('กรุณารอสักครู่', 'กำลังโหลดข้อมูลจาก LINE', 'warning');
-            }
+            btnContainer.innerHTML = `
+              <button onclick="liff.closeWindow()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">
+                ปิดหน้าต่าง
+              </button>
+            `;
+          } else {
+            document.getElementById('statusIcon').innerText = "✅";
+            document.getElementById('statusTitle').innerText = "สิทธิ์ใช้งาน Active";
+            document.getElementById('statusTitle').className = "text-2xl font-bold mb-2 text-green-600";
+            document.getElementById('statusDesc').innerText = "ยินดีต้อนรับ! คุณสามารถเข้าใช้งานระบบออกใบเสนอราคาได้ตามปกติครับ";
+            
+            btnContainer.innerHTML = `
+              <button onclick="window.location.href='${QUOTATION_LIFF_URL}'" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg mb-3">
+                📄 ไปหน้าออกใบเสนอราคา
+              </button>
+              <button onclick="liff.closeWindow()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">
+                ปิดหน้าต่าง
+              </button>
+            `;
+          }
+        } else {
+          document.getElementById('registerSection').classList.remove('hidden');
+        }
+      }).catch(err => Swal.fire('ข้อผิดพลาด', 'ระบบขัดข้อง กรุณาลองใหม่', 'error'));
+    }
 
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึกข้อมูล...';
+    function submitRegistration(e) {
+      e.preventDefault();
+      
+      // บังคับเบอร์โทรให้มีเลข 0 นำหน้ากรณีพิมพ์ตก
+      let rawPhone = document.getElementById('phone').value.trim();
+      if (rawPhone.length === 9 && !rawPhone.startsWith('0')) {
+        rawPhone = '0' + rawPhone;
+      }
 
-            // ดึงค่าเบอร์โทรและจัดการให้มี 0 นำหน้าเสมอ (กรณีคนพิมพ์ตกเลข 0)
-            let rawPhone = document.getElementById('phone').value.trim();
-            if (rawPhone.length === 9 && !rawPhone.startsWith('0')) {
-                rawPhone = '0' + rawPhone;
-            }
+      const data = {
+        fullName: document.getElementById('fullName').value.trim(),
+        nickname: document.getElementById('nickname').value.trim(),
+        phone: rawPhone,
+        userId: userProfile.userId,
+        displayName: userProfile.displayName,
+        pictureUrl: userProfile.pictureUrl,
+        refUserId: refUserId
+      };
 
-            // เตรียมข้อมูลส่งไปหา Google Apps Script
-            const payload = {
-                action: "submitAgentRegistration",
-                userId: lineProfile.userId,
-                displayName: lineProfile.displayName,
-                pictureUrl: lineProfile.pictureUrl,
-                fullName: document.getElementById('fullName').value,
-                nickname: document.getElementById('nickname').value,
-                phone: rawPhone // ส่งเบอร์ที่จัดการเลข 0 แล้ว
-            };
+      Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-            try {
-                // 🌟 GAS_API_URL ดึงมาจากไฟล์ config.js
-                const response = await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
-
-                if(result.status === "success") {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'สมัครสำเร็จ!',
-                        text: 'ระบบได้ส่งข้อมูลรหัสตัวแทนให้คุณทางแชทเรียบร้อยแล้ว',
-                        confirmButtonText: 'ปิดหน้าต่าง',
-                        confirmButtonColor: '#1A365D'
-                    }).then(() => {
-                        liff.closeWindow();
-                    });
-                } else {
-                    Swal.fire('แจ้งเตือน', result.message, 'warning');
-                    btn.disabled = false;
-                    btn.innerText = "ยืนยันการสมัคร";
-                }
-            } catch (error) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
-                btn.disabled = false;
-                btn.innerText = "ยืนยันการสมัคร";
-            }
-        });
-    </script>
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "registerAgent", data: data })
+      }).then(res => res.json()).then(res => {
+        if (res.success) {
+          Swal.fire({
+            icon: 'success', title: 'ลงทะเบียนสำเร็จ!',
+            text: `รหัสตัวแทนของคุณคือ ${res.agentCode} ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว`,
+            confirmButtonText: 'ตกลง'
+          }).then(() => { liff.closeWindow(); });
+        } else {
+          Swal.fire('ผิดพลาด', res.error, 'error');
+        }
+      }).catch(err => Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อระบบล้มเหลว', 'error'));
+    }
+  </script>
 </body>
 </html>
