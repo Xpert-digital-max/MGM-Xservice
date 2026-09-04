@@ -86,33 +86,21 @@
       try {
         const configResponse = await fetch(GAS_API_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: "getConfig" })
-        }).then(res => res.json());
-
-        if (configResponse.success) {
-          AGENT_REG_LIFF_URL = configResponse.data.AGENT_REG_LIFF_URL;
-          QUOTATION_LIFF_URL = configResponse.data.QUOTATION_LIFF_URL; 
-          
-          if (!AGENT_REG_LIFF_URL) return Swal.fire('ตั้งค่าไม่สมบูรณ์', 'ไม่พบ AGENT_REG_LIFF_URL ในแท็บ Settings', 'error');
+        body: JSON.stringify({ action: "registerAgent", data: data })
+      }).then(res => res.json()).then(res => {
+        // 🌟 ปรับตรงนี้ให้รองรับทั้ง 2 รูปแบบเพื่อความชัวร์
+        if (res.success || res.status === "success") {
+          const code = res.agentCode || res.message || "สำเร็จ";
+          Swal.fire({
+            icon: 'success', title: 'ลงทะเบียนสำเร็จ!',
+            text: `รหัสตัวแทนของคุณคือ ${code} ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว`,
+            confirmButtonText: 'ตกลง'
+          }).then(() => { liff.closeWindow(); });
         } else {
-          return Swal.fire('ข้อผิดพลาด', 'ดึงข้อมูล Settings ไม่สำเร็จ', 'error');
+          // ถ้ามี error ให้แสดงข้อความจริง หรือแจ้งว่าเกิดอะไรขึ้น
+          Swal.fire('ผิดพลาด', res.error || res.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ', 'error');
         }
-
-        // ดึง LIFF ID จาก URL หรือแปลงจาก LIFF URL ที่ได้มา
-        // (ตัวอย่างนี้ดึง LIFF ID จากโครงสร้างมาตรฐาน liff.line.me/ID)
-        const liffIdMatch = AGENT_REG_LIFF_URL.match(/liff\.line\.me\/([^\/]+)/);
-        const liffId = liffIdMatch ? liffIdMatch[1] : AGENT_REG_LIFF_URL;
-
-        await liff.init({ liffId: liffId });
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
-        }
-        userProfile = await liff.getProfile();
-        checkStatus(userProfile.userId);
-        
-      } catch (err) {
-        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ LINE ได้', 'error');
+      }).catch(err => Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อระบบล้มเหลว: ' + err, 'error'));
       }
     };
 
