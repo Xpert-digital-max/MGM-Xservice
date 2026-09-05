@@ -65,8 +65,7 @@
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    const MY_LIFF_ID = "2000218686-kY7ah48L"; 
-    
+        
     window.onload = () => { liff.init({ liffId: MY_LIFF_ID }).then(() => { if (!liff.isLoggedIn()) liff.login(); }); };
 
     async function triggerBotPush() {
