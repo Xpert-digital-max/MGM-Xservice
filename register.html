@@ -69,18 +69,27 @@
     let globalRefId = "";
 
     window.onload = async () => {
-      // 🌟 ดึงค่า refId จาก URL ที่ติดมาเวลาคนอื่นสแกน QR Code (ถ้ามี)
+      // 🌟 1. ล็อกปุ่มไว้ก่อน ป้องกันคนกดก่อนที่ LIFF จะดึง Token เสร็จ
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerText = "กำลังเชื่อมต่อระบบ LINE...";
+
       const urlParams = new URLSearchParams(window.location.search);
       globalRefId = urlParams.get('refId') || "";
 
       try {
-        // 🌟 ใช้ SHARE_LIFF_ID จาก config.js กลางโดยอัตโนมัติ
         await liff.init({ liffId: REGISTER_LIFF_ID }); 
+        
         if (!liff.isLoggedIn()) {
           liff.login();
+        } else {
+          // 🌟 2. ปลดล็อกปุ่มเมื่อมั่นใจ 100% ว่าเข้าสู่ระบบและมี Token แล้ว
+          btn.disabled = false;
+          btn.innerText = "ดำเนินการตรวจสอบ";
         }
       } catch (err) {
         console.error("LIFF Init Error:", err);
+        btn.innerText = "การเชื่อมต่อล้มเหลว";
       }
     };
 
@@ -93,13 +102,19 @@
       btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังดึงข้อมูล...'; 
 
       try {
+          // เช็คย้ำอีกรอบเพื่อความชัวร์ก่อนดึง Profile
+          if (!liff.isLoggedIn()) {
+              liff.login();
+              return;
+          }
+
           const profile = await liff.getProfile();
           const payload = {
               action: "processPhoneFromLiff", 
               phone: phone, 
               userId: profile.userId, 
               displayName: profile.displayName,
-              refId: globalRefId // ส่งรหัสผู้แนะนำพ่วงไปหลังบ้านด้วย
+              refId: globalRefId 
           };
 
           const response = await fetch(GAS_API_URL, {
@@ -108,16 +123,11 @@
           });
 
           const result = await response.json();
-
-          // 🌟 ปรับปรุงการรับค่าให้ยืดหยุ่น ป้องกันเคสหา formUrl ไม่เจอ
           const finalUrl = result.formUrl || (result.detail && result.detail.formUrl);
 
           if (finalUrl) {
-              // ซ่อนหน้ากรอกเบอร์ โชว์หน้าปุ่มสีทอง
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
-
-              // ยัดลิงก์ใส่ปุ่มสีทอง
               document.getElementById('surveyBtn').href = finalUrl;
           } else {
               throw new Error(result.message || "ไม่พบลิงก์ปลายทางในระบบ");
