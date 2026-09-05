@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR Code สิทธิพิเศษของคุณ</title>
+  <script src="config.js"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body { background-color: #f5f5f5; text-align: center; font-family: sans-serif; margin: 0; padding: 20px; }
@@ -29,22 +30,17 @@
   </div>
 
   <script>
-    // ⚠️ 1. ใส่ LIFF ID ของแคมเปญหลัก (ตัวที่ใช้กดลิงก์แชร์)
-    const mainLiffId = "2000218686-Zh9auEF3"; 
-    
-    // ⚠️ 2. ใส่ LIFF ID ตัวใหม่ที่คุณเพิ่งสร้างในขั้นตอนที่ 1
-    const qrLiffId = "2000218686-8pMjNxWW"; 
-    
     async function init() {
       try {
-        await liff.init({ liffId: qrLiffId }); 
+        // 🌟 เรียกใช้ QRCODE_LIFF_ID สำหรับหน้าต่างนี้
+        await liff.init({ liffId: QRCODE_LIFF_ID }); 
         if (!liff.isLoggedIn()) { liff.login(); return; }
 
         // ดึงข้อมูลลูกค้าเพื่อนำไปฝังในลิงก์ Tracking
         const profile = await liff.getProfile();
         
-        // สร้างลิงก์แชร์แบบเดียวกับปุ่มส่งคอนแทค
-        const trackingLink = "https://liff.line.me/" + mainLiffId + 
+        // 🌟 เรียกใช้ SHARE_LIFF_ID สำหรับสร้างลิงก์แชร์
+        const trackingLink = "https://liff.line.me/" + SHARE_LIFF_ID + 
                              "?refId=" + encodeURIComponent(profile.userId) + 
                              "&refName=" + encodeURIComponent(profile.displayName) + 
                              "&refPic=" + encodeURIComponent(profile.pictureUrl || "");
