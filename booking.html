@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 🌟 เปิดใช้งานตัวแปรกลางจาก config.js -->
+  <!-- 🌟 ดึงตัวแปรกลางจาก config.js -->
   <script src="config.js"></script> 
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -90,6 +90,7 @@
         <option value="รถตู้ / รถอื่นๆ">🚐 รถตู้ / รถอื่นๆ</option>
       </select>
 
+      <!-- 🌟 ส่วนที่เพิ่มเข้ามา: รูปแบบบริการ และ GPS -->
       <label>รูปแบบบริการ</label>
       <div style="display: flex; gap: 10px; margin-bottom: 20px;">
          <label class="radio-box active" id="lblSelf">
@@ -123,7 +124,7 @@
 
     window.onload = async function() {
         try {
-            // 🌟 เรียกใช้ BOOKING_LIFF_ID ที่มาจากไฟล์ config.js
+            // ดึงค่า BOOKING_LIFF_ID จากไฟล์ config.js
             await liff.init({ liffId: BOOKING_LIFF_ID });
             if (liff.isLoggedIn()) {
                 const profile = await liff.getProfile();
@@ -221,7 +222,7 @@
                  icon: "success",
                  confirmButtonColor: "#1a237e"
               }).then(() => {
-                 liff.closeWindow();
+                 liff.closeWindow(); // ปิดหน้าต่าง LIFF ทันทีเมื่อกดยืนยัน
               });
           } else {
               throw new Error("Save failed");
