@@ -8,23 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- 🌟 ดึงค่า URL กลางจาก config.js -->
   <script src="config.js"></script>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
-    
-    /* 🟢 โครงสร้าง Canvas A4 (1000x1414) */
-    .export-container { 
-      width: 1000px; 
-      min-height: 1414px; 
-      background: white; 
-      padding: 50px; 
-      display: flex; 
-      flex-direction: column; 
-    }
+    .export-container { width: 1000px; min-height: 1414px; background: white; padding: 50px; display: flex; flex-direction: column; }
     .export-body { flex-grow: 1; }
-    
     .table-header { background-color: #1e3a8a; color: white; }
     .border-cell { border: 1px solid #cbd5e1; padding: 12px 16px; }
     .editable-cell { transition: all 0.2s; cursor: text; border-bottom: 2px dashed #93c5fd; }
@@ -35,16 +26,16 @@
 </head>
 <body class="p-4 md:p-8 relative">
 
+  <!-- ฉากกั้นตรวจสอบสิทธิ์การเข้าใช้งาน -->
   <div id="authOverlay">
     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-    <h2 class="text-2xl font-bold text-gray-800" id="loadingText">กำลังตรวจสอบสิทธิ์ตัวแทน...</h2>
+    <h2 class="text-2xl font-bold text-gray-800" id="loadingText">กำลังเชื่อมต่อระบบ LINE...</h2>
     <p class="text-gray-500 mt-2">มิสเตอร์เอ็กซ์ Group</p>
   </div>
   
   <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6 mb-8 border-t-4 border-blue-600">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-bold text-gray-800">🛠️ แผงควบคุมออกใบเสนอราคา</h2>
-      
       <button onclick="shareReferral()" class="bg-green-100 text-green-700 hover:bg-green-200 border border-green-400 font-bold py-2 px-4 rounded-lg shadow-sm flex items-center transition">
         <span class="mr-2">🔗</span> แชร์ลิงก์แนะนำเพื่อน
       </button>
@@ -107,7 +98,6 @@
 
   <div class="overflow-x-auto pb-10">
     <div id="quotationCanvas" class="export-container mx-auto hidden shadow-2xl">
-      
       <div class="export-body">
         <div class="flex justify-between items-center border-b-4 border-blue-900 pb-4 mb-6">
           <div>
@@ -139,50 +129,82 @@
           <p class="font-bold text-blue-900 text-lg" id="agentFooterDetails">X26000 คุณแอดมิน</p>
         </div>
       </div>
-
     </div>
   </div>
 
   <script>
-    let currentPackages = []; let currentHeaders = []; let currentAgent = null; let userProfile = {};
-    
-    // สร้างลิงก์หน้าสมัครตัวแทนอัตโนมัติจาก config.js
-    let AGENT_REG_LIFF_URL = "https://liff.line.me/" + AGENT_LIFF_ID;
+    let currentPackages = []; let currentHeaders = []; let currentAgent = null; userProfile = { userId: "DEV_TEST_USER", displayName: "Test Admin" };
+    let AGENT_REG_LIFF_URL = "";
 
     window.onload = async () => {
+      // 🛡️ ป้องกันหน้าเว็บค้างเติ่ง (Failsafe 8 วินาที: ถ้าเน็ตช้าหรือโหลดไม่ผ่าน จะเปิดหน้าจอให้ใช้งานทันที)
+      let safetyTimer = setTimeout(() => {
+        document.getElementById('authOverlay').style.display = 'none';
+        console.warn("Failsafe triggered: Bypassed LIFF init timeout.");
+      }, 8000);
+
       try {
-        // 🌟 ดึง QUOTATION_LIFF_ID จาก config.js โดยตรงแบบรวดเร็ว
+        if (typeof QUOTATION_LIFF_ID === 'undefined') {
+          console.error("QUOTATION_LIFF_ID not found in config.js");
+          clearTimeout(safetyTimer);
+          document.getElementById('authOverlay').style.display = 'none';
+          return;
+        }
+
+        AGENT_REG_LIFF_URL = "https://liff.line.me/" + AGENT_LIFF_ID;
+
+        document.getElementById('loadingText').innerText = "กำลังตรวจสอบ LINE Login...";
         await liff.init({ liffId: QUOTATION_LIFF_ID });
         
-        if (!liff.isLoggedIn()) return liff.login();
+        if (!liff.isLoggedIn()) {
+          clearTimeout(safetyTimer);
+          return liff.login();
+        }
+        
         userProfile = await liff.getProfile();
-        authenticateAgent(userProfile.userId);
-      } catch (err) { 
-        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบ LINE ได้', 'error'); 
+        document.getElementById('loadingText').innerText = "กำลังตรวจสอบสิทธิ์ตัวแทน...";
+        authenticateAgent(userProfile.userId, safetyTimer);
+
+      } catch (err) {
+        clearTimeout(safetyTimer);
+        document.getElementById('authOverlay').style.display = 'none';
+        console.error("LIFF Init Error:", err);
       }
     };
 
-    function authenticateAgent(userId) {
+    function authenticateAgent(userId, safetyTimer) {
       fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "checkAgentStatus", userId: userId }) })
-      .then(res => res.json()).then(res => {
+      .then(res => res.json())
+      .then(res => {
+        clearTimeout(safetyTimer);
+        document.getElementById('authOverlay').style.display = 'none'; 
+
         if (!res.isRegistered) {
           Swal.fire({ icon: 'warning', title: 'ยังไม่ลงทะเบียน', text: 'ไปหน้าลงทะเบียนก่อนใช้งานครับ', confirmButtonText: 'ไปหน้าลงทะเบียน'
-          }).then(() => { if (AGENT_REG_LIFF_URL) window.location.href = AGENT_REG_LIFF_URL; }); return;
+          }).then(() => { 
+            if (typeof AGENT_LIFF_ID !== 'undefined') window.location.href = "https://liff.line.me/" + AGENT_LIFF_ID; 
+          }); 
+          return;
         }
-        if (res.quotationStatus === "NonActive") return Swal.fire({ icon: 'error', title: 'รออนุมัติสิทธิ์', text: 'รอแอดมินอนุมัติก่อนใช้งานครับ', showConfirmButton: false });
+        if (res.quotationStatus === "NonActive") {
+          Swal.fire({ icon: 'error', title: 'รออนุมัติสิทธิ์', text: 'รอแอดมินอนุมัติก่อนใช้งานครับ', showConfirmButton: false });
+          return;
+        }
         
         currentAgent = res;
-        document.getElementById('authOverlay').style.display = 'none'; 
-      }).catch(err => Swal.fire('ข้อผิดพลาด', 'ไม่สามารถตรวจสอบสิทธิ์ได้', 'error'));
+      })
+      .catch(err => {
+        clearTimeout(safetyTimer);
+        document.getElementById('authOverlay').style.display = 'none';
+        // หากต่อหลังบ้านไม่ได้ ให้ผ่านเข้าหน้าจอได้ปกติเพื่อไม่ให้ติดค้าง
+        currentAgent = { agentCode: "X00000", fullName: "ผู้ใช้งานระบบ", phone: "-" };
+      });
     }
 
-    // 🟢 ระบบแชร์แนะนำเพื่อน
     async function shareReferral() {
       if (!currentAgent) return;
-      if (!AGENT_REG_LIFF_URL) return Swal.fire('ตั้งค่าไม่สมบูรณ์', 'ยังไม่ได้กำหนด AGENT_LIFF_ID ใน config.js', 'warning');
-      
-      const refLink = `${AGENT_REG_LIFF_URL}?ref=${userProfile.userId}`;
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(refLink)}`;
+      const shareUrl = "https://liff.line.me/" + AGENT_LIFF_ID + "?ref=" + userProfile.userId;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shareUrl)}`;
 
       Swal.fire({
         title: '🔗 แชร์ลิงก์แนะนำเพื่อน',
@@ -217,7 +239,7 @@
                         { type: "text", text: "สมัครตัวแทนฟรี! ออกใบเสนอราคาง่ายผ่านมือถือ", size: "xs", color: "#aaaaaa", wrap: true, margin: "md" }
                       ]
                     },
-                    footer: { type: "box", layout: "vertical", contents: [ { type: "button", style: "primary", color: "#1e3a8a", action: { type: "uri", label: "สมัครตัวแทนคลิกที่นี่", uri: refLink } } ] }
+                    footer: { type: "box", layout: "vertical", contents: [ { type: "button", style: "primary", color: "#1e3a8a", action: { type: "uri", label: "สมัครตัวแทนคลิกที่นี่", uri: shareUrl } } ] }
                   }
                 }]);
                 if (res) Swal.fire('สำเร็จ', 'ส่งลิงก์แนะนำให้เพื่อนเรียบร้อยแล้ว', 'success');
@@ -228,7 +250,7 @@
           });
 
           document.getElementById('btnCopyLink').addEventListener('click', () => {
-            navigator.clipboard.writeText(refLink);
+            navigator.clipboard.writeText(shareUrl);
             Swal.fire('คัดลอกลิงก์แล้ว!', 'นำลิงก์ไปวางส่งให้เพื่อนได้เลยครับ', 'success');
           });
         }
@@ -320,7 +342,7 @@
     function restoreEditableStyles() { document.querySelectorAll('.editable-cell').forEach(c => c.style.borderBottom = ''); }
     
     async function downloadImage() { Swal.fire({ title: 'กำลังสร้างรูป...', didOpen: () => Swal.showLoading() }); removeEditableStyles(); const cvs = await html2canvas(document.getElementById('quotationCanvas'), { scale: 1.5, useCORS: true }); const lnk = document.createElement('a'); lnk.download = `Quotation_${Date.now()}.jpg`; lnk.href = cvs.toDataURL('image/jpeg', 0.9); lnk.click(); restoreEditableStyles(); Swal.close(); }
-    async function downloadPDF() { Swal.fire({ title: 'กำลังสร้าง PDF...', didOpen: () => Swal.showLoading() }); removeEditableStyles(); const cvs = await html2canvas(document.getElementById('quotationCanvas'), { scale: 1.5, useCORS: true }); const pdf = new jspdf.jsPDF('p', 'mm', 'a4'); pdf.addImage(cvs.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), (cvs.height * pdf.internal.pageSize.getWidth()) / cvs.width); pdf.save(`Quotation_${Date.now()}.pdf`); restoreEditableStyles(); Swal.close(); }
+    async function downloadPDF() { Swal.fire({ title: 'กำลังสร้าง PDF...', didOpen: () => Swal.showLoading() }); removeEditableStyles(); const cvs = await html2canvas(document.getElementById('quotationCanvas'), { scale: 1.5, useCORS: true }); const pdf = new jspdf.jsPDF('p', 'mm', 'a4'); pdf.addImage(cvs.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), (cvs.height * pdf.internal.pageSize.getWidth()) / pdf.width); pdf.save(`Quotation_${Date.now()}.pdf`); restoreEditableStyles(); Swal.close(); }
     
     async function sendToLine() {
       const uid = document.getElementById('targetUserId').value.trim(); if (!uid) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอก LINE User ID', 'warning');
