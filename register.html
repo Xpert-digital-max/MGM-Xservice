@@ -109,15 +109,14 @@
 
           const result = await response.json();
 
-          if (result.status === "success") {
+          // 🌟 เช็คว่ามี formUrl ส่งกลับมาไหม
+          if (result && result.formUrl) {
               // ซ่อนหน้ากรอกเบอร์ โชว์หน้าปุ่มสีทอง
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
 
-              // 🌟 แก้ไขตรงนี้ให้รับ formUrl ตรงๆ จาก result ได้เลย
-              if (result.formUrl) {
-                  document.getElementById('surveyBtn').href = result.formUrl;
-              }
+              // ยัดลิงก์ใส่ปุ่มสีทอง
+              document.getElementById('surveyBtn').href = result.formUrl;
           } else {
               throw new Error(result.message || "Server Error");
           }
