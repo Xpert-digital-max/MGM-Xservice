@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จองคิวตรวจสภาพรถ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- <script src="config.js"></script> เอาไว้ดึง LIFF ID ถ้าต้องการผูก LINE -->
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .container { background: white; width: 100%; max-width: 450px; border-radius: 12px; padding: 30px 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+    .header { text-align: center; margin-bottom: 25px; }
+    .header h2 { color: #1a237e; margin: 0 0 5px 0; }
+    .header p { color: #7f8c8d; font-size: 14px; margin: 0; }
+    
+    label { font-weight: 600; font-size: 14px; color: #34495e; display: block; margin-bottom: 6px; }
+    input, select { 
+        width: 100%; padding: 12px 15px; margin-bottom: 20px; 
+        border: 1px solid #ced4da; border-radius: 8px; box-sizing: border-box; 
+        font-family: 'Sarabun', sans-serif; font-size: 15px; color: #2c3e50; transition: 0.2s;
+    }
+    input:focus, select:focus { outline: none; border-color: #1a237e; box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.2); }
+    
+    select {
+        appearance: none; -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a237e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat; background-position: right 15px center; background-size: 16px;
+    }
+    
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 16px; transition: 0.3s; }
+    .btn-primary { background-color: #1a237e; color: white; box-shadow: 0 4px 10px rgba(26, 35, 126, 0.3); }
+    .btn-primary:hover { background-color: #151e6b; transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h2>📅 จองคิวตรวจสภาพรถ</h2>
+      <p>กรุณากรอกข้อมูลเพื่ออำนวยความสะดวกในการเข้ารับบริการ</p>
+    </div>
+
+    <form id="bookingForm" onsubmit="submitBooking(event)">
+      
+      <label>ชื่อ - นามสกุล</label>
+      <input type="text" id="customerName" required placeholder="ระบุชื่อผู้ติดต่อ">
+
+      <label>ทะเบียนรถ</label>
+      <input type="text" id="plate" required placeholder="เช่น กข 1234 จันทบุรี">
+
+      <label>เบอร์โทรศัพท์ (ใส่ 0 นำหน้าให้ครบ 10 หลัก)</label>
+      <input type="tel" id="phone" required placeholder="08XXXXXXXX" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+          <label>วันที่ต้องการจอง</label>
+          <input type="date" id="bookDate" required>
+        </div>
+        <div style="flex: 1;">
+          <label>ช่วงเวลา</label>
+          <select id="bookTime" required>
+            <option value="" disabled selected>- เลือกเวลา -</option>
+            <option value="08:00 - 10:00">08:00 - 10:00 น.</option>
+            <option value="10:00 - 12:00">10:00 - 12:00 น.</option>
+            <option value="13:00 - 15:00">13:00 - 15:00 น.</option>
+            <option value="15:00 - 17:00">15:00 - 17:00 น.</option>
+          </select>
+        </div>
+      </div>
+
+      <label>ประเภทรถ</label>
+      <select id="vehicleType" required>
+        <option value="" disabled selected>- เลือกประเภทรถ -</option>
+        <option value="รถยนต์">🚗 รถยนต์</option>
+        <option value="รถจักรยานยนต์">🏍️ รถจักรยานยนต์</option>
+        <option value="รถตู้ / รถอื่นๆ">🚐 รถตู้ / รถอื่นๆ</option>
+      </select>
+
+      <button type="submit" id="btnSubmit" class="btn btn-primary">✅ ยืนยันการจองคิว</button>
+    </form>
+  </div>
+
+  <script>
+    // ตั้งค่าไม่ให้เลือกวันที่ย้อนหลังได้
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('bookDate').setAttribute('min', today);
+
+    function submitBooking(event) {
+      event.preventDefault();
+      
+      const phone = document.getElementById("phone").value;
+      if (!phone.startsWith("0") || phone.length < 9) {
+          return Swal.fire("เบอร์โทรไม่ถูกต้อง", "กรุณาใส่เลข 0 นำหน้า และกรอกให้ครบถ้วน", "warning");
+      }
+
+      const btn = document.getElementById("btnSubmit");
+      btn.innerText = "กำลังส่งข้อมูล... ⏳";
+      btn.disabled = true;
+
+      // 🌟 นำข้อมูลส่งไปที่ GAS_API_URL ของคุณ (ดัดแปลง Payload ตามหลังบ้านของคุณ)
+      const payload = {
+         action: "saveBooking", // เปลี่ยนเป็นชื่อ action หลังบ้านของคุณ
+         name: document.getElementById("customerName").value,
+         plate: document.getElementById("plate").value,
+         phone: phone,
+         date: document.getElementById("bookDate").value,
+         time: document.getElementById("bookTime").value,
+         type: document.getElementById("vehicleType").value
+      };
+
+      // จำลองการโหลดส่งข้อมูล (ถ้าผูก API จริง ให้ใช้ fetch แบบไฟล์ Outsource)
+      setTimeout(() => {
+          Swal.fire({
+             title: "จองคิวสำเร็จ!",
+             text: "แอดมินได้รับข้อมูลเรียบร้อยแล้ว แวะมาตามวันและเวลาที่จองได้เลยครับ",
+             icon: "success",
+             confirmButtonColor: "#1a237e"
+          }).then(() => {
+             // liff.closeWindow(); // ปิดหน้าจอถ้าเปิดใน LINE
+             document.getElementById("bookingForm").reset();
+             btn.innerText = "✅ ยืนยันการจองคิว";
+             btn.disabled = false;
+          });
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
