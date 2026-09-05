@@ -24,8 +24,7 @@
   </div>
 
   <script>
-    const liffId = "2000218686-Zh9auEF3"; 
-    // ⚠️ ลิงก์นี้สำคัญมาก หากเขาไม่ได้แอดเพื่อน ระบบจะพามาที่ลิงก์นี้
+    // ⚠️ ลิงก์นี้เฉพาะเจาะจงกับหน้านี้ หากเขาไม่ได้แอดเพื่อน ระบบจะพามาที่ลิงก์นี้
     const lineOALink = "https://line.me/R/ti/p/@xservice"; 
     
     let currentUserId = "", currentUserName = "", currentUserPic = "";
@@ -33,7 +32,8 @@
     async function initializeLiff() {
       const statusText = document.getElementById('statusText');
       try {
-        await liff.init({ liffId: liffId });
+        // 🌟 เรียกใช้ SHARE_LIFF_ID จาก config.js
+        await liff.init({ liffId: SHARE_LIFF_ID });
         if (!liff.isLoggedIn()) { liff.login(); return; }
 
         const profile = await liff.getProfile();
@@ -102,7 +102,8 @@
     async function executeShare() {
       if (!liff.isApiAvailable('shareTargetPicker')) return alert("แอป LINE ไม่รองรับ");
       try {
-        const trackingLink = "https://liff.line.me/" + liffId + "?refId=" + encodeURIComponent(currentUserId) + "&refName=" + encodeURIComponent(currentUserName) + "&refPic=" + encodeURIComponent(currentUserPic);
+        // 🌟 เรียกใช้ SHARE_LIFF_ID ในการสร้างลิงก์สำหรับแชร์
+        const trackingLink = "https://liff.line.me/" + SHARE_LIFF_ID + "?refId=" + encodeURIComponent(currentUserId) + "&refName=" + encodeURIComponent(currentUserName) + "&refPic=" + encodeURIComponent(currentUserPic);
         
         await liff.shareTargetPicker([{
           "type": "flex",
