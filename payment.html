@@ -41,9 +41,6 @@
   </div>
 
   <script>
-    // 🌟 เปลี่ยนชื่อตัวแปรเป็น PAYMENT_LIFF_ID ป้องกันการชนกับ config.js
-    const PAYMENT_LIFF_ID = "2000218686-jvvVChwV"; 
-    
     var currentStaff = "";
     var currentBranch = ""; 
     var tempPayData = {}; 
@@ -55,7 +52,7 @@
     // 1. ฟังก์ชันโหลด LIFF และบังคับล็อกอิน
     async function initializeLiff() {
         try {
-            // 🌟 เปลี่ยนมาเรียกใช้ PAYMENT_LIFF_ID
+            // 🌟 เรียกใช้ PAYMENT_LIFF_ID จาก config.js โดยตรง
             await liff.init({ liffId: PAYMENT_LIFF_ID });
             if (!liff.isLoggedIn()) {
                 liff.login();
