@@ -6,16 +6,18 @@
   <title>จองคิวตรวจสภาพรถ</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- <script src="config.js"></script> เอาไว้ดึง LIFF ID ถ้าต้องการผูก LINE -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 🌟 เปิดใช้งานตัวแปรกลางจาก config.js -->
+  <script src="config.js"></script> 
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .container { background: white; width: 100%; max-width: 450px; border-radius: 12px; padding: 30px 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+    .container { background: white; width: 100%; max-width: 450px; border-radius: 12px; padding: 30px 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); display: none; }
     .header { text-align: center; margin-bottom: 25px; }
     .header h2 { color: #1a237e; margin: 0 0 5px 0; }
     .header p { color: #7f8c8d; font-size: 14px; margin: 0; }
     
     label { font-weight: 600; font-size: 14px; color: #34495e; display: block; margin-bottom: 6px; }
-    input, select { 
+    input[type="text"], input[type="tel"], input[type="date"], select { 
         width: 100%; padding: 12px 15px; margin-bottom: 20px; 
         border: 1px solid #ced4da; border-radius: 8px; box-sizing: border-box; 
         font-family: 'Sarabun', sans-serif; font-size: 15px; color: #2c3e50; transition: 0.2s;
@@ -31,11 +33,22 @@
     .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 16px; transition: 0.3s; }
     .btn-primary { background-color: #1a237e; color: white; box-shadow: 0 4px 10px rgba(26, 35, 126, 0.3); }
     .btn-primary:hover { background-color: #151e6b; transform: translateY(-2px); }
+    
+    .radio-box { flex: 1; background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #ced4da; cursor: pointer; text-align: center; font-size: 14px; font-weight: bold; color: #2c3e50; transition: 0.2s;}
+    .radio-box:hover { background: #e8eaf6; border-color: #1a237e; }
+    .radio-box input[type="radio"] { display: none; }
+    .radio-box.active { background: #e8eaf6; border-color: #1a237e; color: #1a237e; box-shadow: inset 0 0 0 1px #1a237e; }
+    
+    #loadingScreen { text-align: center; color: #1a237e; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <div id="loadingScreen">
+    <h3>กำลังเชื่อมต่อระบบ LINE... ⏳</h3>
+  </div>
+
+  <div class="container" id="appContainer">
     <div class="header">
       <h2>📅 จองคิวตรวจสภาพรถ</h2>
       <p>กรุณากรอกข้อมูลเพื่ออำนวยความสะดวกในการเข้ารับบริการ</p>
@@ -77,52 +90,148 @@
         <option value="รถตู้ / รถอื่นๆ">🚐 รถตู้ / รถอื่นๆ</option>
       </select>
 
+      <label>รูปแบบบริการ</label>
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+         <label class="radio-box active" id="lblSelf">
+            <input type="radio" name="serviceType" value="นำรถมาตรวจเอง" checked onchange="toggleLocation()"> 🏢 นำมาตรวจเอง
+         </label>
+         <label class="radio-box" id="lblHome">
+            <input type="radio" name="serviceType" value="ให้ไปรับรถที่บ้าน" onchange="toggleLocation()"> 🏡 ให้ไปรับที่บ้าน
+         </label>
+      </div>
+
+      <div id="locationSection" style="display:none; background:#e8eaf6; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #c5cae9;">
+         <label>📍 พิกัดรับรถ</label>
+         <div style="display:flex; gap:10px; margin-bottom: 5px;">
+            <input type="text" id="locationLink" placeholder="กดปุ่มเพื่อดึงพิกัดอัตโนมัติ" readonly style="margin-bottom:0; flex:1; font-size:12px; background:#fff;">
+            <button type="button" class="btn btn-primary" style="width:auto; padding:0 15px; margin-bottom:0;" onclick="getLocation()">📌 ดึงพิกัด</button>
+         </div>
+         <p style="font-size:12px; color:#e74c3c; margin:0;">* ระบบจะขออนุญาตเข้าถึง GPS ในมือถือของคุณ</p>
+      </div>
+
       <button type="submit" id="btnSubmit" class="btn btn-primary">✅ ยืนยันการจองคิว</button>
     </form>
   </div>
 
   <script>
-    // ตั้งค่าไม่ให้เลือกวันที่ย้อนหลังได้
+    let lineUserId = "";
+    let lineDisplayName = "";
+
+    // ป้องกันเลือกวันที่ย้อนหลัง
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('bookDate').setAttribute('min', today);
+
+    window.onload = async function() {
+        try {
+            // 🌟 เรียกใช้ BOOKING_LIFF_ID ที่มาจากไฟล์ config.js
+            await liff.init({ liffId: BOOKING_LIFF_ID });
+            if (liff.isLoggedIn()) {
+                const profile = await liff.getProfile();
+                lineUserId = profile.userId;
+                lineDisplayName = profile.displayName;
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+            } else {
+                liff.login();
+            }
+        } catch(err) {
+            Swal.fire("ข้อผิดพลาด", "ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาเปิดผ่านแอป LINE", "error");
+        }
+    };
+
+    function toggleLocation() {
+        var serviceType = document.querySelector('input[name="serviceType"]:checked').value;
+        document.getElementById('lblSelf').classList.toggle('active', serviceType === "นำรถมาตรวจเอง");
+        document.getElementById('lblHome').classList.toggle('active', serviceType === "ให้ไปรับรถที่บ้าน");
+        
+        var locSection = document.getElementById("locationSection");
+        if (serviceType === "ให้ไปรับรถที่บ้าน") {
+            locSection.style.display = "block";
+            getLocation();
+        } else {
+            locSection.style.display = "none";
+            document.getElementById("locationLink").value = "";
+        }
+    }
+
+    function getLocation() {
+        Swal.fire({ title: 'กำลังดึงพิกัด...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    Swal.close();
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    document.getElementById("locationLink").value = `https://maps.google.com/?q=${lat},${lon}`;
+                },
+                (error) => {
+                    Swal.close();
+                    Swal.fire("ดึงพิกัดล้มเหลว", "กรุณาอนุญาตให้เข้าถึง GPS ในมือถือของคุณ", "warning");
+                }
+            );
+        } else {
+            Swal.close();
+            Swal.fire("ข้อผิดพลาด", "เบราว์เซอร์ของคุณไม่รองรับการดึงตำแหน่ง", "error");
+        }
+    }
 
     function submitBooking(event) {
       event.preventDefault();
       
       const phone = document.getElementById("phone").value;
       if (!phone.startsWith("0") || phone.length < 9) {
-          return Swal.fire("เบอร์โทรไม่ถูกต้อง", "กรุณาใส่เลข 0 นำหน้า และกรอกให้ครบถ้วน", "warning");
+          return Swal.fire("เบอร์โทรไม่ถูกต้อง", "กรุณาใส่เลข 0 นำหน้า และกรอกให้ครบ 10 หลัก", "warning");
+      }
+
+      const serviceType = document.querySelector('input[name="serviceType"]:checked').value;
+      const locationLink = document.getElementById("locationLink").value;
+      
+      if (serviceType === "ให้ไปรับรถที่บ้าน" && !locationLink) {
+          return Swal.fire("ข้อมูลไม่ครบ", "กรุณากดปุ่มเพื่อดึงพิกัดรับรถด้วยครับ", "warning");
       }
 
       const btn = document.getElementById("btnSubmit");
       btn.innerText = "กำลังส่งข้อมูล... ⏳";
       btn.disabled = true;
 
-      // 🌟 นำข้อมูลส่งไปที่ GAS_API_URL ของคุณ (ดัดแปลง Payload ตามหลังบ้านของคุณ)
       const payload = {
-         action: "saveBooking", // เปลี่ยนเป็นชื่อ action หลังบ้านของคุณ
+         action: "saveBooking",
          name: document.getElementById("customerName").value,
          plate: document.getElementById("plate").value,
          phone: phone,
          date: document.getElementById("bookDate").value,
          time: document.getElementById("bookTime").value,
-         type: document.getElementById("vehicleType").value
+         type: document.getElementById("vehicleType").value,
+         serviceType: serviceType,
+         location: locationLink,
+         userId: lineUserId,
+         displayName: lineDisplayName
       };
 
-      // จำลองการโหลดส่งข้อมูล (ถ้าผูก API จริง ให้ใช้ fetch แบบไฟล์ Outsource)
-      setTimeout(() => {
-          Swal.fire({
-             title: "จองคิวสำเร็จ!",
-             text: "แอดมินได้รับข้อมูลเรียบร้อยแล้ว แวะมาตามวันและเวลาที่จองได้เลยครับ",
-             icon: "success",
-             confirmButtonColor: "#1a237e"
-          }).then(() => {
-             // liff.closeWindow(); // ปิดหน้าจอถ้าเปิดใน LINE
-             document.getElementById("bookingForm").reset();
-             btn.innerText = "✅ ยืนยันการจองคิว";
-             btn.disabled = false;
-          });
-      }, 1500);
+      fetch(GAS_API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+          if (data.status === "success") {
+              Swal.fire({
+                 title: "จองคิวสำเร็จ!",
+                 text: "แอดมินได้รับข้อมูลเรียบร้อยแล้ว โปรดรอการยืนยันทาง LINE",
+                 icon: "success",
+                 confirmButtonColor: "#1a237e"
+              }).then(() => {
+                 liff.closeWindow();
+              });
+          } else {
+              throw new Error("Save failed");
+          }
+      })
+      .catch(err => {
+          btn.innerText = "✅ ยืนยันการจองคิว";
+          btn.disabled = false;
+          Swal.fire("ข้อผิดพลาด", "ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่", "error");
+      });
     }
   </script>
 </body>
