@@ -347,8 +347,9 @@
               document.getElementById('qNum').innerText = r.queueNo;
               document.getElementById('jId').innerText = r.jobID;
 
-              // 🌟 แก้ไขจุดสร้าง QR Code ให้ดึงค่า REGISTER_LIFF_ID เพื่อรับสิทธิพิเศษ
-              let targetUrl = "https://liff.line.me/" + REGISTER_LIFF_ID;
+              // 🌟 ดึงข้อมูลพนักงานที่ล็อกอินอยู่ แล้วเอา userId ไปต่อท้ายเป็นรหัสผู้แนะนำ
+              const profile = await liff.getProfile();
+              let targetUrl = "https://liff.line.me/" + REGISTER_LIFF_ID + "?refId=" + encodeURIComponent(profile.userId);
               let qrApi = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(targetUrl);
               document.getElementById('qrImage').src = qrApi;
               
