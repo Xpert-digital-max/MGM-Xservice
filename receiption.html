@@ -347,10 +347,11 @@
               document.getElementById('qNum').innerText = r.queueNo;
               document.getElementById('jId').innerText = r.jobID;
 
-              let liffMemberId = "2000218686-kY7ah48L"; // ลิงก์ไปติดตามสถานะ (Track)
-              let targetUrl = "https://liff.line.me/" + liffMemberId;
+              // 🌟 แก้ไขจุดสร้าง QR Code ให้ดึงค่า REGISTER_LIFF_ID เพื่อรับสิทธิพิเศษ
+              let targetUrl = "https://liff.line.me/" + REGISTER_LIFF_ID;
               let qrApi = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(targetUrl);
               document.getElementById('qrImage').src = qrApi;
+              
           } else {
               throw new Error("Save failed");
           }
