@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- 🌟 เพิ่มการดึงค่าจาก config.js -->
+  <!-- 🌟 ดึงค่า URL กลางจาก config.js -->
   <script src="config.js"></script>
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
@@ -29,20 +29,27 @@
       <p class="text-gray-600">กำลังตรวจสอบข้อมูล...</p>
     </div>
 
-    <!-- ส่วนแสดงสถานะ (กรณีสมัครแล้ว) -->
+    <!-- ส่วนแสดงสถานะ (กรณีสมัครแล้ว -> บังคับโชว์ปุ่มไปหน้าใบเสนอราคา) -->
     <div id="statusSection" class="hidden text-center py-6">
-      <div id="statusIcon" class="text-6xl mb-4"></div>
-      <h2 id="statusTitle" class="text-2xl font-bold mb-2"></h2>
-      <p id="statusDesc" class="text-gray-600 mb-6"></p>
+      <div id="statusIcon" class="text-6xl mb-4">✅</div>
+      <h2 id="statusTitle" class="text-2xl font-bold mb-2 text-green-600">ลงทะเบียนในระบบแล้ว</h2>
+      <p id="statusDesc" class="text-gray-600 mb-6">คุณได้ลงทะเบียนเป็นพาร์ทเนอร์เรียบร้อยแล้วครับ สามารถเข้าใช้งานระบบออกใบเสนอราคาได้ทันที</p>
       
-      <div class="bg-gray-50 p-4 rounded-xl border text-left mb-6">
+      <div class="bg-gray-50 p-4 rounded-xl border text-left mb-6 shadow-inner">
         <p class="text-sm text-gray-500 mb-1">รหัสตัวแทนของคุณ:</p>
-        <p id="agentCodeDisplay" class="text-xl font-bold text-blue-800"></p>
-        <p id="agentNameDisplay" class="text-md text-gray-700 mt-1"></p>
+        <p id="agentCodeDisplay" class="text-xl font-bold text-blue-800">-</p>
+        <p id="agentNameDisplay" class="text-md text-gray-700 mt-1">-</p>
       </div>
 
-      <!-- 🟢 พื้นที่สำหรับปุ่มกด (เปลี่ยนตามสถานะ) -->
-      <div id="actionButtons"></div>
+      <!-- 🟢 ปุ่มกดเด้งไปหน้าใบเสนอราคา -->
+      <div id="actionButtons" class="flex flex-col gap-3">
+        <button onclick="goToQuotation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg flex items-center justify-center">
+          <span class="mr-2">📄</span> ไปหน้าออกใบเสนอราคา
+        </button>
+        <button onclick="liff.closeWindow()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">
+          ปิดหน้าต่าง
+        </button>
+      </div>
     </div>
 
     <!-- ส่วนฟอร์มลงทะเบียน (กรณียังไม่สมัคร) -->
@@ -75,11 +82,7 @@
   <script>
     let userProfile = {};
     let refUserId = "";
-    
-    // 🌟 ดึง LIFF ID จาก config.js มาประกอบเป็น URL สำหรับปุ่มกด
-    let QUOTATION_LIFF_URL = "https://liff.line.me/" + QUOTATION_LIFF_ID; 
 
-    // เริ่มการทำงานเมื่อโหลดหน้าเว็บเสร็จ
     window.onload = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       refUserId = urlParams.get('ref') || "";
@@ -93,7 +96,7 @@
         }
 
         userProfile = await liff.getProfile();
-        checkStatus(userProfile.userId); // เช็คว่าเคยสมัครหรือยัง
+        checkStatus(userProfile.userId); 
       } catch (err) {
         Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดระบบ LINE ได้', 'error');
       }
@@ -104,55 +107,41 @@
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "checkAgentStatus", userId: userId })
-      }).then(res => res.json()).then(res => {
+      })
+      .then(res => res.json())
+      .then(res => {
         document.getElementById('loadingSection').classList.add('hidden');
         
-        if (res.isRegistered) {
-          // 🟢 ถ้าสมัครแล้ว โชว์หน้าสถานะ
+        // 🌟 เช็คให้ชัวร์ว่าลงทะเบียนแล้วจริงๆ (รองรับค่า true หรือมี agentCode กลับมา)
+        if (res.isRegistered === true || (res.agentCode && res.agentCode !== "")) {
+          // เคยลงทะเบียนแล้ว -> ซ่อนฟอร์ม โชว์การ์ดข้อมูลและปุ่มไปหน้าใบเสนอราคา
           document.getElementById('statusSection').classList.remove('hidden');
-          document.getElementById('agentCodeDisplay').innerText = res.agentCode;
-          document.getElementById('agentNameDisplay').innerText = res.fullName;
-
-          const btnContainer = document.getElementById('actionButtons');
-
-          if (res.quotationStatus === "NonActive") {
-            document.getElementById('statusIcon').innerText = "⏳";
-            document.getElementById('statusTitle').innerText = "รอการอนุมัติสิทธิ์";
-            document.getElementById('statusTitle').className = "text-2xl font-bold mb-2 text-yellow-600";
-            document.getElementById('statusDesc').innerText = "ระบบได้รับข้อมูลของคุณแล้ว กรุณารอแอดมินตรวจสอบและอนุมัติสิทธิ์การใช้งานครับ";
-            
-            btnContainer.innerHTML = `
-              <button onclick="liff.closeWindow()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">
-                ปิดหน้าต่าง
-              </button>
-            `;
-          } else {
-            document.getElementById('statusIcon').innerText = "✅";
-            document.getElementById('statusTitle').innerText = "สิทธิ์ใช้งาน Active";
-            document.getElementById('statusTitle').className = "text-2xl font-bold mb-2 text-green-600";
-            document.getElementById('statusDesc').innerText = "ยินดีต้อนรับ! คุณสามารถเข้าใช้งานระบบออกใบเสนอราคาได้ตามปกติครับ";
-            
-            btnContainer.innerHTML = `
-              <button onclick="window.location.href='${QUOTATION_LIFF_URL}'" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg mb-3">
-                📄 ไปหน้าออกใบเสนอราคา
-              </button>
-              <button onclick="liff.closeWindow()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">
-                ปิดหน้าต่าง
-              </button>
-            `;
-          }
+          document.getElementById('agentCodeDisplay').innerText = res.agentCode || "มีรหัสในระบบแล้ว";
+          document.getElementById('agentNameDisplay').innerText = res.fullName || userProfile.displayName;
         } else {
-          // 🔴 ถ้ายังไม่สมัคร โชว์ฟอร์มลงทะเบียน
+          // ยังไม่เคยลงทะเบียน -> โชว์ฟอร์มกรอกข้อมูล
           document.getElementById('registerSection').classList.remove('hidden');
         }
-      }).catch(err => Swal.fire('ข้อผิดพลาด', 'ระบบขัดข้อง กรุณาลองใหม่', 'error'));
+      })
+      .catch(err => {
+        document.getElementById('loadingSection').classList.add('hidden');
+        document.getElementById('registerSection').classList.remove('hidden');
+      });
     }
 
-    // ฟังก์ชันส่งข้อมูลลงทะเบียน
+    // ฟังก์ชันกดปุ่มเด้งไปหน้าใบเสนอราคา
+    function goToQuotation() {
+      if (typeof QUOTATION_LIFF_ID !== 'undefined') {
+        window.location.href = "https://liff.line.me/" + QUOTATION_LIFF_ID;
+      } else {
+        Swal.fire('แจ้งเตือน', 'ยังไม่ได้กำหนดลิงก์ใบเสนอราคาในระบบ', 'warning');
+      }
+    }
+
+    // ฟังก์ชันส่งข้อมูลลงทะเบียนใหม่
     function submitRegistration(e) {
       e.preventDefault();
       
-      // บังคับเบอร์โทรให้มีเลข 0 นำหน้ากรณีพิมพ์ตก
       let rawPhone = document.getElementById('phone').value.trim();
       if (rawPhone.length === 9 && !rawPhone.startsWith('0')) {
         rawPhone = '0' + rawPhone;
@@ -164,7 +153,7 @@
         phone: rawPhone,
         userId: userProfile.userId,
         displayName: userProfile.displayName,
-        pictureUrl: userProfile.pictureUrl || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png", // รูปโปรไฟล์พื้นฐานกรณีไม่มี
+        pictureUrl: userProfile.pictureUrl || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
         refUserId: refUserId
       };
 
@@ -173,18 +162,23 @@
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "registerAgent", data: data })
-      }).then(res => res.json()).then(res => {
+      })
+      .then(res => res.json())
+      .then(res => {
         if (res.success || res.status === "success") {
-          const code = res.agentCode || res.message || "สำเร็จ";
+          const code = res.agentCode || "สำเร็จ";
           Swal.fire({
             icon: 'success', title: 'ลงทะเบียนสำเร็จ!',
             text: `รหัสตัวแทนของคุณคือ ${code} ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว`,
-            confirmButtonText: 'ตกลง'
-          }).then(() => { liff.closeWindow(); });
+            confirmButtonText: 'ไปหน้าออกใบเสนอราคา'
+          }).then(() => { 
+            goToQuotation(); 
+          });
         } else {
-          Swal.fire('ผิดพลาด', res.error || res.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ', 'error');
+          Swal.fire('ผิดพลาด', res.error || res.message || 'เกิดข้อผิดพลาด', 'error');
         }
-      }).catch(err => Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อระบบล้มเหลว', 'error'));
+      })
+      .catch(err => Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อระบบล้มเหลว', 'error'));
     }
   </script>
 </body>
