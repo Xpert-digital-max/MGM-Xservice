@@ -114,12 +114,12 @@
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
 
-              // ยัดลิงก์สิทธิพิเศษใส่ปุ่มสีทอง
-              if (result.detail && result.detail.formUrl) {
-                  document.getElementById('surveyBtn').href = result.detail.formUrl;
+              // 🌟 แก้ไขตรงนี้ให้รับ formUrl ตรงๆ จาก result ได้เลย
+              if (result.formUrl) {
+                  document.getElementById('surveyBtn').href = result.formUrl;
               }
           } else {
-              throw new Error("Server Error");
+              throw new Error(result.message || "Server Error");
           }
       } catch (err) {
           Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
