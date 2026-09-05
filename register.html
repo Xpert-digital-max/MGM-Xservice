@@ -75,7 +75,7 @@
 
       try {
         // 🌟 ใช้ SHARE_LIFF_ID จาก config.js กลางโดยอัตโนมัติ
-        await liff.init({ liffId: SHARE_LIFF_ID }); 
+        await liff.init({ liffId: REGISTER_LIFF_ID }); 
         if (!liff.isLoggedIn()) {
           liff.login();
         }
