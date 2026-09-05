@@ -17,7 +17,6 @@
     .tab-btn { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-weight: bold; color: #7f8c8d; transition: 0.3s; font-size: 14px;}
     .tab-btn.active { color: #1a237e; border-bottom: 3px solid #1a237e; margin-bottom: -2px; }
     
-    /* 🌟 ปรับแต่งช่องกรอกข้อมูลและตัวเลือกให้ดูโมเดิร์นและกดง่ายขึ้น */
     input, select, textarea { 
         width: 100%; 
         padding: 12px 15px; 
@@ -32,14 +31,12 @@
         transition: all 0.2s ease;
     }
     
-    /* 🌟 เพิ่มแสงเงา (Glow) ตอนที่กดเลือกช่องต่างๆ เป็นโทนสีน้ำเงินตามธีม */
     input:focus, select:focus, textarea:focus { 
         outline: none; 
         border-color: #1a237e; 
         box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.2); 
     }
     
-    /* 🌟 ดีไซน์ช่อง Select โดยเฉพาะ ลบลูกศรเดิมทิ้งและใส่ลูกศรใหม่ */
     select {
         appearance: none;
         -webkit-appearance: none;
@@ -48,7 +45,7 @@
         background-repeat: no-repeat;
         background-position: right 15px center;
         background-size: 16px;
-        padding-right: 40px; /* เว้นที่ให้ลูกศร */
+        padding-right: 40px; 
         cursor: pointer;
     }
     select:hover { border-color: #9fa8da; }
@@ -76,13 +73,13 @@
     
     .floating-total { background: #1a237e; color: white; padding: 15px; border-radius: 8px; text-align: center; position: sticky; bottom: 10px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     
-    #loadingScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
+    #loadingScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
   </style>
 </head>
 <body>
 
   <div id="loadingScreen">
-    <h3 style="color:#1a237e;">กำลังตรวจสอบสิทธิ์... ⏳</h3>
+    <h3 style="color:#1a237e;" id="loadingText">กำลังเตรียมระบบ... ⏳</h3>
   </div>
 
   <div class="container" id="mainApp" style="display:none;">
@@ -93,11 +90,9 @@
 
     <!-- แท็บเมนู -->
     <div class="tab-container">
-      <!-- ซ่อนค้นหาไว้ก่อน จะโชว์เฉพาะคนที่มีสิทธิ์ -->
       <div id="tabSearch" class="tab-btn" onclick="switchTab('search')" style="display:none;">🔍 ค้นหา</div>
       <div id="tabPending" class="tab-btn" onclick="switchTab('pending')" style="display:none; color:#d35400;">📝 ใส่ค่าคอม</div>
       <div id="tabCart" class="tab-btn" onclick="switchTab('cart')" style="display:none;">💰 ทำจ่าย</div>
-      <!-- แท็บรายงานจะแสดงให้ทุกคนที่มีชื่อในระบบ -->
       <div id="tabReport" class="tab-btn" onclick="switchTab('report')" style="display:none; color:#1565c0;">📊 รายงาน</div>
     </div>
 
@@ -119,8 +114,9 @@
         <label>ทะเบียนรถ</label>
         <input type="text" id="plate" readonly style="background:#f4f6f6; font-weight:bold;">
         
+        <!-- 🌟 เพิ่ม maxlength และ oninput เพื่อบังคับพิมพ์เฉพาะตัวเลข -->
         <label>เบอร์โทรศัพท์ (ใส่ 0 นำหน้าให้ครบ)</label>
-        <input type="text" id="phone" placeholder="08XXXXXXXX">
+        <input type="tel" id="phone" placeholder="08XXXXXXXX" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
 
         <div class="calc-grid">
           <div>
@@ -233,60 +229,85 @@
     let adminId = "";
     let rawPending = [];
 
-    fetch(GAS_API_URL + "?action=getSettings")
-      .then(res => res.json())
-      .then(config => {
-          if (!config.OUTSOURCE_LIFF_ID) return alert("ยังไม่ได้ตั้งค่า LIFF ID");
-          liff.init({ liffId: config.OUTSOURCE_LIFF_ID }).then(() => {
-              if (liff.isLoggedIn()) {
-                  liff.getProfile().then(profile => {
-                      adminId = profile.userId;
-                      adminName = profile.displayName;
-                      document.getElementById('displayName').innerText = adminName;
-                      checkAdminRole(adminId);
-                  });
-              } else {
-                  liff.login();
-              }
-          });
-      });
+    // 🌟 ระบบโหลดเริ่มต้นใหม่ ป้องกันหน้าจอค้างขาว
+    window.onload = async function() {
+      const loadText = document.getElementById("loadingText");
+      try {
+          loadText.innerText = "กำลังเชื่อมต่อระบบหลังบ้าน... ⏳";
+          
+          const res = await fetch(GAS_API_URL + "?action=getSettings");
+          if (!res.ok) throw new Error("การเชื่อมต่อเซิร์ฟเวอร์ล้มเหลว");
+          const config = await res.json();
+          
+          if (!config.OUTSOURCE_LIFF_ID) throw new Error("ไม่พบข้อมูล LIFF ID ในระบบหลังบ้าน");
+          
+          loadText.innerText = "กำลังเชื่อมต่อ LINE... ⏳";
+          await liff.init({ liffId: config.OUTSOURCE_LIFF_ID });
+          
+          if (!liff.isLoggedIn()) {
+              liff.login();
+              return;
+          }
+
+          loadText.innerText = "กำลังตรวจสอบสิทธิ์... ⏳";
+          const profile = await liff.getProfile();
+          adminId = profile.userId;
+          adminName = profile.displayName;
+          document.getElementById('displayName').innerText = adminName;
+          
+          checkAdminRole(adminId);
+
+      } catch (error) {
+          console.error(error);
+          document.getElementById("loadingScreen").innerHTML = `
+            <div style="text-align:center; padding: 20px;">
+                <h3 style="color:#c0392b;">❌ ไม่สามารถเริ่มระบบได้</h3>
+                <p style="color:#7f8c8d; font-size: 14px;">${error.message}</p>
+                <button onclick="window.location.reload()" class="btn btn-primary" style="width:auto; padding:10px 30px; margin-top:10px;">ลองใหม่อีกครั้ง</button>
+            </div>
+          `;
+      }
+    };
 
     function checkAdminRole(userId) {
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "checkRoleVehicle", userId: userId })
-      }).then(res => res.json()).then(data => {
-        
-        // ถ้าลงทะเบียนในระบบ จะเปิดให้เข้าถึงแอปได้
+      })
+      .then(res => res.json())
+      .then(data => {
         if(data.isRegistered) {
            document.getElementById("loadingScreen").style.display = "none";
            document.getElementById("mainApp").style.display = "block";
            
-           // 🌟 เปิดแท็บรายงานให้ "ทุกคน" เห็น
            document.getElementById("tabReport").style.display = "block";
            
-           // 🌟 เช็คสิทธิ์พนักงาน (ค้นหาและบันทึก)
            if(data.canAccess) {
                document.getElementById("tabSearch").style.display = "block";
            }
-           
-           // 🌟 เช็คสิทธิ์แอดมิน (จัดการเงิน)
            if (data.canManageComm) {
                document.getElementById("tabPending").style.display = "block";
                document.getElementById("tabCart").style.display = "block";
                document.getElementById("commSection").style.display = "block";
            }
            
-           // 🌟 กำหนดหน้าแรกที่เปิดมาเจอ
            if (data.canAccess) {
-               switchTab('search'); // มีสิทธิ์บันทึก ไปหน้าค้นหา
+               switchTab('search'); 
            } else {
-               switchTab('report'); // มีแค่ชื่อ ไปหน้ารายงานเลย
+               switchTab('report'); 
            }
-           
         } else {
            document.getElementById("loadingScreen").innerHTML = "<h3 style='color:#c0392b;'>❌ คุณไม่ได้ลงทะเบียนในระบบ</h3>";
         }
+      })
+      .catch(err => {
+         document.getElementById("loadingScreen").innerHTML = `
+            <div style="text-align:center; padding: 20px;">
+                <h3 style="color:#c0392b;">❌ ตรวจสอบสิทธิ์ล้มเหลว</h3>
+                <p style="color:#7f8c8d; font-size: 14px;">เชื่อมต่อฐานข้อมูลไม่สำเร็จ กรุณาลองใหม่</p>
+                <button onclick="window.location.reload()" class="btn btn-primary" style="width:auto; padding:10px 30px; margin-top:10px;">ลองใหม่อีกครั้ง</button>
+            </div>
+         `;
       });
     }
 
@@ -317,10 +338,13 @@
     function searchVehicle() {
       let kw = document.getElementById("searchInput").value.trim();
       Swal.fire({ title: 'กำลังค้นหา...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "searchMasterVehicle", plate: kw }) 
-      }).then(res => res.json()).then(res => {
+      })
+      .then(res => res.json())
+      .then(res => {
         Swal.close();
         if (res.data && res.data.found) {
             let matches = res.data.data;
@@ -376,6 +400,10 @@
                calcComm();
             }
         }
+      })
+      .catch(err => {
+         Swal.close();
+         Swal.fire("ข้อผิดพลาด", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้", "error");
       });
     }
 
@@ -415,15 +443,27 @@
       document.getElementById('managerFee').value = totalComm > 0 ? Math.floor(totalComm * 0.05) : "";
     }
 
+    // 🌟 ส่วนที่ปรับแก้ ดักจับและเช็คเลข 0 นำหน้าเบอร์โทรศัพท์
     function saveVehicle() {
       let plateVal = document.getElementById("plate").value.trim();
+      let phoneVal = document.getElementById("phone").value.trim();
+
       if(!plateVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาระบุทะเบียนรถ", "warning");
+
+      if (phoneVal !== "") {
+          if (!phoneVal.startsWith("0")) {
+              return Swal.fire("รูปแบบไม่ถูกต้อง", "กรุณาใส่เลข 0 นำหน้าเบอร์โทรศัพท์ด้วยครับ", "warning");
+          }
+          if (phoneVal.length < 9) {
+              return Swal.fire("ข้อมูลไม่ครบ", "กรุณากรอกเบอร์โทรศัพท์ให้ครบถ้วน", "warning");
+          }
+      }
 
       let payload = {
          action: "saveMasterVehicle",
          rowIndex: document.getElementById("rowIndex").value,
          plate: plateVal,
-         phone: document.getElementById("phone").value,
+         phone: phoneVal,
          insCompany: document.getElementById("insCompany").value,
          insType: document.getElementById("insType").value,
          grossPremium: document.getElementById("grossPremium").value,
@@ -439,10 +479,16 @@
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify(payload)
-      }).then(res => res.json()).then(data => {
+      })
+      .then(res => res.json())
+      .then(data => {
          btn.innerText = "💾 บันทึกเข้าระบบ"; btn.disabled = false;
          Swal.fire("สำเร็จ","บันทึกข้อมูลเรียบร้อยแล้ว","success");
          resetForm();
+      })
+      .catch(err => {
+         btn.innerText = "💾 บันทึกเข้าระบบ"; btn.disabled = false;
+         Swal.fire("ข้อผิดพลาด", "บันทึกล้มเหลว ไม่สามารถเชื่อมต่อระบบหลังบ้านได้", "error");
       });
     }
 
@@ -458,7 +504,9 @@
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "getPendingComm" })
-      }).then(res => res.json()).then(data => {
+      })
+      .then(res => res.json())
+      .then(data => {
         document.getElementById("pendingLoading").style.display = "none";
         
         if(data.status === "success") {
@@ -481,6 +529,10 @@
            });
            document.getElementById("pendingList").innerHTML = html;
         }
+      })
+      .catch(err => {
+         document.getElementById("pendingLoading").style.display = "none";
+         document.getElementById("pendingList").innerHTML = "<div style='text-align:center; color:#c0392b;'>ดึงข้อมูลล้มเหลว กรุณาลองใหม่</div>";
       });
     }
 
@@ -498,12 +550,18 @@
       fetch(GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "getAdminVehiclePaymentTasks" })
-      }).then(res => res.json()).then(data => {
+      })
+      .then(res => res.json())
+      .then(data => {
         document.getElementById("cartLoading").style.display = "none";
         if(data.status === "success") {
            rawPending = data.data.pending;
            renderCart();
         }
+      })
+      .catch(err => {
+         document.getElementById("cartLoading").style.display = "none";
+         document.getElementById("cartList").innerHTML = "<div style='text-align:center; color:#c0392b;'>โหลดรายการล้มเหลว กรุณาลองใหม่</div>";
       });
     }
 
@@ -564,11 +622,18 @@
            let itemsToPay = [];
            chk.forEach(c => itemsToPay.push(JSON.parse(c.value.replace(/&quot;/g, '"'))));
            document.getElementById("floatingTotalBox").innerHTML = "กำลังประมวลผลและส่ง LINE... ⏳";
+           
            fetch(GAS_API_URL, {
              method: 'POST',
              body: JSON.stringify({ action: "processAdminVehiclePayments", items: itemsToPay })
-           }).then(r => r.json()).then(d => {
+           })
+           .then(r => r.json())
+           .then(d => {
               Swal.fire("สำเร็จ!","ทำจ่ายและแจ้งเตือนเรียบร้อย","success");
+              loadPaymentCart();
+           })
+           .catch(err => {
+              Swal.fire("ข้อผิดพลาด", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์เพื่อทำจ่ายได้", "error");
               loadPaymentCart();
            });
         }
@@ -587,7 +652,9 @@
        fetch(GAS_API_URL, {
           method: 'POST',
           body: JSON.stringify({ action: "getVehicleReport", startDate: sd, endDate: ed })
-       }).then(res => res.json()).then(data => {
+       })
+       .then(res => res.json())
+       .then(data => {
           Swal.close();
           if(data.status === "success") {
              document.getElementById("reportResult").style.display = "block";
@@ -595,6 +662,10 @@
              document.getElementById("reportGross").innerText = data.totalGross.toLocaleString() + " ฿";
              document.getElementById("reportNet").innerText = data.totalNet.toLocaleString() + " ฿";
           }
+       })
+       .catch(err => {
+          Swal.close();
+          Swal.fire("ข้อผิดพลาด", "ไม่สามารถดึงรายงานจากเซิร์ฟเวอร์ได้", "error");
        });
     }
   </script>
