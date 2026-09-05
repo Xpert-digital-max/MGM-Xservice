@@ -200,6 +200,10 @@
         }
         
         currentAgent = res;
+
+        // 🌟 [เพิ่มตรงนี้] ดึง User ID ของตัวแทนมาใส่เป็นค่าตั้งต้นในช่อง input ทันที
+        document.getElementById('targetUserId').value = userId;
+
       })
       .catch(err => {
         clearTimeout(safetyTimer);
