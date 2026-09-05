@@ -41,8 +41,8 @@
   </div>
 
   <script>
-    // 🌟 ใส่ LIFF ID ของหน้านี้ (ดึงจาก LINE Developers)
-    const MY_LIFF_ID = "2000218686-jvvVChwV"; 
+    // 🌟 เปลี่ยนชื่อตัวแปรเป็น PAYMENT_LIFF_ID ป้องกันการชนกับ config.js
+    const PAYMENT_LIFF_ID = "2000218686-jvvVChwV"; 
     
     var currentStaff = "";
     var currentBranch = ""; 
@@ -55,7 +55,8 @@
     // 1. ฟังก์ชันโหลด LIFF และบังคับล็อกอิน
     async function initializeLiff() {
         try {
-            await liff.init({ liffId: MY_LIFF_ID });
+            // 🌟 เปลี่ยนมาเรียกใช้ PAYMENT_LIFF_ID
+            await liff.init({ liffId: PAYMENT_LIFF_ID });
             if (!liff.isLoggedIn()) {
                 liff.login();
             } else {
@@ -222,7 +223,7 @@
           });
 
           if (slipLink) {
-             submitToBackend(jobId, method, finalAmount, slipLink.trim(), "link");
+              submitToBackend(jobId, method, finalAmount, slipLink.trim(), "link");
           }
        } 
        else {
