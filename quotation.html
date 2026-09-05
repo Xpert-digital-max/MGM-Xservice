@@ -29,7 +29,7 @@
   <!-- ฉากกั้นตรวจสอบสิทธิ์การเข้าใช้งาน -->
   <div id="authOverlay">
     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-    <h2 class="text-2xl font-bold text-gray-800" id="loadingText">กำลังเชื่อมต่อระบบ LINE...</h2>
+    <h2 class="text-2xl font-bold text-gray-800" id="loadingText">กำลังตรวจสอบสิทธิ์ตัวแทน...</h2>
     <p class="text-gray-500 mt-2">มิสเตอร์เอ็กซ์ Group</p>
   </div>
   
@@ -133,19 +133,17 @@
   </div>
 
   <script>
-    let currentPackages = []; let currentHeaders = []; let currentAgent = null; userProfile = { userId: "DEV_TEST_USER", displayName: "Test Admin" };
+    let currentPackages = []; let currentHeaders = []; let currentAgent = null; let userProfile = {};
     let AGENT_REG_LIFF_URL = "";
 
     window.onload = async () => {
-      // 🛡️ ป้องกันหน้าเว็บค้างเติ่ง (Failsafe 8 วินาที: ถ้าเน็ตช้าหรือโหลดไม่ผ่าน จะเปิดหน้าจอให้ใช้งานทันที)
+      // Failsafe 8 วินาที ป้องกันหน้าเว็บค้าง
       let safetyTimer = setTimeout(() => {
         document.getElementById('authOverlay').style.display = 'none';
-        console.warn("Failsafe triggered: Bypassed LIFF init timeout.");
       }, 8000);
 
       try {
         if (typeof QUOTATION_LIFF_ID === 'undefined') {
-          console.error("QUOTATION_LIFF_ID not found in config.js");
           clearTimeout(safetyTimer);
           document.getElementById('authOverlay').style.display = 'none';
           return;
@@ -153,7 +151,7 @@
 
         AGENT_REG_LIFF_URL = "https://liff.line.me/" + AGENT_LIFF_ID;
 
-        document.getElementById('loadingText').innerText = "กำลังตรวจสอบ LINE Login...";
+        document.getElementById('loadingText').innerText = "กำลังเชื่อมต่อระบบ LINE...";
         await liff.init({ liffId: QUOTATION_LIFF_ID });
         
         if (!liff.isLoggedIn()) {
@@ -161,14 +159,16 @@
           return liff.login();
         }
         
+        // 🌟 ดึงข้อมูล User Profile จริงจาก LINE LIFF
         userProfile = await liff.getProfile();
         document.getElementById('loadingText').innerText = "กำลังตรวจสอบสิทธิ์ตัวแทน...";
+        
+        // ส่ง userId จริงไปเช็คกับ Google Sheets
         authenticateAgent(userProfile.userId, safetyTimer);
 
       } catch (err) {
         clearTimeout(safetyTimer);
         document.getElementById('authOverlay').style.display = 'none';
-        console.error("LIFF Init Error:", err);
       }
     };
 
@@ -179,13 +179,21 @@
         clearTimeout(safetyTimer);
         document.getElementById('authOverlay').style.display = 'none'; 
 
+        // 🌟 เช็คเงื่อนไขตามโครงสร้างข้อมูลจริงในชีต Agent_Data
         if (!res.isRegistered) {
-          Swal.fire({ icon: 'warning', title: 'ยังไม่ลงทะเบียน', text: 'ไปหน้าลงทะเบียนก่อนใช้งานครับ', confirmButtonText: 'ไปหน้าลงทะเบียน'
+          Swal.fire({ 
+            icon: 'warning', 
+            title: 'ยังไม่ลงทะเบียน', 
+            text: 'ไปหน้าลงทะเบียนก่อนใช้งานครับ', 
+            confirmButtonText: 'ไปหน้าลงทะเบียน'
           }).then(() => { 
-            if (typeof AGENT_LIFF_ID !== 'undefined') window.location.href = "https://liff.line.me/" + AGENT_LIFF_ID; 
+            if (typeof AGENT_LIFF_ID !== 'undefined') {
+              window.location.href = "https://liff.line.me/" + AGENT_LIFF_ID; 
+            }
           }); 
           return;
         }
+
         if (res.quotationStatus === "NonActive") {
           Swal.fire({ icon: 'error', title: 'รออนุมัติสิทธิ์', text: 'รอแอดมินอนุมัติก่อนใช้งานครับ', showConfirmButton: false });
           return;
@@ -196,8 +204,6 @@
       .catch(err => {
         clearTimeout(safetyTimer);
         document.getElementById('authOverlay').style.display = 'none';
-        // หากต่อหลังบ้านไม่ได้ ให้ผ่านเข้าหน้าจอได้ปกติเพื่อไม่ให้ติดค้าง
-        currentAgent = { agentCode: "X00000", fullName: "ผู้ใช้งานระบบ", phone: "-" };
       });
     }
 
