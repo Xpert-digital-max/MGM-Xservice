@@ -120,9 +120,6 @@
   </div>
   
   <script>
-    // 🌟 เปลี่ยนชื่อตัวแปรไม่ให้ซ้ำกับใน config.js
-    const RECEPTION_LIFF_ID = "2000218686-sKmiajH7"; 
-    
     var currentStaff = "";
     var currentBranch = "";
     let processedFiles = []; 
@@ -134,6 +131,7 @@
     // 🌟 1. ฟังก์ชันโหลด LIFF และตรวจสอบสิทธิ์
     async function initLiff() {
         try {
+            // 🌟 ดึงค่า RECEPTION_LIFF_ID จาก config.js มาใช้โดยตรง (ไม่ต้องประกาศใหม่)
             await liff.init({ liffId: RECEPTION_LIFF_ID });
             if (!liff.isLoggedIn()) { 
                 liff.login(); 
