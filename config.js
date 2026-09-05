@@ -11,3 +11,4 @@ const TRANSPORT_LIFF_ID = "2000218686-KumAYGWy"; // สำหรับหน้�
 const SHARE_LIFF_ID = "2000218686-Zh9auEF3";     // สำหรับหน้ารับสิทธิ์/แชร์
 const QRCODE_LIFF_ID = "2000218686-8pMjNxWW";    // สำหรับหน้าแสดง QR Code
 const QUOTATION_LIFF_ID = "2000218686-axiOXqBh"; // สำหรับหน้าใบเสนอราคา
+const SHARE_LIFF_ID = "2000218686-Zh9auEF3"; // สำหรับหน้าแชร์ / สร้าง QR Code
