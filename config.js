@@ -13,4 +13,4 @@ const QRCODE_LIFF_ID = "2000218686-8pMjNxWW";    // สำหรับหน้�
 const QUOTATION_LIFF_ID = "2000218686-axiOXqBh"; // สำหรับหน้าใบเสนอราคา
 const REGISTER_LIFF_ID = "2000218686-nFUV3rHq"; // สำหรับหน้าลงทะเบียน / กรอกเบอร์
 const trackingLink = "https://liff.line.me/" + REGISTER_LIFF_ID + 
-                     "?refId=" + encodeURIComponent(profile.userId) + ...
+                     "?refId=" + encodeURIComponent(profile.userId) +
