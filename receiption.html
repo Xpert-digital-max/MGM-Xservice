@@ -41,8 +41,6 @@
         <hr>
         <div id="ui">
 
-
-
           <label class="fw-bold text-danger">สาขาที่รับรถ</label>
           <select id="branch" class="form-select mb-3 border-danger">
             <option value="สาขาพระยืน">สาขาพระยืน</option>
@@ -131,7 +129,7 @@
     // 🌟 1. ฟังก์ชันโหลด LIFF และตรวจสอบสิทธิ์
     async function initLiff() {
         try {
-            // 🌟 ดึงค่า RECEPTION_LIFF_ID จาก config.js มาใช้โดยตรง (ไม่ต้องประกาศใหม่)
+            // 🌟 ดึงค่า RECEPTION_LIFF_ID จาก config.js มาใช้โดยตรง 
             await liff.init({ liffId: RECEPTION_LIFF_ID });
             if (!liff.isLoggedIn()) { 
                 liff.login(); 
@@ -276,7 +274,6 @@
         try {
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
-                // ส่งพารามิเตอร์ 'todayOnly: true' เพื่อให้ดึงเฉพาะของวันนี้
                 body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch, todayOnly: true })
             });
             const res = await response.json();
@@ -284,18 +281,13 @@
 
             if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบคิวนี้ในสาขาที่เลือก หรือ ไม่ใช่คิวของวันนี้', 'info');
 
-            // บังคับดึงเอาคันแรกของวันนี้มาเลย
             let job = res.jobs[0];
-            
-            // 🌟 เช็คสิทธิ์ที่คอลัมน์ Y (paymentStatus) เพียวๆ เลย!
             let payStatus = String(job.paymentStatus || "").trim(); 
             
-            // ถ้า Col Y ไม่ว่าง ห้ามแก้!
             if (payStatus !== "" && payStatus !== "undefined") {
                 return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการรับชำระเงินเรียบร้อยแล้ว<br><small class="text-danger">(' + payStatus + ')</small>', 'error');
             }
 
-            // ถ้า Col Y ว่าง ให้เอาข้อมูลมายัดใส่ฟอร์มให้แก้
             document.getElementById('editRowIndex').value = job.rowIndex;
             document.getElementById('editJobId').value = job.jobId;
             document.getElementById('reg').value = job.reg;
@@ -306,7 +298,6 @@
                 if(selType.options[i].value === job.carType) { selType.selectedIndex = i; break; }
             }
 
-            // เปลี่ยนปุ่ม
             let saveBtn = document.getElementById('btnSubmitQueue');
             saveBtn.innerText = "💾 บันทึกการแก้ไข";
             saveBtn.className = "btn btn-warning w-100 py-3 fw-bold shadow";
@@ -339,8 +330,8 @@
           phone: phone,
           carType: carType,
           files: processedFiles,
-          editRowIndex: document.getElementById('editRowIndex').value, // 🌟 ส่ง Index ไป (ถ้าเป็นการแก้ไข)
-          editJobId: document.getElementById('editJobId').value // 🌟 ส่ง JobID เก่าไป 
+          editRowIndex: document.getElementById('editRowIndex').value, 
+          editJobId: document.getElementById('editJobId').value 
       };
       
       try {
@@ -356,7 +347,7 @@
               document.getElementById('qNum').innerText = r.queueNo;
               document.getElementById('jId').innerText = r.jobID;
 
-              let liffMemberId = "2000218686-kY7ah48L"; // แก้ตาม LIFF ID สมาชิกของคุณ
+              let liffMemberId = "2000218686-kY7ah48L"; // ลิงก์ไปติดตามสถานะ (Track)
               let targetUrl = "https://liff.line.me/" + liffMemberId;
               let qrApi = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(targetUrl);
               document.getElementById('qrImage').src = qrApi;
