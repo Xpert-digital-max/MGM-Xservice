@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- 🌟 เพิ่มการดึงค่าจาก config.js -->
+  <script src="config.js"></script>
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
     .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
@@ -71,39 +73,33 @@
   </div>
 
   <script>
-    // ⚠️ ใส่ลิงก์ Web App (GAS Exec) ของคุณตรงนี้
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyzFxHS2LMwdh0d2BvggdBiUMDY79wRQr_xfJLBUzo8RB9XbxPQIWaNe6S8PpvGeAJDmw/exec"; 
-    
     let userProfile = {};
     let refUserId = "";
-    let AGENT_REG_LIFF_URL = ""; 
-    let QUOTATION_LIFF_URL = ""; 
+    
+    // 🌟 ดึง LIFF ID จาก config.js มาประกอบเป็น URL สำหรับปุ่มกด
+    let QUOTATION_LIFF_URL = "https://liff.line.me/" + QUOTATION_LIFF_ID; 
 
+    // เริ่มการทำงานเมื่อโหลดหน้าเว็บเสร็จ
     window.onload = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       refUserId = urlParams.get('ref') || "";
 
       try {
-        const configResponse = await fetch(GAS_API_URL, {
-          method: 'POST',
-        body: JSON.stringify({ action: "registerAgent", data: data })
-      }).then(res => res.json()).then(res => {
-        // 🌟 ปรับตรงนี้ให้รองรับทั้ง 2 รูปแบบเพื่อความชัวร์
-        if (res.success || res.status === "success") {
-          const code = res.agentCode || res.message || "สำเร็จ";
-          Swal.fire({
-            icon: 'success', title: 'ลงทะเบียนสำเร็จ!',
-            text: `รหัสตัวแทนของคุณคือ ${code} ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว`,
-            confirmButtonText: 'ตกลง'
-          }).then(() => { liff.closeWindow(); });
-        } else {
-          // ถ้ามี error ให้แสดงข้อความจริง หรือแจ้งว่าเกิดอะไรขึ้น
-          Swal.fire('ผิดพลาด', res.error || res.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ', 'error');
+        // 🌟 เรียกใช้ AGENT_LIFF_ID จาก config.js
+        await liff.init({ liffId: AGENT_LIFF_ID });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
         }
-      }).catch(err => Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อระบบล้มเหลว: ' + err, 'error'));
+
+        userProfile = await liff.getProfile();
+        checkStatus(userProfile.userId); // เช็คว่าเคยสมัครหรือยัง
+      } catch (err) {
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดระบบ LINE ได้', 'error');
       }
     };
 
+    // ฟังก์ชันตรวจสอบสถานะตัวแทน
     function checkStatus(userId) {
       fetch(GAS_API_URL, {
         method: 'POST',
@@ -112,6 +108,7 @@
         document.getElementById('loadingSection').classList.add('hidden');
         
         if (res.isRegistered) {
+          // 🟢 ถ้าสมัครแล้ว โชว์หน้าสถานะ
           document.getElementById('statusSection').classList.remove('hidden');
           document.getElementById('agentCodeDisplay').innerText = res.agentCode;
           document.getElementById('agentNameDisplay').innerText = res.fullName;
@@ -145,11 +142,13 @@
             `;
           }
         } else {
+          // 🔴 ถ้ายังไม่สมัคร โชว์ฟอร์มลงทะเบียน
           document.getElementById('registerSection').classList.remove('hidden');
         }
       }).catch(err => Swal.fire('ข้อผิดพลาด', 'ระบบขัดข้อง กรุณาลองใหม่', 'error'));
     }
 
+    // ฟังก์ชันส่งข้อมูลลงทะเบียน
     function submitRegistration(e) {
       e.preventDefault();
       
@@ -165,7 +164,7 @@
         phone: rawPhone,
         userId: userProfile.userId,
         displayName: userProfile.displayName,
-        pictureUrl: userProfile.pictureUrl,
+        pictureUrl: userProfile.pictureUrl || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png", // รูปโปรไฟล์พื้นฐานกรณีไม่มี
         refUserId: refUserId
       };
 
@@ -175,14 +174,15 @@
         method: 'POST',
         body: JSON.stringify({ action: "registerAgent", data: data })
       }).then(res => res.json()).then(res => {
-        if (res.success) {
+        if (res.success || res.status === "success") {
+          const code = res.agentCode || res.message || "สำเร็จ";
           Swal.fire({
             icon: 'success', title: 'ลงทะเบียนสำเร็จ!',
-            text: `รหัสตัวแทนของคุณคือ ${res.agentCode} ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว`,
+            text: `รหัสตัวแทนของคุณคือ ${code} ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว`,
             confirmButtonText: 'ตกลง'
           }).then(() => { liff.closeWindow(); });
         } else {
-          Swal.fire('ผิดพลาด', res.error, 'error');
+          Swal.fire('ผิดพลาด', res.error || res.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ', 'error');
         }
       }).catch(err => Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อระบบล้มเหลว', 'error'));
     }
