@@ -109,19 +109,21 @@
 
           const result = await response.json();
 
-          // 🌟 เช็คว่ามี formUrl ส่งกลับมาไหม
-          if (result && result.formUrl) {
+          // 🌟 ปรับปรุงการรับค่าให้ยืดหยุ่น ป้องกันเคสหา formUrl ไม่เจอ
+          const finalUrl = result.formUrl || (result.detail && result.detail.formUrl);
+
+          if (finalUrl) {
               // ซ่อนหน้ากรอกเบอร์ โชว์หน้าปุ่มสีทอง
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
 
               // ยัดลิงก์ใส่ปุ่มสีทอง
-              document.getElementById('surveyBtn').href = result.formUrl;
+              document.getElementById('surveyBtn').href = finalUrl;
           } else {
-              throw new Error(result.message || "Server Error");
+              throw new Error(result.message || "ไม่พบลิงก์ปลายทางในระบบ");
           }
       } catch (err) {
-          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้', 'error');
+          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้: ' + err.message, 'error');
           btn.disabled = false; 
           btn.innerText = "ดำเนินการตรวจสอบ";
       }
