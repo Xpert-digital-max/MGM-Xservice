@@ -3,6 +3,7 @@
 <head>
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ตรวจสอบข้อมูล & รับสิทธิ์</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
@@ -99,10 +100,11 @@
               Swal.close();
               checkUrlParamsAndShowForm();
           }
-      }, 12000); // เผื่อเวลาเน็ตช้าเป็น 12 วิ
+      }, 12000); 
 
       try {
-          await liff.init({ liffId: "2000218686-kY7ah48L" }); // แก้ LIFF ID ของคุณตามจริง
+          // 🌟 เรียกใช้ตัวแปรจาก config.js โดยตรง ไม่ต้องประกาศซ้ำ
+          await liff.init({ liffId: TRACK_LIFF_ID }); 
           if (!liff.isLoggedIn()) {
               liff.login();
               return;
