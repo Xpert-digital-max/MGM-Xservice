@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- 🌟 ดึงค่า URL กลางจาก config.js -->
   <script src="config.js"></script>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -36,7 +35,6 @@
 </head>
 <body class="p-4 md:p-8 relative">
 
-  <!-- ฉากกั้นตรวจสอบสิทธิ์การเข้าใช้งาน -->
   <div id="authOverlay">
     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
     <h2 class="text-2xl font-bold text-gray-800" id="loadingText">กำลังตรวจสอบสิทธิ์ตัวแทน...</h2>
@@ -47,7 +45,6 @@
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-bold text-gray-800">🛠️ แผงควบคุมออกใบเสนอราคา</h2>
       
-      <!-- 🟢 ปุ่มแชร์แนะนำเพื่อน -->
       <button onclick="shareReferral()" class="bg-green-100 text-green-700 hover:bg-green-200 border border-green-400 font-bold py-2 px-4 rounded-lg shadow-sm flex items-center transition">
         <span class="mr-2">🔗</span> แชร์ลิงก์แนะนำเพื่อน
       </button>
@@ -109,7 +106,6 @@
   </div>
 
   <div class="overflow-x-auto pb-10">
-    <!-- Canvas A4 -->
     <div id="quotationCanvas" class="export-container mx-auto hidden shadow-2xl">
       
       <div class="export-body">
@@ -133,7 +129,6 @@
         <div id="dynamicTableArea"></div>
       </div>
       
-      <!-- Footer รหัสตัวแทน -->
       <div class="mt-8 text-sm border-t-2 border-gray-300 pt-6 flex justify-between items-end">
         <div class="text-gray-500">
           <p>เอกสารฉบับนี้จัดทำขึ้นเพื่อเปรียบเทียบข้อมูลเบื้องต้น บริษัทฯ ขอสงวนสิทธิ์ในการพิจารณารับประกันตามเงื่อนไข</p>
@@ -151,16 +146,15 @@
   <script>
     let currentPackages = []; let currentHeaders = []; let currentAgent = null; let userProfile = {};
     
-    // 🌟 สร้าง URL หน้าสมัครตัวแทน จากตัวแปรใน config.js แบบอัตโนมัติ
+    // สร้างลิงก์หน้าสมัครตัวแทนอัตโนมัติจาก config.js
     let AGENT_REG_LIFF_URL = "https://liff.line.me/" + AGENT_LIFF_ID;
 
     window.onload = async () => {
       try {
-        // 🌟 เรียกใช้ QUOTATION_LIFF_ID จาก config.js โดยตรง
+        // 🌟 ดึง QUOTATION_LIFF_ID จาก config.js โดยตรงแบบรวดเร็ว
         await liff.init({ liffId: QUOTATION_LIFF_ID });
         
         if (!liff.isLoggedIn()) return liff.login();
-        
         userProfile = await liff.getProfile();
         authenticateAgent(userProfile.userId);
       } catch (err) { 
@@ -185,7 +179,7 @@
     // 🟢 ระบบแชร์แนะนำเพื่อน
     async function shareReferral() {
       if (!currentAgent) return;
-      if (!AGENT_REG_LIFF_URL) return Swal.fire('ตั้งค่าไม่สมบูรณ์', 'ยังไม่ได้ใส่ AGENT_REG_LIFF_URL ใน Settings', 'warning');
+      if (!AGENT_REG_LIFF_URL) return Swal.fire('ตั้งค่าไม่สมบูรณ์', 'ยังไม่ได้กำหนด AGENT_LIFF_ID ใน config.js', 'warning');
       
       const refLink = `${AGENT_REG_LIFF_URL}?ref=${userProfile.userId}`;
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(refLink)}`;
@@ -326,7 +320,7 @@
     function restoreEditableStyles() { document.querySelectorAll('.editable-cell').forEach(c => c.style.borderBottom = ''); }
     
     async function downloadImage() { Swal.fire({ title: 'กำลังสร้างรูป...', didOpen: () => Swal.showLoading() }); removeEditableStyles(); const cvs = await html2canvas(document.getElementById('quotationCanvas'), { scale: 1.5, useCORS: true }); const lnk = document.createElement('a'); lnk.download = `Quotation_${Date.now()}.jpg`; lnk.href = cvs.toDataURL('image/jpeg', 0.9); lnk.click(); restoreEditableStyles(); Swal.close(); }
-    async function downloadPDF() { Swal.fire({ title: 'กำลังสร้าง PDF...', didOpen: () => Swal.showLoading() }); removeEditableStyles(); const cvs = await html2canvas(document.getElementById('quotationCanvas'), { scale: 1.5, useCORS: true }); const pdf = new jspdf.jsPDF('p', 'mm', 'a4'); pdf.addImage(cvs.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), (cvs.height * pdf.internal.pageSize.getWidth()) / pdf.width); pdf.save(`Quotation_${Date.now()}.pdf`); restoreEditableStyles(); Swal.close(); }
+    async function downloadPDF() { Swal.fire({ title: 'กำลังสร้าง PDF...', didOpen: () => Swal.showLoading() }); removeEditableStyles(); const cvs = await html2canvas(document.getElementById('quotationCanvas'), { scale: 1.5, useCORS: true }); const pdf = new jspdf.jsPDF('p', 'mm', 'a4'); pdf.addImage(cvs.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), (cvs.height * pdf.internal.pageSize.getWidth()) / cvs.width); pdf.save(`Quotation_${Date.now()}.pdf`); restoreEditableStyles(); Swal.close(); }
     
     async function sendToLine() {
       const uid = document.getElementById('targetUserId').value.trim(); if (!uid) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอก LINE User ID', 'warning');
