@@ -303,11 +303,23 @@
             moneyBadge = `<br><div class="money-badge">💰 ส่วนแบ่ง: ${task.outsourceShare} บ.</div>`;
         }
 
+        // 🌟 เพิ่มเงื่อนไขเช็คสีสถานะ
+        let badgeStyle = "";
+        if (task.status === "ปิดการขาย") {
+            badgeStyle = "background: #27ae60; color: white;"; // สีเขียว
+        } else if (task.status === "เสนอราคา") {
+            badgeStyle = "background: #e74c3c; color: white;"; // สีแดง
+        } else if (task.status === "ลูกค้าปฏิเสธ" || task.status === "ทำที่อื่นแล้ว") {
+            badgeStyle = "background: #2c3e50; color: white;"; // สีดำ
+        } else {
+            badgeStyle = "background: #fef9e7; color: #f39c12;"; // สีส้มอ่อน (รอทัก)
+        }
+
         card.innerHTML = `
           <div class="task-title">🚗 ${task.plate}${chatIcon}</div>
           <div class="task-detail">👤 ${ownerTag}${task.customerName} | 📞 ${task.phone}</div>
           <div class="task-detail">🛡️ ${task.insuranceType || "-"} (${task.insuranceCompany || "-"})</div>
-          <div class="status-badge">${task.status}</div>
+          <div class="status-badge" style="${badgeStyle}">${task.status}</div>
           ${moneyBadge}
           <div style="font-size:12px; color:#c0392b; margin-top:5px; text-align:right;">⏰ นัดเตือน: ${task.followUpDate}</div>
         `;
