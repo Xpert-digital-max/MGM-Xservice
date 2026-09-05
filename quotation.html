@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- 🌟 ดึงค่า URL กลางจาก config.js -->
+  <script src="config.js"></script>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
@@ -37,7 +39,7 @@
   <!-- ฉากกั้นตรวจสอบสิทธิ์การเข้าใช้งาน -->
   <div id="authOverlay">
     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-    <h2 class="text-2xl font-bold text-gray-800" id="loadingText">กำลังโหลดการตั้งค่าระบบ...</h2>
+    <h2 class="text-2xl font-bold text-gray-800" id="loadingText">กำลังตรวจสอบสิทธิ์ตัวแทน...</h2>
     <p class="text-gray-500 mt-2">มิสเตอร์เอ็กซ์ Group</p>
   </div>
   
@@ -147,33 +149,23 @@
   </div>
 
   <script>
-    // ⚠️ ใส่ลิงก์ Web App (GAS Exec) ของคุณตรงนี้
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyzFxHS2LMwdh0d2BvggdBiUMDY79wRQr_xfJLBUzo8RB9XbxPQIWaNe6S8PpvGeAJDmw/exec";
-    
     let currentPackages = []; let currentHeaders = []; let currentAgent = null; let userProfile = {};
-    let QUOTATION_LIFF_URL = ""; let AGENT_REG_LIFF_URL = "";
+    
+    // 🌟 สร้าง URL หน้าสมัครตัวแทน จากตัวแปรใน config.js แบบอัตโนมัติ
+    let AGENT_REG_LIFF_URL = "https://liff.line.me/" + AGENT_LIFF_ID;
 
     window.onload = async () => {
       try {
-        const configResponse = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getConfig" }) }).then(res => res.json());
-        if (configResponse.success) {
-          QUOTATION_LIFF_URL = configResponse.data.QUOTATION_LIFF_URL;
-          AGENT_REG_LIFF_URL = configResponse.data.AGENT_REG_LIFF_URL;
-          if (!QUOTATION_LIFF_URL) return Swal.fire('ตั้งค่าไม่สมบูรณ์', 'ไม่พบ QUOTATION_LIFF_URL ใน Settings', 'error');
-        } else return Swal.fire('ข้อผิดพลาด', 'ดึงข้อมูล Settings ไม่สำเร็จ', 'error');
-
-        document.getElementById('loadingText').innerText = "กำลังตรวจสอบสิทธิ์ตัวแทน...";
-        
-        // ดึง LIFF ID จาก URL หรือแปลงจาก QUOTATION_LIFF_URL
-        const liffIdMatch = QUOTATION_LIFF_URL.match(/liff\.line\.me\/([^\/]+)/);
-        const liffId = liffIdMatch ? liffIdMatch[1] : QUOTATION_LIFF_URL;
-
-        await liff.init({ liffId: liffId });
+        // 🌟 เรียกใช้ QUOTATION_LIFF_ID จาก config.js โดยตรง
+        await liff.init({ liffId: QUOTATION_LIFF_ID });
         
         if (!liff.isLoggedIn()) return liff.login();
+        
         userProfile = await liff.getProfile();
         authenticateAgent(userProfile.userId);
-      } catch (err) { Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบได้', 'error'); }
+      } catch (err) { 
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบ LINE ได้', 'error'); 
+      }
     };
 
     function authenticateAgent(userId) {
