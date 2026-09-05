@@ -7,3 +7,4 @@ const CASHIER_LIFF_ID = "2000218686-eb3mB4DQ";   // สำหรับการ�
 const PAYMENT_LIFF_ID = "2000218686-jvvVChwV";   // สำหรับระบบรับชำระเงิน
 const AGENT_LIFF_ID = "2000218686-4vuDrxS0";     // สำหรับหน้าสมัครตัวแทน
 const TRACK_LIFF_ID = "2000218686-kY7ah48L";     // สำหรับหน้าติดตามสถานะ
+const TRANSPORT_LIFF_ID = "2000218686-KumAYGWy"; // สำหรับหน้าจัดการงานขนส่ง
