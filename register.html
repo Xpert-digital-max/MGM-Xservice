@@ -74,8 +74,8 @@
       globalRefId = urlParams.get('refId') || "";
 
       try {
-        // 🌟 ใช้ FORM_LIFF_ID จาก config.js กลางโดยอัตโนมัติ
-        await liff.init({ liffId: FORM_LIFF_ID }); 
+        // 🌟 ใช้ SHARE_LIFF_ID จาก config.js กลางโดยอัตโนมัติ
+        await liff.init({ liffId: SHARE_LIFF_ID }); 
         if (!liff.isLoggedIn()) {
           liff.login();
         }
