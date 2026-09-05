@@ -120,14 +120,12 @@
             </div>
             
             <div id="insDateSection" class="row g-2 mt-2" style="display:none">
-                <!-- 🌟 เพิ่ม onchange="autoSetEndDate()" ตรงช่องวันเริ่ม -->
                 <div class="col-6"><label class="small">วันเริ่ม</label><input type="date" id="insStartDate" class="form-control form-control-sm" onchange="autoSetEndDate()"></div>
                 <div class="col-6"><label class="small">วันสิ้นสุด</label><input type="date" id="insEndDate" class="form-control form-control-sm"></div>
             </div>
             <div class="col-6 mt-2"><input type="number" id="insPrice" class="form-control" placeholder="ราคาประกัน"></div>
             <div class="col-6 mt-2"><input type="text" id="insNote" class="form-control" placeholder="บริษัท/รายละเอียด"></div>
             
-            <!-- 🌟 ย้ายลงมาตรงนี้: สวิตช์เปิด-ปิด การแบ่งจ่าย / มัดจำ -->
             <div class="col-12 mt-4 pt-3 border-top border-success">
                 <div class="form-check form-switch border border-success p-2 rounded bg-light shadow-sm">
                     <input class="form-check-input ms-1" type="checkbox" id="isInstallment" onchange="toggleInstallment()">
@@ -135,7 +133,6 @@
                 </div>
             </div>
             
-            <!-- 🌟 ช่องกรอกมัดจำ (จะถูกซ่อนไว้โดยค่าเริ่มต้น) -->
             <div class="col-12 mt-2 mb-2" id="depositSection" style="display: none;">
                 <label class="text-success fw-bold">💵 ยอดรับมัดจำล่วงหน้า (งวดที่ 1)</label>
                 <input type="number" id="deposit" class="form-control border-success text-success fw-bold form-control-lg" placeholder="ระบุจำนวนเงินที่รับจริง">
@@ -175,13 +172,13 @@
             </div>
          </div>
       </div>
-    </div> <!-- ปิด mainContent -->
+    </div> 
 
   </div>
 
   <script>
-    // 🌟 ใส่ LIFF ID 
-    const MY_LIFF_ID = "2000218686-eb3mB4DQ"; 
+    // 🌟 เปลี่ยนชื่อตัวแปรเป็น CASHIER_LIFF_ID ป้องกันการชนกับ config.js
+    const CASHIER_LIFF_ID = "2000218686-eb3mB4DQ"; 
     
     var currentStaff = "";
     var currentBranch = "";
@@ -192,7 +189,7 @@
 
     async function initLiff() {
         try {
-            await liff.init({ liffId: MY_LIFF_ID });
+            await liff.init({ liffId: CASHIER_LIFF_ID });
             if (!liff.isLoggedIn()) { liff.login(); } 
             else { verifyPermission(); }
         } catch(e) { Swal.fire('Error', 'ไม่สามารถโหลดระบบ LINE ได้', 'error'); }
@@ -328,7 +325,6 @@
         let idCard = document.getElementById('idCard').value;
         let engineLabel = document.getElementById('engineLabel').innerText; 
         
-        // 🌟 เช็คว่าเปิดสวิตช์แบ่งจ่ายหรือไม่ และดึงยอดมัดจำ
         let isInstallment = document.getElementById('isInstallment') ? document.getElementById('isInstallment').checked : false;
         let deposit = 0;
         if (isInstallment) {
@@ -555,7 +551,6 @@
     function toggleCarType() { let t = document.getElementById('cType').value; let lbl = document.getElementById('engineLabel'); if(t.includes('รย.3') || t.includes('กระบะ')) lbl.innerText = "น้ำหนักรถ (กก.)"; else if(t.includes('รย.2') || t.includes('ตู้')) lbl.innerText = "จำนวนที่นั่ง"; else lbl.innerText = "เครื่องยนต์ (CC)"; autoCheckTor(); }
     function autoCheckTor() { let yInput = document.getElementById('regYear').value; if(!yInput || yInput.length < 4) return; let yearBE = parseInt(yInput); let currentYearBE = new Date().getFullYear() + 543; let age = currentYearBE - yearBE; document.getElementById('carAgeText').innerText = "อายุรถ: " + age + " ปี"; let type = document.getElementById('cType').value; let torCheck = document.getElementById('doTor'); let limit = 7; if(type.includes("จักรยานยนต์")) limit = 5; if (age >= limit) torCheck.checked = true; }
     
-    // 🌟 ฟังก์ชันคำนวณวันสิ้นสุดอัตโนมัติ (บวก 1 ปี)
     function autoSetEndDate() {
         const startDateInput = document.getElementById("insStartDate").value;
         const endDateInput = document.getElementById("insEndDate");
@@ -571,24 +566,19 @@
     
     function setDefaultDate() { 
         let d = new Date();
-        
-        // 🌟 แก้ปัญหา Timezone: ดึงวันที่และเวลาตามเครื่อง (Local Time) ของผู้ใช้งานจริงๆ
         let year = d.getFullYear();
         let month = String(d.getMonth() + 1).padStart(2, '0');
         let day = String(d.getDate()).padStart(2, '0');
         let t = `${year}-${month}-${day}`; 
         
-        // ตั้งค่าวัดเริ่มต้นของ พ.ร.บ.
         let prbInput = document.getElementById('prbStartDate');
         prbInput.value = t;  
-        prbInput.min = t; // 🌟 ล็อกไม่ให้กดเลือกวันย้อนหลัง
+        prbInput.min = t; 
         
-        // ตั้งค่าวัดเริ่มต้นของ ประกัน
         let insStartInput = document.getElementById('insStartDate');
         insStartInput.value = t; 
-        insStartInput.min = t; // 🌟 ล็อกไม่ให้กดเลือกวันย้อนหลัง
+        insStartInput.min = t; 
         
-        // 🌟 ตั้งค่าวันสิ้นสุดเป็นปีหน้าแบบอัตโนมัติ
         d.setFullYear(d.getFullYear() + 1);
         let nextYear = d.getFullYear();
         let nextMonth = String(d.getMonth() + 1).padStart(2, '0');
