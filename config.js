@@ -10,3 +10,4 @@ const TRACK_LIFF_ID = "2000218686-kY7ah48L";     // สำหรับหน้�
 const TRANSPORT_LIFF_ID = "2000218686-KumAYGWy"; // สำหรับหน้าจัดการงานขนส่ง
 const SHARE_LIFF_ID = "2000218686-Zh9auEF3";     // สำหรับหน้ารับสิทธิ์/แชร์
 const QRCODE_LIFF_ID = "2000218686-8pMjNxWW";    // สำหรับหน้าแสดง QR Code
+const QUOTATION_LIFF_ID = "2000218686-Aiq7vt7b"; // สำหรับหน้าใบเสนอราคา
