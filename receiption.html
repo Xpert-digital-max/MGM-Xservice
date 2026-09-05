@@ -120,8 +120,8 @@
   </div>
   
   <script>
-    // 🌟 ใส่ LIFF ID 
-    const MY_LIFF_ID = "2000218686-sKmiajH7"; 
+    // 🌟 เปลี่ยนชื่อตัวแปรไม่ให้ซ้ำกับใน config.js
+    const RECEPTION_LIFF_ID = "2000218686-sKmiajH7"; 
     
     var currentStaff = "";
     var currentBranch = "";
@@ -134,7 +134,7 @@
     // 🌟 1. ฟังก์ชันโหลด LIFF และตรวจสอบสิทธิ์
     async function initLiff() {
         try {
-            await liff.init({ liffId: MY_LIFF_ID });
+            await liff.init({ liffId: RECEPTION_LIFF_ID });
             if (!liff.isLoggedIn()) { 
                 liff.login(); 
             } else { 
