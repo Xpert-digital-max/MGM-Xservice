@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เช็คเบี้ยประกันรถยนต์ ฟรี</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="config.js"></script> 
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
+    .container { background: white; width: 100%; max-width: 480px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; padding-bottom: 30px;}
+    
+    .hero-header { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 25px 20px; text-align: center; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; border-bottom: 4px solid #1565c0;}
+    .hero-header h2 { color: #0d47a1; margin: 0; font-size: 22px; font-weight: 700; }
+    .hero-header h2 span { color: #f39c12; text-decoration: underline; }
+    .hero-header p { color: #455a64; font-size: 14px; margin: 8px 0 0 0; }
+
+    .form-content { padding: 20px; }
+    .section-title { font-weight: 700; font-size: 16px; color: #1a237e; margin-bottom: 15px; text-align: center; }
+
+    /* Grid สำหรับเลือกประเภทรถ */
+    .car-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+    .car-card { background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .car-card:hover { border-color: #90caf9; background: #f8fbff; }
+    .car-card.active { border-color: #1976d2; background: #e3f2fd; box-shadow: 0 4px 10px rgba(25, 118, 210, 0.15); }
+    .car-card input { display: none; }
+    .car-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+    .car-label { font-size: 13px; font-weight: 600; color: #37474f; }
+
+    label { font-weight: 600; font-size: 14px; color: #455a64; display: block; margin-bottom: 6px; }
+    input[type="text"], input[type="tel"], input[type="email"], input[type="date"], select { 
+        width: 100%; padding: 14px 15px; margin-bottom: 20px; 
+        border: 1px solid #cfd8dc; border-radius: 10px; box-sizing: border-box; 
+        font-family: 'Sarabun', sans-serif; font-size: 15px; color: #263238; background: #f9fbfb; transition: 0.2s;
+    }
+    input:focus, select:focus { outline: none; border-color: #1976d2; background: #fff; box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15); }
+    
+    select {
+        appearance: none; -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231976d2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat; background-position: right 15px center; background-size: 16px;
+    }
+
+    .divider { border-top: 2px dashed #eceff1; margin: 30px 0; }
+
+    .btn-submit { 
+        width: 100%; padding: 16px; border: none; border-radius: 12px; 
+        background: linear-gradient(to right, #1e88e5, #1565c0); color: white; 
+        font-weight: 700; font-family: 'Sarabun', sans-serif; font-size: 18px; 
+        cursor: pointer; box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3); transition: 0.3s;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(21, 101, 192, 0.4); }
+    
+    #loadingScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
+  </style>
+</head>
+<body>
+
+  <div id="loadingScreen">
+    <h3 style="color:#1565c0;" id="loadingText">กำลังเตรียมระบบ... ⏳</h3>
+  </div>
+
+  <div class="container" id="appContainer" style="display:none;">
+    <div class="hero-header">
+      <h2>เช็คเบี้ยประกันรถยนต์ <span>ฟรี</span></h2>
+      <p>และ ผ่อนได้ 0% คัดเบี้ยจากบริษัทชั้นนำมาให้แล้ว</p>
+    </div>
+
+    <form class="form-content" id="insuranceForm" onsubmit="submitInsurance(event)">
+      
+      <div class="section-title">วันนี้จะเช็คเบี้ยให้รถคันไหนครับ?</div>
+      
+      <!-- 1. เลือกชนิดรถ -->
+      <div class="car-type-grid">
+        <label class="car-card active" id="lblCar1" onclick="selectCarType('lblCar1')">
+          <input type="radio" name="carType" value="รถเก๋ง / กระบะ 4 ประตู" checked>
+          <span class="car-icon">🚗</span>
+          <span class="car-label">รถเก๋ง /<br>กระบะ 4 ประตู</span>
+        </label>
+        <label class="car-card" id="lblCar2" onclick="selectCarType('lblCar2')">
+          <input type="radio" name="carType" value="กระบะ 2 ประตู">
+          <span class="car-icon">🛻</span>
+          <span class="car-label">กระบะ 2 ประตู</span>
+        </label>
+        <label class="car-card" id="lblCar3" onclick="selectCarType('lblCar3')">
+          <input type="radio" name="carType" value="รถไฟฟ้า EV">
+          <span class="car-icon">⚡</span>
+          <span class="car-label">รถไฟฟ้า EV<br>ไม่เกิน 7 ที่นั่ง</span>
+        </label>
+        <label class="car-card" id="lblCar4" onclick="selectCarType('lblCar4')">
+          <input type="radio" name="carType" value="รถตู้">
+          <span class="car-icon">🚐</span>
+          <span class="car-label">รถตู้</span>
+        </label>
+      </div>
+
+      <!-- ข้อมูลรถยนต์ -->
+      <label>ยี่ห้อรถ</label>
+      <select id="brand" required>
+        <option value="" disabled selected>- เลือดยี่ห้อรถ -</option>
+        <option value="TOYOTA">TOYOTA</option>
+        <option value="HONDA">HONDA</option>
+        <option value="ISUZU">ISUZU</option>
+        <option value="NISSAN">NISSAN</option>
+        <option value="MITSUBISHI">MITSUBISHI</option>
+        <option value="MAZDA">MAZDA</option>
+        <option value="FORD">FORD</option>
+        <option value="MG">MG</option>
+        <option value="SUZUKI">SUZUKI</option>
+        <option value="BYD">BYD (EV)</option>
+        <option value="อื่นๆ">อื่นๆ</option>
+      </select>
+
+      <label>รุ่นรถ</label>
+      <input type="text" id="model" required placeholder="เช่น CIVIC, D-MAX, YARIS">
+
+      <label>รายละเอียดรุ่นรถ</label>
+      <input type="text" id="subModel" placeholder="เช่น 1.8 EL, 1.9 Ddi (ถ้าทราบ)">
+
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+          <label>ปีจดทะเบียน</label>
+          <select id="year" required>
+            <option value="" disabled selected>- ปีผลิต -</option>
+            <!-- จะสร้างด้วย JS -->
+          </select>
+        </div>
+        <div style="flex: 1;">
+          <label>จังหวัดที่จดทะเบียน</label>
+          <input type="text" id="province" required placeholder="เช่น กรุงเทพฯ">
+        </div>
+      </div>
+
+      <label>การใช้รถ</label>
+      <select id="usage" required>
+        <option value="" disabled selected>- เลือกการใช้งาน -</option>
+        <option value="ส่วนบุคคล (ไม่รับจ้าง)">ใช้ส่วนตัว (ไม่รับจ้าง)</option>
+        <option value="ใช้เชิงพาณิชย์ / รับจ้าง">ใช้เชิงพาณิชย์ / รับจ้าง</option>
+      </select>
+
+      <label>บริษัทประกันล่าสุดที่ใช้บริการอยู่</label>
+      <select id="currentIns" required>
+        <option value="" disabled selected>- เลือกบริษัทประกัน -</option>
+        <option value="ไม่มีประกัน / ประกันขาด">ประกันหมดอายุแล้ว / ไม่มีประกัน</option>
+        <option value="วิริยะประกันภัย">วิริยะประกันภัย</option>
+        <option value="กรุงเทพประกันภัย">กรุงเทพประกันภัย</option>
+        <option value="เมืองไทยประกันภัย">เมืองไทยประกันภัย</option>
+        <option value="ทิพยประกันภัย">ทิพยประกันภัย</option>
+        <option value="สินมั่นคงประกันภัย">สินมั่นคงประกันภัย</option>
+        <option value="ธนชาตประกันภัย">ธนชาตประกันภัย</option>
+        <option value="บริษัทอื่นๆ">บริษัทอื่นๆ</option>
+        <option value="จำไม่ได้">จำไม่ได้ / ไม่แน่ใจ</option>
+      </select>
+
+      <label>วันที่ต้องการให้เราเริ่มคุ้มครอง</label>
+      <input type="date" id="effectiveDate" required>
+
+      <div class="divider"></div>
+
+      <div class="section-title">ข้อมูลสำหรับจัดส่งแผนประกัน</div>
+
+      <label>ชื่อ - นามสกุล</label>
+      <input type="text" id="customerName" required placeholder="ระบุชื่อของคุณ">
+
+      <label>เบอร์โทรศัพท์ (ติดต่อรับข้อเสนอ)</label>
+      <input type="tel" id="phone" required placeholder="08XXXXXXXX" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+
+      <label>อีเมล (ถ้ามี)</label>
+      <input type="email" id="email" placeholder="example@email.com">
+
+      <button type="submit" id="btnSubmit" class="btn-submit">ดูแผนประกันเลย 🚀</button>
+    </form>
+  </div>
+
+  <script>
+    let lineUserId = "", lineDisplayName = "", linePicUrl = "";
+
+    // 🌟 ดึง LIFF ID จาก config.js มาใช้ (สมมติว่าคุณจะตั้งชื่อ INSURANCE_LIFF_ID ใน config)
+    // ถ้ายังไม่ได้เพิ่ม ให้เพิ่ม const INSURANCE_LIFF_ID = "รหัส LIFF" ใน config.js ก่อนนะครับ
+    const MY_LIFF_ID = typeof INSURANCE_LIFF_ID !== 'undefined' ? INSURANCE_LIFF_ID : "";
+
+    window.onload = async function() {
+        populateYears();
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('effectiveDate').setAttribute('min', today);
+
+        try {
+            if(!MY_LIFF_ID) throw new Error("ไม่พบ INSURANCE_LIFF_ID ใน config.js");
+            await liff.init({ liffId: MY_LIFF_ID });
+            if (liff.isLoggedIn()) {
+                const profile = await liff.getProfile();
+                lineUserId = profile.userId;
+                lineDisplayName = profile.displayName;
+                linePicUrl = profile.pictureUrl || "";
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+            } else {
+                liff.login();
+            }
+        } catch(err) {
+            Swal.fire("ข้อผิดพลาด", "ไม่สามารถเชื่อมต่อ LINE ได้: " + err.message, "error");
+        }
+    };
+
+    function selectCarType(cardId) {
+        document.querySelectorAll('.car-card').forEach(el => el.classList.remove('active'));
+        document.getElementById(cardId).classList.add('active');
+    }
+
+    function populateYears() {
+        const yearSelect = document.getElementById("year");
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear; i >= currentYear - 20; i--) {
+            let option = document.createElement("option");
+            option.value = i;
+            option.text = `${i} (${i + 543})`;
+            yearSelect.appendChild(option);
+        }
+    }
+
+    function submitInsurance(event) {
+      event.preventDefault();
+      
+      const phone = document.getElementById("phone").value;
+      if (!phone.startsWith("0") || phone.length < 9) {
+          return Swal.fire("เบอร์โทรไม่ถูกต้อง", "กรุณาใส่เลข 0 นำหน้า และกรอกให้ครบ 10 หลัก", "warning");
+      }
+
+      const btn = document.getElementById("btnSubmit");
+      btn.innerText = "กำลังคำนวณแผนประกัน... ⏳";
+      btn.disabled = true;
+
+      const payload = {
+         action: "saveInsuranceCheck",
+         carType: document.querySelector('input[name="carType"]:checked').value,
+         brand: document.getElementById("brand").value,
+         model: document.getElementById("model").value,
+         subModel: document.getElementById("subModel").value,
+         year: document.getElementById("year").value,
+         province: document.getElementById("province").value,
+         usage: document.getElementById("usage").value,
+         currentIns: document.getElementById("currentIns").value,
+         effectiveDate: document.getElementById("effectiveDate").value,
+         customerName: document.getElementById("customerName").value,
+         phone: phone,
+         email: document.getElementById("email").value,
+         userId: lineUserId,
+         displayName: lineDisplayName,
+         pictureUrl: linePicUrl
+      };
+
+      fetch(GAS_API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+          if (data.status === "success") {
+              Swal.fire({
+                 title: "ได้รับข้อมูลเรียบร้อย!",
+                 text: "โปรดรอสักครู่ ระบบกำลังเตรียมสร้างใบเสนอราคา และแอดมินจะแจ้งกลับทาง LINE ทันทีครับ",
+                 icon: "success",
+                 confirmButtonColor: "#1565c0"
+              }).then(() => {
+                 liff.closeWindow();
+              });
+          } else {
+              throw new Error("Save failed");
+          }
+      })
+      .catch(err => {
+          btn.innerText = "ดูแผนประกันเลย 🚀";
+          btn.disabled = false;
+          Swal.fire("ข้อผิดพลาด", "ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่", "error");
+      });
+    }
+  </script>
+</body>
+</html>
