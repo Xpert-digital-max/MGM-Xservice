@@ -102,7 +102,8 @@
     async function executeShare() {
       if (!liff.isApiAvailable('shareTargetPicker')) return alert("แอป LINE ไม่รองรับ");
       try {
-        const trackingLink = "https://liff.line.me/" + liffId + "?refId=" + encodeURIComponent(currentUserId) + "&refName=" + encodeURIComponent(currentUserName) + "&refPic=" + encodeURIComponent(currentUserPic);
+        // 🌟 แก้ไข: ดึงตัวแปร SHARE_LIFF_ID แทน liffId ที่ไม่มีอยู่จริง
+        const trackingLink = "https://liff.line.me/" + SHARE_LIFF_ID + "?refId=" + encodeURIComponent(currentUserId) + "&refName=" + encodeURIComponent(currentUserName) + "&refPic=" + encodeURIComponent(currentUserPic);
         
         await liff.shareTargetPicker([{
           "type": "flex",
@@ -119,7 +120,7 @@
             "body": {
               "type": "box", "layout": "vertical", "contents": [
                 { "type": "text", "text": "🎁 EXCLUSIVE VOUCHER", "weight": "bold", "color": "#D4AF37", "size": "sm" },
-                { "type": "text", "text": "รับฟรี 50 พอยท์!", "weight": "bold", "size": "xxl", "margin": "md", "color": "#1e3a8a" },
+                { "type": "text", "text": "รับฟรี 10 พอยท์!", "weight": "bold", "size": "xxl", "margin": "md", "color": "#1e3a8a" },
                 { "type": "text", "text": "นำไปแลกรับสิทธิพิเศษจากแบรนด์ชั้นนำ เช่น Starbucks, Suki Teenoi, Dairy Queen, MK และอีกมากมาย", "size": "xs", "color": "#666666", "wrap": true, "margin": "md" },
                 { "type": "separator", "margin": "lg" },
                 {
