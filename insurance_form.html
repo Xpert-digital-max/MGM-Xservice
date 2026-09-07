@@ -94,9 +94,11 @@
               <span class="chip-icon">🚗</span> <span>รถเก๋ง / กระบะ 4 ประตู</span>
             </label>
             <label class="chip-btn" onclick="selectCar(this, 'กระบะ 2 ประตู')">
-              <input type="radio" name="carType" value="กระบะ 2 ประตู">
-              <span class="chip-icon">🛻</span> <span>กระบะ 2 ประตู</span>
-            </label>
+          <input type="radio" name="carType" value="กระบะ 2 ประตู">
+          <!-- 🌟 เปลี่ยนจาก Emoji เป็นรูปภาพ เพื่อป้องกันเครื่องลูกค้าไม่รองรับ -->
+          <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f6fb.png" style="width: 32px; height: 32px; margin-bottom: 5px;" alt="กระบะ">
+          <span>กระบะ 2 ประตู</span>
+        </label>
             <label class="chip-btn" onclick="selectCar(this, 'รถไฟฟ้า EV')">
               <input type="radio" name="carType" value="รถไฟฟ้า EV">
               <span class="chip-icon">⚡</span> <span>รถไฟฟ้า EV</span>
