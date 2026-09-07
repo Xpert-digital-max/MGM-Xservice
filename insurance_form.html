@@ -116,22 +116,22 @@
           <input type="hidden" id="selectedBrand" value="">
           <div class="chip-grid col-3" id="brandOptions">
             <div class="chip-btn" onclick="selectBrand(this, 'TOYOTA')">
-              <img src="https://www.carlogos.org/car-logos/toyota-logo-2005-download.png" class="logo-img"><span>TOYOTA</span>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/9/9d/Toyota_carlogo.svg" class="logo-img" alt="TOYOTA"><span>TOYOTA</span>
             </div>
             <div class="chip-btn" onclick="selectBrand(this, 'HONDA')">
-              <img src="https://www.carlogos.org/car-logos/honda-logo-2000-download.png" class="logo-img"><span>HONDA</span>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Honda_Logo.svg" class="logo-img" alt="HONDA"><span>HONDA</span>
             </div>
             <div class="chip-btn" onclick="selectBrand(this, 'ISUZU')">
-              <img src="https://www.carlogos.org/car-logos/isuzu-logo-2003-download.png" class="logo-img"><span>ISUZU</span>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/Isuzu_logo.svg" class="logo-img" alt="ISUZU"><span>ISUZU</span>
             </div>
             <div class="chip-btn" onclick="selectBrand(this, 'NISSAN')">
-              <img src="https://www.carlogos.org/car-logos/nissan-logo-2020-black-download.png" class="logo-img"><span>NISSAN</span>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_2020_logo.svg" class="logo-img" alt="NISSAN"><span>NISSAN</span>
             </div>
             <div class="chip-btn" onclick="selectBrand(this, 'MITSUBISHI')">
-              <img src="https://www.carlogos.org/car-logos/mitsubishi-logo-2000-download.png" class="logo-img"><span>MITSUBISHI</span>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/5/5a/Mitsubishi_logo.svg" class="logo-img" alt="MITSUBISHI"><span>MITSUBISHI</span>
             </div>
             <div class="chip-btn" onclick="selectBrand(this, 'MAZDA')">
-              <img src="https://www.carlogos.org/car-logos/mazda-logo-1997-download.png" class="logo-img"><span>MAZDA</span>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/c/c4/Mazda_logo_with_emblem.svg" class="logo-img" alt="MAZDA"><span>MAZDA</span>
             </div>
           </div>
           <select id="otherBrand" onchange="selectOtherBrand(this)">
@@ -140,36 +140,10 @@
             <option value="MG">MG</option>
             <option value="SUZUKI">SUZUKI</option>
             <option value="BYD">BYD (EV)</option>
+            <option value="NETA">NETA (EV)</option>
+            <option value="GWM">GWM (EV)</option>
             <option value="อื่นๆ">ยี่ห้ออื่นๆ</option>
           </select>
-        </div>
-
-        <!-- Step 3: ข้อมูลรถ และ การใช้งาน -->
-        <div id="step3" class="step-section">
-          <label class="title-label">ข้อมูลรถ</label>
-          <input type="text" id="model" required placeholder="เลือกรุ่นรถ (เช่น CIVIC, D-MAX)">
-          <input type="text" id="subModel" placeholder="เลือกรายละเอียดรุ่นรถ (เช่น 1.8 EL)">
-          
-          <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <div style="flex: 1;">
-              <select id="year" required onchange="checkStep3()">
-                <option value="" disabled selected>เลือกปีผลิตรุ่นรถ</option>
-              </select>
-            </div>
-            <div style="flex: 1;">
-              <input type="text" id="province" required placeholder="จังหวัดที่จดทะเบียน" oninput="checkStep3()">
-            </div>
-          </div>
-
-          <label class="title-label">การใช้งาน</label>
-          <div class="chip-grid col-2">
-            <label class="chip-btn" onclick="selectUsage(this, 'ส่วนบุคคล (ไม่รับจ้าง)')">
-              <input type="radio" name="usageType" value="ส่วนบุคคล (ไม่รับจ้าง)"> <span>ใช้ส่วนตัว</span>
-            </label>
-            <label class="chip-btn" onclick="selectUsage(this, 'ใช้เชิงพาณิชย์ / รับจ้าง')">
-              <input type="radio" name="usageType" value="ใช้เชิงพาณิชย์ / รับจ้าง"> <span>เชิงพาณิชย์/รับจ้าง</span>
-            </label>
-          </div>
         </div>
 
         <!-- Step 4: ประกันเดิม -->
