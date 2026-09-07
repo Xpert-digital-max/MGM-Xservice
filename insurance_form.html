@@ -21,36 +21,35 @@
     .section-title { font-weight: 700; font-size: 16px; color: #1a237e; margin-bottom: 15px; text-align: center; }
     label.title-label { font-weight: 700; font-size: 15px; color: #37474f; display: block; margin: 20px 0 10px 0; }
 
-    /* 🌟 ระบบปุ่มกดแบบใหม่ (Chips Option) */
+    /* 🌟 ซ่อนสเต็ปที่ยังไม่ถึง */
+    .step-section { display: none; animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 🌟 ระบบปุ่มกดแบบชิป และ โลโก้ */
     .chip-grid { display: grid; gap: 10px; margin-bottom: 10px; }
     .chip-grid.col-2 { grid-template-columns: 1fr 1fr; }
     .chip-grid.col-3 { grid-template-columns: 1fr 1fr 1fr; }
     
     .chip-btn {
         background: #fff; border: 1px solid #cfd8dc; border-radius: 8px; 
-        padding: 12px 10px; text-align: center; font-size: 14px; color: #455a64; 
+        padding: 10px; text-align: center; font-size: 14px; color: #455a64; 
         cursor: pointer; transition: 0.2s; font-weight: 600; display: flex; 
-        align-items: center; justify-content: center; min-height: 48px; line-height: 1.3;
+        flex-direction: column; align-items: center; justify-content: center; min-height: 80px; line-height: 1.3;
     }
     .chip-btn:hover { background: #f8fbff; border-color: #90caf9; }
     .chip-btn.active { background: #e3f2fd; border-color: #1976d2; color: #1565c0; box-shadow: 0 2px 8px rgba(25,118,210,0.15); }
     .chip-btn input { display: none; }
-    .chip-btn.has-icon { flex-direction: column; padding: 15px 5px; }
-    .chip-icon { font-size: 30px; margin-bottom: 5px; }
+    .chip-icon { font-size: 32px; margin-bottom: 5px; }
+    .logo-img { width: auto; height: 35px; object-fit: contain; margin-bottom: 5px; }
 
-    /* Input & Select ธรรมดา */
+    /* Input & Select */
     input[type="text"], input[type="tel"], input[type="email"], input[type="date"], select { 
         width: 100%; padding: 14px 15px; margin-bottom: 10px; 
         border: 1px solid #cfd8dc; border-radius: 8px; box-sizing: border-box; 
         font-family: 'Sarabun', sans-serif; font-size: 15px; color: #263238; background: #fff; transition: 0.2s;
     }
     input:focus, select:focus { outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15); }
-    
-    select {
-        appearance: none; -webkit-appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231976d2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat; background-position: right 15px center; background-size: 16px; cursor: pointer;
-    }
+    select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231976d2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 15px center; background-size: 16px; cursor: pointer; }
 
     .divider { border-top: 2px dashed #eceff1; margin: 30px 0; }
 
@@ -63,6 +62,10 @@
     .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(21, 101, 192, 0.4); }
     
     #loadingScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
+    
+    /* หน้าจอขอบคุณ */
+    #thankYouScreen { display: none; text-align: center; padding: 40px 20px; }
+    #thankYouScreen img { width: 120px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
@@ -72,126 +75,161 @@
   </div>
 
   <div class="container" id="appContainer" style="display:none;">
-    <div class="hero-header">
-      <h2>เช็คเบี้ยประกันรถยนต์ <span>ฟรี</span></h2>
-      <p>และ ผ่อนได้ 0% คัดเบี้ยจากบริษัทชั้นนำมาให้แล้ว</p>
-    </div>
-
-    <form class="form-content" id="insuranceForm" onsubmit="submitInsurance(event)">
-      
-      <div class="section-title">วันนี้จะเช็คเบี้ยให้รถคันไหนครับ?</div>
-      
-      <!-- 1. เลือกชนิดรถ -->
-      <div class="chip-grid col-2">
-        <label class="chip-btn has-icon active" onclick="selectChip(this, 'carType')">
-          <input type="radio" name="carType" value="รถเก๋ง / กระบะ 4 ประตู" checked>
-          <span class="chip-icon">🚗</span> <span>รถเก๋ง / กระบะ 4 ประตู</span>
-        </label>
-        <label class="chip-btn has-icon" onclick="selectChip(this, 'carType')">
-          <input type="radio" name="carType" value="กระบะ 2 ประตู">
-          <span class="chip-icon">🛻</span> <span>กระบะ 2 ประตู</span>
-        </label>
-        <label class="chip-btn has-icon" onclick="selectChip(this, 'carType')">
-          <input type="radio" name="carType" value="รถไฟฟ้า EV">
-          <span class="chip-icon">⚡</span> <span>รถไฟฟ้า EV<br><small>(ไม่เกิน 7 ที่นั่ง)</small></span>
-        </label>
-        <label class="chip-btn has-icon" onclick="selectChip(this, 'carType')">
-          <input type="radio" name="carType" value="รถตู้">
-          <span class="chip-icon">🚐</span> <span>รถตู้</span>
-        </label>
+    
+    <!-- ฟอร์มหลัก -->
+    <div id="mainFormArea">
+      <div class="hero-header">
+        <h2>เช็คเบี้ยประกันรถยนต์ <span>ฟรี</span></h2>
+        <p>และ ผ่อนได้ 0% คัดเบี้ยจากบริษัทชั้นนำมาให้แล้ว</p>
       </div>
 
-      <!-- 2. ยี่ห้อรถ -->
-      <label class="title-label">ยี่ห้อรถ</label>
-      <input type="hidden" id="selectedBrand" value="">
-      <div class="chip-grid col-3" id="brandOptions">
-        <div class="chip-btn" onclick="selectBrandChip(this, 'TOYOTA')">TOYOTA</div>
-        <div class="chip-btn" onclick="selectBrandChip(this, 'HONDA')">HONDA</div>
-        <div class="chip-btn" onclick="selectBrandChip(this, 'ISUZU')">ISUZU</div>
-        <div class="chip-btn" onclick="selectBrandChip(this, 'NISSAN')">NISSAN</div>
-        <div class="chip-btn" onclick="selectBrandChip(this, 'MITSUBISHI')">MITSUBISHI</div>
-        <div class="chip-btn" onclick="selectBrandChip(this, 'MAZDA')">MAZDA</div>
-      </div>
-      <select id="otherBrand" onchange="selectOtherBrand(this)">
-        <option value="" disabled selected>ยี่ห้ออื่นๆ...</option>
-        <option value="FORD">FORD</option>
-        <option value="MG">MG</option>
-        <option value="SUZUKI">SUZUKI</option>
-        <option value="BYD">BYD (EV)</option>
-        <option value="NETA">NETA (EV)</option>
-        <option value="GWM">GWM (EV)</option>
-        <option value="อื่นๆ">ยี่ห้ออื่นๆ นอกเหนือจากนี้</option>
-      </select>
+      <form class="form-content" id="insuranceForm" onsubmit="submitInsurance(event)">
+        
+        <!-- Step 1: ชนิดรถ -->
+        <div id="step1">
+          <div class="section-title">วันนี้จะเช็คเบี้ยให้รถคันไหนครับ?</div>
+          <div class="chip-grid col-2">
+            <label class="chip-btn" onclick="selectCar(this, 'รถเก๋ง / กระบะ 4 ประตู')">
+              <input type="radio" name="carType" value="รถเก๋ง / กระบะ 4 ประตู">
+              <span class="chip-icon">🚗</span> <span>รถเก๋ง / กระบะ 4 ประตู</span>
+            </label>
+            <label class="chip-btn" onclick="selectCar(this, 'กระบะ 2 ประตู')">
+              <input type="radio" name="carType" value="กระบะ 2 ประตู">
+              <span class="chip-icon">🛻</span> <span>กระบะ 2 ประตู</span>
+            </label>
+            <label class="chip-btn" onclick="selectCar(this, 'รถไฟฟ้า EV')">
+              <input type="radio" name="carType" value="รถไฟฟ้า EV">
+              <span class="chip-icon">⚡</span> <span>รถไฟฟ้า EV</span>
+            </label>
+            <label class="chip-btn" onclick="selectCar(this, 'รถตู้')">
+              <input type="radio" name="carType" value="รถตู้">
+              <span class="chip-icon">🚐</span> <span>รถตู้</span>
+            </label>
+          </div>
+        </div>
 
-      <!-- 3. รุ่นรถ & รายละเอียด -->
-      <label class="title-label">รายละเอียดรุ่นรถ</label>
-      <input type="text" id="model" required placeholder="รุ่นรถ (เช่น CIVIC, D-MAX, YARIS)">
-      <input type="text" id="subModel" placeholder="รายละเอียดรุ่น (เช่น 1.8 EL, 1.9 Ddi)">
-
-      <!-- 4. ปีรถ & จังหวัด -->
-      <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <div style="flex: 1;">
-          <label class="title-label" style="margin-top:0;">ปีจดทะเบียน</label>
-          <select id="year" required>
-            <option value="" disabled selected>- ปีผลิต -</option>
+        <!-- Step 2: ยี่ห้อรถ -->
+        <div id="step2" class="step-section">
+          <label class="title-label">ยี่ห้อรถ</label>
+          <input type="hidden" id="selectedBrand" value="">
+          <div class="chip-grid col-3" id="brandOptions">
+            <div class="chip-btn" onclick="selectBrand(this, 'TOYOTA')">
+              <img src="https://www.carlogos.org/car-logos/toyota-logo-2005-download.png" class="logo-img"><span>TOYOTA</span>
+            </div>
+            <div class="chip-btn" onclick="selectBrand(this, 'HONDA')">
+              <img src="https://www.carlogos.org/car-logos/honda-logo-2000-download.png" class="logo-img"><span>HONDA</span>
+            </div>
+            <div class="chip-btn" onclick="selectBrand(this, 'ISUZU')">
+              <img src="https://www.carlogos.org/car-logos/isuzu-logo-2003-download.png" class="logo-img"><span>ISUZU</span>
+            </div>
+            <div class="chip-btn" onclick="selectBrand(this, 'NISSAN')">
+              <img src="https://www.carlogos.org/car-logos/nissan-logo-2020-black-download.png" class="logo-img"><span>NISSAN</span>
+            </div>
+            <div class="chip-btn" onclick="selectBrand(this, 'MITSUBISHI')">
+              <img src="https://www.carlogos.org/car-logos/mitsubishi-logo-2000-download.png" class="logo-img"><span>MITSUBISHI</span>
+            </div>
+            <div class="chip-btn" onclick="selectBrand(this, 'MAZDA')">
+              <img src="https://www.carlogos.org/car-logos/mazda-logo-1997-download.png" class="logo-img"><span>MAZDA</span>
+            </div>
+          </div>
+          <select id="otherBrand" onchange="selectOtherBrand(this)">
+            <option value="" disabled selected>ยี่ห้ออื่นๆ นอกเหนือจากนี้...</option>
+            <option value="FORD">FORD</option>
+            <option value="MG">MG</option>
+            <option value="SUZUKI">SUZUKI</option>
+            <option value="BYD">BYD (EV)</option>
+            <option value="อื่นๆ">ยี่ห้ออื่นๆ</option>
           </select>
         </div>
-        <div style="flex: 1;">
-          <label class="title-label" style="margin-top:0;">จังหวัดป้ายทะเบียน</label>
-          <input type="text" id="province" required placeholder="เช่น กรุงเทพฯ">
+
+        <!-- Step 3: ข้อมูลรถ และ การใช้งาน -->
+        <div id="step3" class="step-section">
+          <label class="title-label">ข้อมูลรถ</label>
+          <input type="text" id="model" required placeholder="เลือกรุ่นรถ (เช่น CIVIC, D-MAX)">
+          <input type="text" id="subModel" placeholder="เลือกรายละเอียดรุ่นรถ (เช่น 1.8 EL)">
+          
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <div style="flex: 1;">
+              <select id="year" required onchange="checkStep3()">
+                <option value="" disabled selected>เลือกปีผลิตรุ่นรถ</option>
+              </select>
+            </div>
+            <div style="flex: 1;">
+              <input type="text" id="province" required placeholder="จังหวัดที่จดทะเบียน" oninput="checkStep3()">
+            </div>
+          </div>
+
+          <label class="title-label">การใช้งาน</label>
+          <div class="chip-grid col-2">
+            <label class="chip-btn" onclick="selectUsage(this, 'ส่วนบุคคล (ไม่รับจ้าง)')">
+              <input type="radio" name="usageType" value="ส่วนบุคคล (ไม่รับจ้าง)"> <span>ใช้ส่วนตัว</span>
+            </label>
+            <label class="chip-btn" onclick="selectUsage(this, 'ใช้เชิงพาณิชย์ / รับจ้าง')">
+              <input type="radio" name="usageType" value="ใช้เชิงพาณิชย์ / รับจ้าง"> <span>เชิงพาณิชย์/รับจ้าง</span>
+            </label>
+          </div>
         </div>
-      </div>
 
-      <!-- 5. การใช้รถ -->
-      <label class="title-label">การใช้งาน</label>
-      <div class="chip-grid col-2">
-        <label class="chip-btn active" onclick="selectChip(this, 'usageType')">
-          <input type="radio" name="usageType" value="ส่วนบุคคล (ไม่รับจ้าง)" checked> ใช้ส่วนตัว
-        </label>
-        <label class="chip-btn" onclick="selectChip(this, 'usageType')">
-          <input type="radio" name="usageType" value="ใช้เชิงพาณิชย์ / รับจ้าง"> เชิงพาณิชย์/รับจ้าง
-        </label>
-      </div>
+        <!-- Step 4: ประกันเดิม -->
+        <div id="step4" class="step-section">
+          <label class="title-label">บริษัทประกันล่าสุดที่ใช้บริการอยู่</label>
+          <input type="hidden" id="selectedIns" value="">
+          <div class="chip-grid col-2" id="insOptions">
+            <div class="chip-btn" onclick="selectIns(this, 'วิริยะประกันภัย')">
+              <img src="https://www.viriyah.co.th/assets/images/logo.png" class="logo-img" onerror="this.style.display='none'"><span>วิริยะประกันภัย</span>
+            </div>
+            <div class="chip-btn" onclick="selectIns(this, 'กรุงเทพประกันภัย')">
+              <img src="https://www.bangkokinsurance.com/assets/img/bki-logo.png" class="logo-img" onerror="this.style.display='none'"><span>กรุงเทพประกันภัย</span>
+            </div>
+            <div class="chip-btn" onclick="selectIns(this, 'เมืองไทยประกันภัย')">
+              <img src="https://www.muangthaiinsurance.com/upload/mtilogo.png" class="logo-img" onerror="this.style.display='none'"><span>เมืองไทยประกันภัย</span>
+            </div>
+            <div class="chip-btn" onclick="selectIns(this, 'ทิพยประกันภัย')">
+              <img src="https://www.dhipaya.co.th/logo.png" class="logo-img" onerror="this.style.display='none'"><span>ทิพยประกันภัย</span>
+            </div>
+          </div>
+          <select id="otherIns" onchange="selectOtherIns(this)">
+            <option value="" disabled selected>บริษัทอื่นๆ / จำไม่ได้...</option>
+            <option value="ไม่มีประกัน / ประกันขาด">ประกันหมดอายุ / ไม่มีประกัน</option>
+            <option value="สินมั่นคงประกันภัย">สินมั่นคงประกันภัย</option>
+            <option value="ธนชาตประกันภัย">ธนชาตประกันภัย</option>
+            <option value="บริษัทอื่นๆ">บริษัทอื่นๆ</option>
+            <option value="จำไม่ได้">จำไม่ได้ / ไม่แน่ใจ</option>
+          </select>
+        </div>
 
-      <!-- 6. บริษัทประกันล่าสุด -->
-      <label class="title-label">บริษัทประกันล่าสุดที่ใช้บริการอยู่</label>
-      <input type="hidden" id="selectedIns" value="">
-      <div class="chip-grid col-2" id="insOptions">
-        <div class="chip-btn" onclick="selectInsChip(this, 'วิริยะประกันภัย')">วิริยะประกันภัย</div>
-        <div class="chip-btn" onclick="selectInsChip(this, 'กรุงเทพประกันภัย')">กรุงเทพประกันภัย</div>
-        <div class="chip-btn" onclick="selectInsChip(this, 'เมืองไทยประกันภัย')">เมืองไทยประกันภัย</div>
-        <div class="chip-btn" onclick="selectInsChip(this, 'ทิพยประกันภัย')">ทิพยประกันภัย</div>
-      </div>
-      <select id="otherIns" onchange="selectOtherIns(this)">
-        <option value="" disabled selected>บริษัทอื่นๆ / ไม่มีประกัน...</option>
-        <option value="ไม่มีประกัน / ประกันขาด">ประกันหมดอายุ / ไม่มีประกัน</option>
-        <option value="สินมั่นคงประกันภัย">สินมั่นคงประกันภัย</option>
-        <option value="ธนชาตประกันภัย">ธนชาตประกันภัย</option>
-        <option value="แอลเอ็มจีประกันภัย">แอลเอ็มจีประกันภัย (LMG)</option>
-        <option value="อลิอันซ์ อยุธยา">อลิอันซ์ อยุธยา</option>
-        <option value="บริษัทอื่นๆ">บริษัทอื่นๆ</option>
-        <option value="จำไม่ได้">จำไม่ได้ / ไม่แน่ใจ</option>
-      </select>
+        <!-- Step 5: ข้อมูลติดต่อ -->
+        <div id="step5" class="step-section">
+          <label class="title-label">วันที่ต้องการให้คุ้มครอง</label>
+          <input type="date" id="effectiveDate" required onchange="showFinalStep()">
 
-      <!-- 7. วันคุ้มครอง -->
-      <label class="title-label">วันที่ต้องการให้คุ้มครอง</label>
-      <input type="date" id="effectiveDate" required>
+          <div id="step6" class="step-section">
+            <div class="divider"></div>
+            <div class="section-title">ข้อมูลสำหรับจัดส่งแผนประกัน</div>
 
-      <div class="divider"></div>
+            <label class="title-label">ชื่อ - นามสกุล</label>
+            <input type="text" id="customerName" required placeholder="ระบุชื่อของคุณ">
 
-      <div class="section-title">ข้อมูลสำหรับจัดส่งแผนประกัน</div>
+            <label class="title-label">เบอร์โทรศัพท์</label>
+            <input type="tel" id="phone" required placeholder="08XXXXXXXX" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
 
-      <label class="title-label">ชื่อ - นามสกุล</label>
-      <input type="text" id="customerName" required placeholder="ระบุชื่อของคุณ">
+            <label class="title-label">อีเมล (ถ้ามี)</label>
+            <input type="email" id="email" placeholder="example@email.com">
 
-      <label class="title-label">เบอร์โทรศัพท์</label>
-      <input type="tel" id="phone" required placeholder="08XXXXXXXX" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            <button type="submit" id="btnSubmit" class="btn-submit mt-4">ดูแผนประกันเลย 🚀</button>
+          </div>
+        </div>
+      </form>
+    </div>
 
-      <label class="title-label">อีเมล (ถ้ามี)</label>
-      <input type="email" id="email" placeholder="example@email.com">
+    <!-- หน้าขอบคุณ (ซ่อนไว้ก่อน) -->
+    <div id="thankYouScreen">
+      <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="Success">
+      <h2 style="color: #1a237e; font-size: 24px; margin-bottom: 10px;">ได้รับข้อมูลเรียบร้อยแล้ว!</h2>
+      <p style="color: #455a64; margin-bottom: 30px;">โปรดรอสักครู่ ระบบกำลังเตรียมสร้างใบเสนอราคาที่ดีที่สุด และแอดมินจะแจ้งกลับทาง LINE ทันทีครับ</p>
+      <button class="btn-submit" onclick="liff.closeWindow()">กลับสู่หน้าแชท</button>
+    </div>
 
-      <button type="submit" id="btnSubmit" class="btn-submit">ดูแผนประกันเลย 🚀</button>
-    </form>
   </div>
 
   <script>
@@ -212,9 +250,7 @@
                 lineDisplayName = profile.displayName;
                 linePicUrl = profile.pictureUrl || "";
                 
-                // ดึงชื่อ LINE มากรอกอัตโนมัติ (ถ้าต้องการ)
                 document.getElementById('customerName').value = lineDisplayName;
-                
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
             } else {
@@ -225,37 +261,56 @@
         }
     };
 
-    // 🌟 ฟังก์ชันจัดการปุ่มกด (Radio Chip)
-    function selectChip(element, groupName) {
-        document.querySelectorAll(`input[name="${groupName}"]`).forEach(input => {
-            input.parentElement.classList.remove('active');
-        });
-        element.classList.add('active');
-        element.querySelector('input').checked = true;
+    // 🌟 ระบบ Progressive Disclosure (แสดงทีละสเต็ป)
+    function selectCar(el, val) {
+        document.querySelectorAll('input[name="carType"]').forEach(i => i.parentElement.classList.remove('active'));
+        el.classList.add('active'); el.querySelector('input').checked = true;
+        document.getElementById('step2').style.display = 'block';
+        setTimeout(() => document.getElementById('step2').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
-    // 🌟 ฟังก์ชันจัดการปุ่ม ยี่ห้อรถ
-    function selectBrandChip(element, val) {
-        document.querySelectorAll('#brandOptions .chip-btn').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-        document.getElementById('selectedBrand').value = val;
-        document.getElementById('otherBrand').value = ""; // รีเซ็ต Dropdown
+    function selectBrand(el, val) {
+        document.querySelectorAll('#brandOptions .chip-btn').forEach(e => e.classList.remove('active'));
+        el.classList.add('active'); document.getElementById('selectedBrand').value = val; document.getElementById('otherBrand').value = "";
+        document.getElementById('step3').style.display = 'block';
+        setTimeout(() => document.getElementById('step3').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
     function selectOtherBrand(sel) {
-        document.querySelectorAll('#brandOptions .chip-btn').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('#brandOptions .chip-btn').forEach(e => e.classList.remove('active'));
         document.getElementById('selectedBrand').value = sel.value;
+        document.getElementById('step3').style.display = 'block';
+        setTimeout(() => document.getElementById('step3').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
-    // 🌟 ฟังก์ชันจัดการปุ่ม บริษัทประกัน
-    function selectInsChip(element, val) {
-        document.querySelectorAll('#insOptions .chip-btn').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-        document.getElementById('selectedIns').value = val;
-        document.getElementById('otherIns').value = ""; // รีเซ็ต Dropdown
+    function checkStep3() {
+        if(document.getElementById('year').value && document.getElementById('province').value) {
+           // โชว์ Step 4 รอไว้ได้เลยถ้าระบุปีกับจังหวัดแล้ว (ตัวการใช้งานมักจะเลือกทีหลังหรือก่อนก็ได้)
+        }
+    }
+
+    function selectUsage(el, val) {
+        document.querySelectorAll('input[name="usageType"]').forEach(i => i.parentElement.classList.remove('active'));
+        el.classList.add('active'); el.querySelector('input').checked = true;
+        document.getElementById('step4').style.display = 'block';
+        setTimeout(() => document.getElementById('step4').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
+    }
+
+    function selectIns(el, val) {
+        document.querySelectorAll('#insOptions .chip-btn').forEach(e => e.classList.remove('active'));
+        el.classList.add('active'); document.getElementById('selectedIns').value = val; document.getElementById('otherIns').value = "";
+        document.getElementById('step5').style.display = 'block';
+        setTimeout(() => document.getElementById('step5').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
     function selectOtherIns(sel) {
-        document.querySelectorAll('#insOptions .chip-btn').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('#insOptions .chip-btn').forEach(e => e.classList.remove('active'));
         document.getElementById('selectedIns').value = sel.value;
+        document.getElementById('step5').style.display = 'block';
+        setTimeout(() => document.getElementById('step5').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
+    }
+
+    function showFinalStep() {
+        document.getElementById('step6').style.display = 'block';
+        setTimeout(() => document.getElementById('step6').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
     function populateYears() {
@@ -273,19 +328,19 @@
       event.preventDefault();
       
       const phone = document.getElementById("phone").value;
-      if (!phone.startsWith("0") || phone.length < 9) {
-          return Swal.fire("เบอร์โทรไม่ถูกต้อง", "กรุณาใส่เลข 0 นำหน้า และกรอกให้ครบ 10 หลัก", "warning");
-      }
+      if (!phone.startsWith("0") || phone.length < 9) { return Swal.fire("เบอร์โทรไม่ถูกต้อง", "กรุณาใส่เลข 0 นำหน้า และกรอกให้ครบ 10 หลัก", "warning"); }
 
-      // เช็คค่าที่กดจากปุ่ม (ยี่ห้อ & ประกันเดิม)
       const brandVal = document.getElementById("selectedBrand").value;
       if(!brandVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกยี่ห้อรถยนต์", "warning");
 
       const insVal = document.getElementById("selectedIns").value;
-      if(!insVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกบริษัทประกันล่าสุด (ถ้าไม่มีให้เลือกช่องอื่นๆ)", "warning");
+      if(!insVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกบริษัทประกันล่าสุด", "warning");
+
+      const usageEl = document.querySelector('input[name="usageType"]:checked');
+      if(!usageEl) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกการใช้งานรถ", "warning");
 
       const btn = document.getElementById("btnSubmit");
-      btn.innerText = "กำลังคำนวณแผนประกัน... ⏳";
+      btn.innerHTML = "กำลังคำนวณแผนประกัน... ⏳";
       btn.disabled = true;
 
       const payload = {
@@ -296,7 +351,7 @@
          subModel: document.getElementById("subModel").value,
          year: document.getElementById("year").value,
          province: document.getElementById("province").value,
-         usage: document.querySelector('input[name="usageType"]:checked').value,
+         usage: usageEl.value,
          currentIns: insVal,
          effectiveDate: document.getElementById("effectiveDate").value,
          customerName: document.getElementById("customerName").value,
@@ -304,30 +359,22 @@
          email: document.getElementById("email").value,
          userId: lineUserId,
          displayName: lineDisplayName,
-         pictureUrl: linePicUrl
+         pictureUrl: linePicUrl,
+         quotationUrl: typeof QUOTATION_WEB_URL !== 'undefined' ? QUOTATION_WEB_URL : ""
       };
 
-      fetch(GAS_API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-      })
+      fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) })
       .then(res => res.json())
       .then(data => {
           if (data.status === "success") {
-              Swal.fire({
-                 title: "ได้รับข้อมูลเรียบร้อย!",
-                 text: "โปรดรอสักครู่ ระบบกำลังเตรียมสร้างใบเสนอราคา และแอดมินจะแจ้งกลับทาง LINE ทันทีครับ",
-                 icon: "success",
-                 confirmButtonColor: "#1565c0"
-              }).then(() => {
-                 liff.closeWindow();
-              });
-          } else {
-              throw new Error("Save failed");
-          }
+              // ซ่อนฟอร์มเดิม และ โชว์หน้าขอบคุณ (รีเฟรชหน้าไปหน้าขอบคุณ)
+              document.getElementById('mainFormArea').style.display = 'none';
+              document.getElementById('thankYouScreen').style.display = 'block';
+              window.scrollTo(0, 0);
+          } else { throw new Error("Save failed"); }
       })
       .catch(err => {
-          btn.innerText = "ดูแผนประกันเลย 🚀";
+          btn.innerHTML = "ดูแผนประกันเลย 🚀";
           btn.disabled = false;
           Swal.fire("ข้อผิดพลาด", "ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่", "error");
       });
