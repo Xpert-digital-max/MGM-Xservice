@@ -25,7 +25,7 @@
     .step-section { display: none; animation: fadeIn 0.5s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* 🌟 จัดระเบียบ Grid ให้ช่องเท่ากันเป๊ะ ป้องกันการล้นกรอบด้วย min-width: 0 */
+    /* Grid Layout สำหรับ Step 1, 2, 3 */
     .chip-grid { display: grid; gap: 10px; margin-bottom: 10px; min-width: 0; }
     .chip-grid.col-2 { grid-template-columns: 1fr 1fr; }
     .chip-grid.col-3 { grid-template-columns: repeat(3, 1fr); }
@@ -41,12 +41,24 @@
     .chip-btn.active { background: #e3f2fd; border-color: #1976d2; color: #1565c0; box-shadow: 0 2px 8px rgba(25,118,210,0.15); }
     .chip-btn input { display: none; }
     .chip-icon { font-size: 30px; margin-bottom: 5px; }
-    
-    /* ควบคุมขนาดโลโก้ให้เท่ากันทุกช่อง ไม่ดันกรอบ */
     .logo-img { height: 30px; width: auto; max-width: 100%; object-fit: contain; margin-bottom: 6px; }
 
-    /* Input & Select */
-    input[type="text"], input[type="tel"], input[type="email"], input[type="date"], select { 
+    /* 🌟 สไตล์เฉพาะสำหรับ List บริษัทประกัน (Step 4) */
+    .ins-search-container { position: relative; margin-bottom: 10px; }
+    .ins-search-container input { padding-left: 35px; width: 100%; padding-top: 12px; padding-bottom: 12px; border: 1px solid #1976d2; border-radius: 8px; font-family: 'Sarabun'; font-size: 15px;}
+    .ins-search-icon { position: absolute; left: 12px; top: 12px; font-size: 16px; color: #7f8c8d; }
+
+    .ins-list-container { max-height: 380px; overflow-y: auto; border: 1px solid #cfd8dc; border-radius: 8px; background: #fff; padding-bottom: 10px; }
+    .ins-category { font-size: 13px; color: #7f8c8d; font-weight: 600; padding: 12px 15px 5px 15px; background: #f9fbfb; }
+    .ins-list-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f2f5; cursor: pointer; transition: 0.2s; }
+    .ins-list-item:hover, .ins-list-item.active { background: #e3f2fd; }
+    .ins-list-item:last-child { border-bottom: none; }
+    .ins-item-logo { width: 32px; height: 32px; object-fit: contain; margin-right: 15px; border-radius: 4px; }
+    .ins-item-icon { width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; margin-right: 15px; background: #eceff1; border-radius: 4px; color: #546e7a; font-weight: bold; font-size: 12px;}
+    .ins-item-name { font-size: 15px; color: #2c3e50; font-weight: 500; }
+
+    /* Input ธรรมดา */
+    input[type="text"]:not(#insSearchInput), input[type="tel"], input[type="email"], input[type="date"], select { 
         width: 100%; padding: 14px 15px; margin-bottom: 10px; 
         border: 1px solid #cfd8dc; border-radius: 8px; box-sizing: border-box; 
         font-family: 'Sarabun', sans-serif; font-size: 15px; color: #263238; background: #fff; transition: 0.2s;
@@ -55,20 +67,10 @@
     select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231976d2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 15px center; background-size: 16px; cursor: pointer; }
 
     .divider { border-top: 2px dashed #eceff1; margin: 30px 0; }
-
-    .btn-submit { 
-        width: 100%; padding: 16px; border: none; border-radius: 12px; 
-        background: linear-gradient(to right, #1e88e5, #1565c0); color: white; 
-        font-weight: 700; font-family: 'Sarabun', sans-serif; font-size: 18px; 
-        cursor: pointer; box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3); transition: 0.3s;
-    }
+    .btn-submit { width: 100%; padding: 16px; border: none; border-radius: 12px; background: linear-gradient(to right, #1e88e5, #1565c0); color: white; font-weight: 700; font-family: 'Sarabun', sans-serif; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3); transition: 0.3s; }
     .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(21, 101, 192, 0.4); }
-    
     #loadingScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
-    
-    /* หน้าจอขอบคุณ */
     #thankYouScreen { display: none; text-align: center; padding: 40px 20px; }
-    #thankYouScreen img { width: 120px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
@@ -78,8 +80,6 @@
   </div>
 
   <div class="container" id="appContainer" style="display:none;">
-    
-    <!-- ฟอร์มหลัก -->
     <div id="mainFormArea">
       <div class="hero-header">
         <h2>เช็คเบี้ยประกันรถยนต์ <span>ฟรี</span></h2>
@@ -156,12 +156,12 @@
           
           <div style="display: flex; gap: 10px; margin-top: 10px;">
             <div style="flex: 1;">
-              <select id="year" required onchange="checkStep3()">
+              <select id="year" required>
                 <option value="" disabled selected>เลือกปีผลิตรุ่นรถ</option>
               </select>
             </div>
             <div style="flex: 1;">
-              <input type="text" id="province" required placeholder="จังหวัดที่จดทะเบียน" oninput="checkStep3()">
+              <input type="text" id="province" required placeholder="จังหวัดที่จดทะเบียน">
             </div>
           </div>
 
@@ -176,32 +176,80 @@
           </div>
         </div>
 
-        <!-- Step 4: ประกันเดิม -->
+        <!-- 🌟 Step 4: ประกันเดิม (แบบใหม่ List View ค้นหาได้) -->
         <div id="step4" class="step-section">
-          <label class="title-label">บริษัทประกันล่าสุดที่ใช้บริการอยู่</label>
+          <label class="title-label">บริษัทประกันล่าสุด</label>
           <input type="hidden" id="selectedIns" value="">
-          <div class="chip-grid col-2" id="insOptions">
-            <div class="chip-btn" onclick="selectIns(this, 'วิริยะประกันภัย')" style="min-height: 65px;">
-              <span>วิริยะประกันภัย</span>
+
+          <div class="ins-search-container">
+            <span class="ins-search-icon">🔍</span>
+            <input type="text" id="insSearchInput" placeholder="ค้นหาบริษัทประกัน..." onkeyup="filterInsList()">
+          </div>
+
+          <div class="ins-list-container" id="insListContainer">
+            <div class="ins-category">ไม่มีประกันที่ใช้อยู่</div>
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'ประกันหมดอายุแล้ว / ไม่มีประกันรถยนต์')">
+              <div class="ins-item-icon">🛡️</div>
+              <span class="ins-item-name">ประกันหมดอายุแล้ว / ไม่มีประกัน</span>
             </div>
-            <div class="chip-btn" onclick="selectIns(this, 'กรุงเทพประกันภัย')" style="min-height: 65px;">
-              <span>กรุงเทพประกันภัย</span>
+
+            <div class="ins-category">มีประกันที่ใช้อยู่</div>
+            
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'วิริยะประกันภัย')">
+              <img src="https://www.viriyah.co.th/assets/images/logo.png" class="ins-item-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2830/2830284.png'">
+              <span class="ins-item-name">วิริยะประกันภัย</span>
             </div>
-            <div class="chip-btn" onclick="selectIns(this, 'เมืองไทยประกันภัย')" style="min-height: 65px;">
-              <span>เมืองไทยประกันภัย</span>
+            
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'คุ้มภัยโตเกียวมารีนประกันภัย')">
+              <img src="https://www.tokiomarine.com/content/dam/tmh/th/logos/tokiomarine_logo.png" class="ins-item-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2830/2830284.png'">
+              <span class="ins-item-name">คุ้มภัยโตเกียวมารีนประกันภัย</span>
             </div>
-            <div class="chip-btn" onclick="selectIns(this, 'ทิพยประกันภัย')" style="min-height: 65px;">
-              <span>ทิพยประกันภัย</span>
+
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'กรุงเทพประกันภัย')">
+              <img src="https://www.bangkokinsurance.com/assets/img/bki-logo.png" class="ins-item-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2830/2830284.png'">
+              <span class="ins-item-name">กรุงเทพประกันภัย</span>
+            </div>
+
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'เมืองไทยประกันภัย')">
+              <img src="https://www.muangthaiinsurance.com/upload/mtilogo.png" class="ins-item-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2830/2830284.png'">
+              <span class="ins-item-name">เมืองไทยประกันภัย</span>
+            </div>
+
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'สินมั่นคงประกันภัย')">
+              <div class="ins-item-icon" style="background:#e3f2fd; color:#1976d2;">SMK</div>
+              <span class="ins-item-name">สินมั่นคงประกันภัย</span>
+            </div>
+
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'ธนชาตประกันภัย')">
+              <img src="https://upload.wikimedia.org/wikipedia/th/5/52/Thanachart_Bank_logo.svg" class="ins-item-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2830/2830284.png'">
+              <span class="ins-item-name">ธนชาตประกันภัย</span>
+            </div>
+
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'ทิพยประกันภัย')">
+              <img src="https://www.dhipaya.co.th/logo.png" class="ins-item-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2830/2830284.png'">
+              <span class="ins-item-name">ทิพยประกันภัย</span>
+            </div>
+
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'ประกันภัยไทยวิวัฒน์')">
+              <img src="https://www.thaivivat.co.th/assets/img/logo.png" class="ins-item-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2830/2830284.png'">
+              <span class="ins-item-name">ประกันภัยไทยวิวัฒน์</span>
+            </div>
+
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'อลิอันซ์อยุธยาประกันภัย')">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Allianz_logo.svg" class="ins-item-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2830/2830284.png'">
+              <span class="ins-item-name">อลิอันซ์อยุธยาประกันภัย</span>
+            </div>
+
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'บริษัทอื่นๆ')">
+              <div class="ins-item-icon">🏢</div>
+              <span class="ins-item-name">บริษัทอื่นๆ</span>
+            </div>
+            
+            <div class="ins-list-item" onclick="selectInsListItem(this, 'จำไม่ได้ / ไม่แน่ใจ')">
+              <div class="ins-item-icon">❓</div>
+              <span class="ins-item-name">จำไม่ได้ / ไม่แน่ใจ</span>
             </div>
           </div>
-          <select id="otherIns" onchange="selectOtherIns(this)">
-            <option value="" disabled selected>บริษัทอื่นๆ / จำไม่ได้...</option>
-            <option value="ไม่มีประกัน / ประกันขาด">ประกันหมดอายุ / ไม่มีประกัน</option>
-            <option value="สินมั่นคงประกันภัย">สินมั่นคงประกันภัย</option>
-            <option value="ธนชาตประกันภัย">ธนชาตประกันภัย</option>
-            <option value="บริษัทอื่นๆ">บริษัทอื่นๆ</option>
-            <option value="จำไม่ได้">จำไม่ได้ / ไม่แน่ใจ</option>
-          </select>
         </div>
 
         <!-- Step 5: ข้อมูลติดต่อ -->
@@ -230,7 +278,7 @@
 
     <!-- หน้าจอขอบคุณ -->
     <div id="thankYouScreen">
-      <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="Success" style="margin: 0 auto;">
+      <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="Success" style="margin: 0 auto; width: 120px;">
       <h2 style="color: #1a237e; font-size: 24px; margin-bottom: 10px;">ได้รับข้อมูลเรียบร้อยแล้ว!</h2>
       <p style="color: #455a64; margin-bottom: 30px;">โปรดรอสักครู่ ระบบกำลังเตรียมสร้างใบเสนอราคาที่ดีที่สุด และแอดมินจะแจ้งกลับทาง LINE ทันทีครับ</p>
       <button class="btn-submit" onclick="closeThankYouPage()">กลับสู่หน้าแชท</button>
@@ -243,7 +291,7 @@
     const MY_LIFF_ID = typeof INSURANCE_LIFF_ID !== 'undefined' ? INSURANCE_LIFF_ID : "";
 
     window.onload = async function() {
-        populateYears();
+        populateYears(); 
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('effectiveDate').setAttribute('min', today);
 
@@ -300,8 +348,6 @@
         setTimeout(() => document.getElementById('step3').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
-    function checkStep3() {}
-
     function selectUsage(el, val) {
         document.querySelectorAll('input[name="usageType"]').forEach(i => i.parentElement.classList.remove('active'));
         el.classList.add('active'); el.querySelector('input').checked = true;
@@ -309,18 +355,30 @@
         setTimeout(() => document.getElementById('step4').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
-    function selectIns(el, val) {
-        document.querySelectorAll('#insOptions .chip-btn').forEach(e => e.classList.remove('active'));
-        el.classList.add('active'); document.getElementById('selectedIns').value = val; document.getElementById('otherIns').value = "";
+    // 🌟 ระบบเลือกประกันใน List แบบใหม่
+    function selectInsListItem(el, val) {
+        document.querySelectorAll('.ins-list-item').forEach(e => e.classList.remove('active'));
+        el.classList.add('active'); 
+        document.getElementById('selectedIns').value = val;
+        
         document.getElementById('step5').style.display = 'block';
         setTimeout(() => document.getElementById('step5').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
-    function selectOtherIns(sel) {
-        document.querySelectorAll('#insOptions .chip-btn').forEach(e => e.classList.remove('active'));
-        document.getElementById('selectedIns').value = sel.value;
-        document.getElementById('step5').style.display = 'block';
-        setTimeout(() => document.getElementById('step5').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
+    // 🌟 ระบบค้นหาประกัน
+    function filterInsList() {
+        let input = document.getElementById('insSearchInput');
+        let filter = input.value.toLowerCase();
+        let items = document.querySelectorAll('.ins-list-item');
+
+        items.forEach(item => {
+            let text = item.querySelector('.ins-item-name').innerText.toLowerCase();
+            if (text.indexOf(filter) > -1) {
+                item.style.display = "flex";
+            } else {
+                item.style.display = "none";
+            }
+        });
     }
 
     function showFinalStep() {
@@ -346,7 +404,7 @@
       if(!brandVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกยี่ห้อรถยนต์", "warning");
 
       const insVal = document.getElementById("selectedIns").value;
-      if(!insVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกบริษัทประกันล่าสุด", "warning");
+      if(!insVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกบริษัทประกันล่าสุดจากรายการ", "warning");
 
       const usageEl = document.querySelector('input[name="usageType"]:checked');
       if(!usageEl) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกการใช้งานรถ", "warning");
