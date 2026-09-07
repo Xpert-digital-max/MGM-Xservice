@@ -19,28 +19,37 @@
 
     .form-content { padding: 20px; }
     .section-title { font-weight: 700; font-size: 16px; color: #1a237e; margin-bottom: 15px; text-align: center; }
+    label.title-label { font-weight: 700; font-size: 15px; color: #37474f; display: block; margin: 20px 0 10px 0; }
 
-    /* Grid สำหรับเลือกประเภทรถ */
-    .car-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
-    .car-card { background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.2s; }
-    .car-card:hover { border-color: #90caf9; background: #f8fbff; }
-    .car-card.active { border-color: #1976d2; background: #e3f2fd; box-shadow: 0 4px 10px rgba(25, 118, 210, 0.15); }
-    .car-card input { display: none; }
-    .car-icon { font-size: 32px; margin-bottom: 8px; display: block; }
-    .car-label { font-size: 13px; font-weight: 600; color: #37474f; }
-
-    label { font-weight: 600; font-size: 14px; color: #455a64; display: block; margin-bottom: 6px; }
-    input[type="text"], input[type="tel"], input[type="email"], input[type="date"], select { 
-        width: 100%; padding: 14px 15px; margin-bottom: 20px; 
-        border: 1px solid #cfd8dc; border-radius: 10px; box-sizing: border-box; 
-        font-family: 'Sarabun', sans-serif; font-size: 15px; color: #263238; background: #f9fbfb; transition: 0.2s;
+    /* 🌟 ระบบปุ่มกดแบบใหม่ (Chips Option) */
+    .chip-grid { display: grid; gap: 10px; margin-bottom: 10px; }
+    .chip-grid.col-2 { grid-template-columns: 1fr 1fr; }
+    .chip-grid.col-3 { grid-template-columns: 1fr 1fr 1fr; }
+    
+    .chip-btn {
+        background: #fff; border: 1px solid #cfd8dc; border-radius: 8px; 
+        padding: 12px 10px; text-align: center; font-size: 14px; color: #455a64; 
+        cursor: pointer; transition: 0.2s; font-weight: 600; display: flex; 
+        align-items: center; justify-content: center; min-height: 48px; line-height: 1.3;
     }
-    input:focus, select:focus { outline: none; border-color: #1976d2; background: #fff; box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15); }
+    .chip-btn:hover { background: #f8fbff; border-color: #90caf9; }
+    .chip-btn.active { background: #e3f2fd; border-color: #1976d2; color: #1565c0; box-shadow: 0 2px 8px rgba(25,118,210,0.15); }
+    .chip-btn input { display: none; }
+    .chip-btn.has-icon { flex-direction: column; padding: 15px 5px; }
+    .chip-icon { font-size: 30px; margin-bottom: 5px; }
+
+    /* Input & Select ธรรมดา */
+    input[type="text"], input[type="tel"], input[type="email"], input[type="date"], select { 
+        width: 100%; padding: 14px 15px; margin-bottom: 10px; 
+        border: 1px solid #cfd8dc; border-radius: 8px; box-sizing: border-box; 
+        font-family: 'Sarabun', sans-serif; font-size: 15px; color: #263238; background: #fff; transition: 0.2s;
+    }
+    input:focus, select:focus { outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15); }
     
     select {
         appearance: none; -webkit-appearance: none;
         background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231976d2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat; background-position: right 15px center; background-size: 16px;
+        background-repeat: no-repeat; background-position: right 15px center; background-size: 16px; cursor: pointer;
     }
 
     .divider { border-top: 2px dashed #eceff1; margin: 30px 0; }
@@ -73,101 +82,112 @@
       <div class="section-title">วันนี้จะเช็คเบี้ยให้รถคันไหนครับ?</div>
       
       <!-- 1. เลือกชนิดรถ -->
-      <div class="car-type-grid">
-        <label class="car-card active" id="lblCar1" onclick="selectCarType('lblCar1')">
+      <div class="chip-grid col-2">
+        <label class="chip-btn has-icon active" onclick="selectChip(this, 'carType')">
           <input type="radio" name="carType" value="รถเก๋ง / กระบะ 4 ประตู" checked>
-          <span class="car-icon">🚗</span>
-          <span class="car-label">รถเก๋ง /<br>กระบะ 4 ประตู</span>
+          <span class="chip-icon">🚗</span> <span>รถเก๋ง / กระบะ 4 ประตู</span>
         </label>
-        <label class="car-card" id="lblCar2" onclick="selectCarType('lblCar2')">
+        <label class="chip-btn has-icon" onclick="selectChip(this, 'carType')">
           <input type="radio" name="carType" value="กระบะ 2 ประตู">
-          <span class="car-icon">🛻</span>
-          <span class="car-label">กระบะ 2 ประตู</span>
+          <span class="chip-icon">🛻</span> <span>กระบะ 2 ประตู</span>
         </label>
-        <label class="car-card" id="lblCar3" onclick="selectCarType('lblCar3')">
+        <label class="chip-btn has-icon" onclick="selectChip(this, 'carType')">
           <input type="radio" name="carType" value="รถไฟฟ้า EV">
-          <span class="car-icon">⚡</span>
-          <span class="car-label">รถไฟฟ้า EV<br>ไม่เกิน 7 ที่นั่ง</span>
+          <span class="chip-icon">⚡</span> <span>รถไฟฟ้า EV<br><small>(ไม่เกิน 7 ที่นั่ง)</small></span>
         </label>
-        <label class="car-card" id="lblCar4" onclick="selectCarType('lblCar4')">
+        <label class="chip-btn has-icon" onclick="selectChip(this, 'carType')">
           <input type="radio" name="carType" value="รถตู้">
-          <span class="car-icon">🚐</span>
-          <span class="car-label">รถตู้</span>
+          <span class="chip-icon">🚐</span> <span>รถตู้</span>
         </label>
       </div>
 
-      <!-- ข้อมูลรถยนต์ -->
-      <label>ยี่ห้อรถ</label>
-      <select id="brand" required>
-        <option value="" disabled selected>- เลือดยี่ห้อรถ -</option>
-        <option value="TOYOTA">TOYOTA</option>
-        <option value="HONDA">HONDA</option>
-        <option value="ISUZU">ISUZU</option>
-        <option value="NISSAN">NISSAN</option>
-        <option value="MITSUBISHI">MITSUBISHI</option>
-        <option value="MAZDA">MAZDA</option>
+      <!-- 2. ยี่ห้อรถ -->
+      <label class="title-label">ยี่ห้อรถ</label>
+      <input type="hidden" id="selectedBrand" value="">
+      <div class="chip-grid col-3" id="brandOptions">
+        <div class="chip-btn" onclick="selectBrandChip(this, 'TOYOTA')">TOYOTA</div>
+        <div class="chip-btn" onclick="selectBrandChip(this, 'HONDA')">HONDA</div>
+        <div class="chip-btn" onclick="selectBrandChip(this, 'ISUZU')">ISUZU</div>
+        <div class="chip-btn" onclick="selectBrandChip(this, 'NISSAN')">NISSAN</div>
+        <div class="chip-btn" onclick="selectBrandChip(this, 'MITSUBISHI')">MITSUBISHI</div>
+        <div class="chip-btn" onclick="selectBrandChip(this, 'MAZDA')">MAZDA</div>
+      </div>
+      <select id="otherBrand" onchange="selectOtherBrand(this)">
+        <option value="" disabled selected>ยี่ห้ออื่นๆ...</option>
         <option value="FORD">FORD</option>
         <option value="MG">MG</option>
         <option value="SUZUKI">SUZUKI</option>
         <option value="BYD">BYD (EV)</option>
-        <option value="อื่นๆ">อื่นๆ</option>
+        <option value="NETA">NETA (EV)</option>
+        <option value="GWM">GWM (EV)</option>
+        <option value="อื่นๆ">ยี่ห้ออื่นๆ นอกเหนือจากนี้</option>
       </select>
 
-      <label>รุ่นรถ</label>
-      <input type="text" id="model" required placeholder="เช่น CIVIC, D-MAX, YARIS">
+      <!-- 3. รุ่นรถ & รายละเอียด -->
+      <label class="title-label">รายละเอียดรุ่นรถ</label>
+      <input type="text" id="model" required placeholder="รุ่นรถ (เช่น CIVIC, D-MAX, YARIS)">
+      <input type="text" id="subModel" placeholder="รายละเอียดรุ่น (เช่น 1.8 EL, 1.9 Ddi)">
 
-      <label>รายละเอียดรุ่นรถ</label>
-      <input type="text" id="subModel" placeholder="เช่น 1.8 EL, 1.9 Ddi (ถ้าทราบ)">
-
-      <div style="display: flex; gap: 10px;">
+      <!-- 4. ปีรถ & จังหวัด -->
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
         <div style="flex: 1;">
-          <label>ปีจดทะเบียน</label>
+          <label class="title-label" style="margin-top:0;">ปีจดทะเบียน</label>
           <select id="year" required>
             <option value="" disabled selected>- ปีผลิต -</option>
-            <!-- จะสร้างด้วย JS -->
           </select>
         </div>
         <div style="flex: 1;">
-          <label>จังหวัดที่จดทะเบียน</label>
+          <label class="title-label" style="margin-top:0;">จังหวัดป้ายทะเบียน</label>
           <input type="text" id="province" required placeholder="เช่น กรุงเทพฯ">
         </div>
       </div>
 
-      <label>การใช้รถ</label>
-      <select id="usage" required>
-        <option value="" disabled selected>- เลือกการใช้งาน -</option>
-        <option value="ส่วนบุคคล (ไม่รับจ้าง)">ใช้ส่วนตัว (ไม่รับจ้าง)</option>
-        <option value="ใช้เชิงพาณิชย์ / รับจ้าง">ใช้เชิงพาณิชย์ / รับจ้าง</option>
-      </select>
+      <!-- 5. การใช้รถ -->
+      <label class="title-label">การใช้งาน</label>
+      <div class="chip-grid col-2">
+        <label class="chip-btn active" onclick="selectChip(this, 'usageType')">
+          <input type="radio" name="usageType" value="ส่วนบุคคล (ไม่รับจ้าง)" checked> ใช้ส่วนตัว
+        </label>
+        <label class="chip-btn" onclick="selectChip(this, 'usageType')">
+          <input type="radio" name="usageType" value="ใช้เชิงพาณิชย์ / รับจ้าง"> เชิงพาณิชย์/รับจ้าง
+        </label>
+      </div>
 
-      <label>บริษัทประกันล่าสุดที่ใช้บริการอยู่</label>
-      <select id="currentIns" required>
-        <option value="" disabled selected>- เลือกบริษัทประกัน -</option>
-        <option value="ไม่มีประกัน / ประกันขาด">ประกันหมดอายุแล้ว / ไม่มีประกัน</option>
-        <option value="วิริยะประกันภัย">วิริยะประกันภัย</option>
-        <option value="กรุงเทพประกันภัย">กรุงเทพประกันภัย</option>
-        <option value="เมืองไทยประกันภัย">เมืองไทยประกันภัย</option>
-        <option value="ทิพยประกันภัย">ทิพยประกันภัย</option>
+      <!-- 6. บริษัทประกันล่าสุด -->
+      <label class="title-label">บริษัทประกันล่าสุดที่ใช้บริการอยู่</label>
+      <input type="hidden" id="selectedIns" value="">
+      <div class="chip-grid col-2" id="insOptions">
+        <div class="chip-btn" onclick="selectInsChip(this, 'วิริยะประกันภัย')">วิริยะประกันภัย</div>
+        <div class="chip-btn" onclick="selectInsChip(this, 'กรุงเทพประกันภัย')">กรุงเทพประกันภัย</div>
+        <div class="chip-btn" onclick="selectInsChip(this, 'เมืองไทยประกันภัย')">เมืองไทยประกันภัย</div>
+        <div class="chip-btn" onclick="selectInsChip(this, 'ทิพยประกันภัย')">ทิพยประกันภัย</div>
+      </div>
+      <select id="otherIns" onchange="selectOtherIns(this)">
+        <option value="" disabled selected>บริษัทอื่นๆ / ไม่มีประกัน...</option>
+        <option value="ไม่มีประกัน / ประกันขาด">ประกันหมดอายุ / ไม่มีประกัน</option>
         <option value="สินมั่นคงประกันภัย">สินมั่นคงประกันภัย</option>
         <option value="ธนชาตประกันภัย">ธนชาตประกันภัย</option>
+        <option value="แอลเอ็มจีประกันภัย">แอลเอ็มจีประกันภัย (LMG)</option>
+        <option value="อลิอันซ์ อยุธยา">อลิอันซ์ อยุธยา</option>
         <option value="บริษัทอื่นๆ">บริษัทอื่นๆ</option>
         <option value="จำไม่ได้">จำไม่ได้ / ไม่แน่ใจ</option>
       </select>
 
-      <label>วันที่ต้องการให้เราเริ่มคุ้มครอง</label>
+      <!-- 7. วันคุ้มครอง -->
+      <label class="title-label">วันที่ต้องการให้คุ้มครอง</label>
       <input type="date" id="effectiveDate" required>
 
       <div class="divider"></div>
 
       <div class="section-title">ข้อมูลสำหรับจัดส่งแผนประกัน</div>
 
-      <label>ชื่อ - นามสกุล</label>
+      <label class="title-label">ชื่อ - นามสกุล</label>
       <input type="text" id="customerName" required placeholder="ระบุชื่อของคุณ">
 
-      <label>เบอร์โทรศัพท์ (ติดต่อรับข้อเสนอ)</label>
+      <label class="title-label">เบอร์โทรศัพท์</label>
       <input type="tel" id="phone" required placeholder="08XXXXXXXX" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
 
-      <label>อีเมล (ถ้ามี)</label>
+      <label class="title-label">อีเมล (ถ้ามี)</label>
       <input type="email" id="email" placeholder="example@email.com">
 
       <button type="submit" id="btnSubmit" class="btn-submit">ดูแผนประกันเลย 🚀</button>
@@ -176,9 +196,6 @@
 
   <script>
     let lineUserId = "", lineDisplayName = "", linePicUrl = "";
-
-    // 🌟 ดึง LIFF ID จาก config.js มาใช้ (สมมติว่าคุณจะตั้งชื่อ INSURANCE_LIFF_ID ใน config)
-    // ถ้ายังไม่ได้เพิ่ม ให้เพิ่ม const INSURANCE_LIFF_ID = "รหัส LIFF" ใน config.js ก่อนนะครับ
     const MY_LIFF_ID = typeof INSURANCE_LIFF_ID !== 'undefined' ? INSURANCE_LIFF_ID : "";
 
     window.onload = async function() {
@@ -194,6 +211,10 @@
                 lineUserId = profile.userId;
                 lineDisplayName = profile.displayName;
                 linePicUrl = profile.pictureUrl || "";
+                
+                // ดึงชื่อ LINE มากรอกอัตโนมัติ (ถ้าต้องการ)
+                document.getElementById('customerName').value = lineDisplayName;
+                
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
             } else {
@@ -204,9 +225,37 @@
         }
     };
 
-    function selectCarType(cardId) {
-        document.querySelectorAll('.car-card').forEach(el => el.classList.remove('active'));
-        document.getElementById(cardId).classList.add('active');
+    // 🌟 ฟังก์ชันจัดการปุ่มกด (Radio Chip)
+    function selectChip(element, groupName) {
+        document.querySelectorAll(`input[name="${groupName}"]`).forEach(input => {
+            input.parentElement.classList.remove('active');
+        });
+        element.classList.add('active');
+        element.querySelector('input').checked = true;
+    }
+
+    // 🌟 ฟังก์ชันจัดการปุ่ม ยี่ห้อรถ
+    function selectBrandChip(element, val) {
+        document.querySelectorAll('#brandOptions .chip-btn').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        document.getElementById('selectedBrand').value = val;
+        document.getElementById('otherBrand').value = ""; // รีเซ็ต Dropdown
+    }
+    function selectOtherBrand(sel) {
+        document.querySelectorAll('#brandOptions .chip-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('selectedBrand').value = sel.value;
+    }
+
+    // 🌟 ฟังก์ชันจัดการปุ่ม บริษัทประกัน
+    function selectInsChip(element, val) {
+        document.querySelectorAll('#insOptions .chip-btn').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        document.getElementById('selectedIns').value = val;
+        document.getElementById('otherIns').value = ""; // รีเซ็ต Dropdown
+    }
+    function selectOtherIns(sel) {
+        document.querySelectorAll('#insOptions .chip-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('selectedIns').value = sel.value;
     }
 
     function populateYears() {
@@ -228,6 +277,13 @@
           return Swal.fire("เบอร์โทรไม่ถูกต้อง", "กรุณาใส่เลข 0 นำหน้า และกรอกให้ครบ 10 หลัก", "warning");
       }
 
+      // เช็คค่าที่กดจากปุ่ม (ยี่ห้อ & ประกันเดิม)
+      const brandVal = document.getElementById("selectedBrand").value;
+      if(!brandVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกยี่ห้อรถยนต์", "warning");
+
+      const insVal = document.getElementById("selectedIns").value;
+      if(!insVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกบริษัทประกันล่าสุด (ถ้าไม่มีให้เลือกช่องอื่นๆ)", "warning");
+
       const btn = document.getElementById("btnSubmit");
       btn.innerText = "กำลังคำนวณแผนประกัน... ⏳";
       btn.disabled = true;
@@ -235,13 +291,13 @@
       const payload = {
          action: "saveInsuranceCheck",
          carType: document.querySelector('input[name="carType"]:checked').value,
-         brand: document.getElementById("brand").value,
+         brand: brandVal,
          model: document.getElementById("model").value,
          subModel: document.getElementById("subModel").value,
          year: document.getElementById("year").value,
          province: document.getElementById("province").value,
-         usage: document.getElementById("usage").value,
-         currentIns: document.getElementById("currentIns").value,
+         usage: document.querySelector('input[name="usageType"]:checked').value,
+         currentIns: insVal,
          effectiveDate: document.getElementById("effectiveDate").value,
          customerName: document.getElementById("customerName").value,
          phone: phone,
