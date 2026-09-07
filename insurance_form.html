@@ -94,11 +94,11 @@
               <span class="chip-icon">🚗</span> <span>รถเก๋ง / กระบะ 4 ประตู</span>
             </label>
             <label class="chip-btn" onclick="selectCar(this, 'กระบะ 2 ประตู')">
-          <input type="radio" name="carType" value="กระบะ 2 ประตู">
-          <!-- 🌟 เปลี่ยนจาก Emoji เป็นรูปภาพ เพื่อป้องกันเครื่องลูกค้าไม่รองรับ -->
-          <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f6fb.png" style="width: 32px; height: 32px; margin-bottom: 5px;" alt="กระบะ">
-          <span>กระบะ 2 ประตู</span>
-        </label>
+              <input type="radio" name="carType" value="กระบะ 2 ประตู">
+              <!-- ใช้รูปรถกระบะแทนไอคอนเพื่อป้องกันเครื่องไม่รองรับ -->
+              <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f6fb.png" style="width: 32px; height: 32px; margin-bottom: 5px;" alt="กระบะ">
+              <span>กระบะ 2 ประตู</span>
+            </label>
             <label class="chip-btn" onclick="selectCar(this, 'รถไฟฟ้า EV')">
               <input type="radio" name="carType" value="รถไฟฟ้า EV">
               <span class="chip-icon">⚡</span> <span>รถไฟฟ้า EV</span>
@@ -144,6 +144,35 @@
             <option value="GWM">GWM (EV)</option>
             <option value="อื่นๆ">ยี่ห้ออื่นๆ</option>
           </select>
+        </div>
+
+        <!-- Step 3: ข้อมูลรถ และ การใช้งาน -->
+        <div id="step3" class="step-section">
+          <label class="title-label">ข้อมูลรถ</label>
+          <input type="text" id="model" required placeholder="เลือกรุ่นรถ (เช่น CIVIC, D-MAX)">
+          <input type="text" id="subModel" placeholder="เลือกรายละเอียดรุ่นรถ (เช่น 1.8 EL)">
+          
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <div style="flex: 1;">
+              <!-- 🌟 จุดนี้คือที่มาของ Error ผมเพิ่ม id="year" ให้ชัวร์แล้วครับ -->
+              <select id="year" required onchange="checkStep3()">
+                <option value="" disabled selected>เลือกปีผลิตรุ่นรถ</option>
+              </select>
+            </div>
+            <div style="flex: 1;">
+              <input type="text" id="province" required placeholder="จังหวัดที่จดทะเบียน" oninput="checkStep3()">
+            </div>
+          </div>
+
+          <label class="title-label">การใช้งาน</label>
+          <div class="chip-grid col-2">
+            <label class="chip-btn" onclick="selectUsage(this, 'ส่วนบุคคล (ไม่รับจ้าง)')">
+              <input type="radio" name="usageType" value="ส่วนบุคคล (ไม่รับจ้าง)"> <span>ใช้ส่วนตัว</span>
+            </label>
+            <label class="chip-btn" onclick="selectUsage(this, 'ใช้เชิงพาณิชย์ / รับจ้าง')">
+              <input type="radio" name="usageType" value="ใช้เชิงพาณิชย์ / รับจ้าง"> <span>เชิงพาณิชย์/รับจ้าง</span>
+            </label>
+          </div>
         </div>
 
         <!-- Step 4: ประกันเดิม -->
@@ -198,11 +227,12 @@
       </form>
     </div>
 
-    <!-- หน้าขอบคุณ (ซ่อนไว้ก่อน) -->
+    <!-- หน้าขอบคุณ -->
     <div id="thankYouScreen">
-      <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="Success">
+      <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="Success" style="margin: 0 auto;">
       <h2 style="color: #1a237e; font-size: 24px; margin-bottom: 10px;">ได้รับข้อมูลเรียบร้อยแล้ว!</h2>
       <p style="color: #455a64; margin-bottom: 30px;">โปรดรอสักครู่ ระบบกำลังเตรียมสร้างใบเสนอราคาที่ดีที่สุด และแอดมินจะแจ้งกลับทาง LINE ทันทีครับ</p>
+      <!-- เปลี่ยนมาใช้ฟังก์ชันปิดหน้าจอแทน -->
       <button class="btn-submit" onclick="closeThankYouPage()">กลับสู่หน้าแชท</button>
     </div>
 
@@ -213,7 +243,7 @@
     const MY_LIFF_ID = typeof INSURANCE_LIFF_ID !== 'undefined' ? INSURANCE_LIFF_ID : "";
 
     window.onload = async function() {
-        populateYears();
+        populateYears(); // โหลดปีอัตโนมัติ
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('effectiveDate').setAttribute('min', today);
 
@@ -237,6 +267,19 @@
         }
     };
 
+    // 🌟 ระบบเพิ่มปีผลิต
+    function populateYears() {
+        const yearSelect = document.getElementById("year");
+        if (!yearSelect) return; // ดัก Error ไว้เผื่อหาไม่เจอ
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear; i >= currentYear - 20; i--) {
+            let option = document.createElement("option");
+            option.value = i;
+            option.text = `${i} (${i + 543})`;
+            yearSelect.appendChild(option);
+        }
+    }
+
     // 🌟 ระบบ Progressive Disclosure (แสดงทีละสเต็ป)
     function selectCar(el, val) {
         document.querySelectorAll('input[name="carType"]').forEach(i => i.parentElement.classList.remove('active'));
@@ -251,6 +294,7 @@
         document.getElementById('step3').style.display = 'block';
         setTimeout(() => document.getElementById('step3').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
+    
     function selectOtherBrand(sel) {
         document.querySelectorAll('#brandOptions .chip-btn').forEach(e => e.classList.remove('active'));
         document.getElementById('selectedBrand').value = sel.value;
@@ -260,7 +304,7 @@
 
     function checkStep3() {
         if(document.getElementById('year').value && document.getElementById('province').value) {
-           // โชว์ Step 4 รอไว้ได้เลยถ้าระบุปีกับจังหวัดแล้ว (ตัวการใช้งานมักจะเลือกทีหลังหรือก่อนก็ได้)
+           // ให้ลูกค้าเลื่อนไปเห็นได้
         }
     }
 
@@ -277,6 +321,7 @@
         document.getElementById('step5').style.display = 'block';
         setTimeout(() => document.getElementById('step5').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
+
     function selectOtherIns(sel) {
         document.querySelectorAll('#insOptions .chip-btn').forEach(e => e.classList.remove('active'));
         document.getElementById('selectedIns').value = sel.value;
@@ -289,14 +334,13 @@
         setTimeout(() => document.getElementById('step6').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
-    function populateYears() {
-        const yearSelect = document.getElementById("year");
-        const currentYear = new Date().getFullYear();
-        for (let i = currentYear; i >= currentYear - 20; i--) {
-            let option = document.createElement("option");
-            option.value = i;
-            option.text = `${i} (${i + 543})`;
-            yearSelect.appendChild(option);
+    // 🌟 ระบบจัดการปุ่ม "กลับสู่หน้าแชท" ให้รองรับทั้งในและนอกแอป LINE
+    function closeThankYouPage() {
+        if (liff.isInClient()) {
+            liff.closeWindow(); 
+        } else {
+            // เด้งกลับหน้าแชท LINE OA ถ้าเปิดบนเบราว์เซอร์อื่น
+            window.location.href = "https://line.me/R/ti/p/@xservice"; 
         }
     }
 
@@ -343,7 +387,6 @@
       .then(res => res.json())
       .then(data => {
           if (data.status === "success") {
-              // ซ่อนฟอร์มเดิม และ โชว์หน้าขอบคุณ (รีเฟรชหน้าไปหน้าขอบคุณ)
               document.getElementById('mainFormArea').style.display = 'none';
               document.getElementById('thankYouScreen').style.display = 'block';
               window.scrollTo(0, 0);
@@ -354,15 +397,6 @@
           btn.disabled = false;
           Swal.fire("ข้อผิดพลาด", "ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่", "error");
       });
-    }
-    // 🌟 ฟังก์ชันจัดการปุ่ม "กลับสู่หน้าแชท" ให้รองรับทั้งในและนอก LINE
-    function closeThankYouPage() {
-        if (liff.isInClient()) {
-            liff.closeWindow(); // ถ้าอยู่ในแอป LINE ให้ปิดหน้าจอปกติ
-        } else {
-            // ถ้าเปิดเบราว์เซอร์ข้างนอก (Chrome, Safari, PC) ให้พากลับไปหน้าแชท LINE OA
-            window.location.href = "https://line.me/R/ti/p/@xservice"; 
-        }
     }
   </script>
 </body>
