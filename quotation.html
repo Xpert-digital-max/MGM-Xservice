@@ -201,8 +201,20 @@
         
         currentAgent = res;
 
-        // 🌟 [เพิ่มตรงนี้] ดึง User ID ของตัวแทนมาใส่เป็นค่าตั้งต้นในช่อง input ทันที
-        document.getElementById('targetUserId').value = userId;
+        // ==============================================================
+        // 🌟 [ปรับปรุงใหม่] ดึง UID ลูกค้าจากลิงก์ หรือ ใช้ UID ตัวแทน
+        // ==============================================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUid = urlParams.get('uid');
+        
+        if (targetUid) {
+            // ถ้ามีพารามิเตอร์ uid ต่อท้ายลิงก์มา (แปลว่ามาจากแชทกลุ่ม)
+            // ให้เอา UID นี้กรอกลงไปในช่อง "LINE User ID (ส่งออโต้)"
+            document.getElementById('targetUserId').value = targetUid; 
+        } else {
+            // ถ้าไม่มี (เปิดเว็บใช้งานเอง) ให้ใส่ UID ของตัวแทนเองเป็นค่าเริ่มต้น
+            document.getElementById('targetUserId').value = userId; 
+        }
 
       })
       .catch(err => {
@@ -213,7 +225,12 @@
 
     async function shareReferral() {
       if (!currentAgent) return;
+      
+      // 🌟 [ตรวจสอบความถูกต้องของลิงก์แชร์]
+      // ตรวจสอบให้แน่ใจว่าลิงก์ AGENT_LIFF_ID จะพาไปหน้าสมัครตัวแทน (agent_register.html)
+      // และมีการแนบ ?ref=รหัสตัวแทน ไปให้ด้วย
       const shareUrl = "https://liff.line.me/" + AGENT_LIFF_ID + "?ref=" + userProfile.userId;
+      
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shareUrl)}`;
 
       Swal.fire({
