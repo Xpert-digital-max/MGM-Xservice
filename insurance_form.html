@@ -227,7 +227,7 @@
       <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="Success">
       <h2 style="color: #1a237e; font-size: 24px; margin-bottom: 10px;">ได้รับข้อมูลเรียบร้อยแล้ว!</h2>
       <p style="color: #455a64; margin-bottom: 30px;">โปรดรอสักครู่ ระบบกำลังเตรียมสร้างใบเสนอราคาที่ดีที่สุด และแอดมินจะแจ้งกลับทาง LINE ทันทีครับ</p>
-      <button class="btn-submit" onclick="liff.closeWindow()">กลับสู่หน้าแชท</button>
+      <button class="btn-submit" onclick="closeThankYouPage()">กลับสู่หน้าแชท</button>
     </div>
 
   </div>
@@ -378,6 +378,15 @@
           btn.disabled = false;
           Swal.fire("ข้อผิดพลาด", "ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่", "error");
       });
+    }
+    // 🌟 ฟังก์ชันจัดการปุ่ม "กลับสู่หน้าแชท" ให้รองรับทั้งในและนอก LINE
+    function closeThankYouPage() {
+        if (liff.isInClient()) {
+            liff.closeWindow(); // ถ้าอยู่ในแอป LINE ให้ปิดหน้าจอปกติ
+        } else {
+            // ถ้าเปิดเบราว์เซอร์ข้างนอก (Chrome, Safari, PC) ให้พากลับไปหน้าแชท LINE OA
+            window.location.href = "https://line.me/R/ti/p/@xservice"; 
+        }
     }
   </script>
 </body>
