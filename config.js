@@ -15,4 +15,4 @@ const REGISTER_LIFF_ID = "2000218686-nFUV3rHq"; // สำหรับหน้�
 const BOOKING_LIFF_ID = "2000218686-thfL9vPM"; // สำหรับหน้าจองคิวตรวจสภาพ
 const INSURANCE_LIFF_ID = "2000218686-RA0TBJhc"; // สำหรับหน้าขอใบเสนอราคาประกันรถยนต์
 // เพิ่มบรรทัดนี้ต่อท้ายไฟล์ config.js
-const QUOTATION_WEB_URL = "https://liff.line.me/2000218686-RA0TBJhc"; // เปลี่ยนเป็นลิงก์หน้าใบเสนอราคาของคุณ
+const QUOTATION_WEB_URL = "https://liff.line.me/2000218686-axiOXqBh"; // เปลี่ยนเป็นลิงก์หน้าใบเสนอราคาของคุณ
