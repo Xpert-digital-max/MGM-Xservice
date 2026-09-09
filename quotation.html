@@ -226,6 +226,18 @@
             document.getElementById('extraInfo').value = targetInfo;
         }
 
+        // 🌟 แจ้งเตือนเข้ากลุ่มว่าแอดมินคนนี้กำลังทำใบเสนอราคา
+        if (targetUid && targetName) {
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: "notifyLeadClaim",
+                    adminName: currentAgent.fullName, // ชื่อแอดมินที่ดึงมาจากชีต
+                    customerName: targetName // ชื่อลูกค้าที่รับมาจากลิงก์
+                })
+            });
+        }
+        
       })
       .catch(err => {
         clearTimeout(safetyTimer);
@@ -383,7 +395,17 @@
       Swal.fire({ title: 'กำลังประมวลผลรูปภาพและส่งเข้า LINE...', text: 'อาจใช้เวลา 5-10 วินาที กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); removeEditableStyles();
       
       const cvs = await html2canvas(document.getElementById('quotationCanvas'), { scale: 1.2, useCORS: true }); const imgB64 = cvs.toDataURL('image/jpeg', 0.8); restoreEditableStyles();
-      fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "sendQuotation", imageB64: imgB64, userId: uid }) }).then(r => r.json()).then(r => { if (r.success) Swal.fire('สำเร็จ!', 'ส่งใบเสนอราคาเรียบร้อย', 'success'); else Swal.fire('ผิดพลาด', r.error, 'error'); }).catch(e => Swal.fire('ผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error'));
+      
+      fetch(GAS_API_URL, { 
+          method: 'POST', 
+          body: JSON.stringify({ 
+              action: "sendQuotation", 
+              imageB64: imgB64, 
+              userId: uid,
+              adminName: currentAgent ? currentAgent.fullName : "แอดมิน",
+              customerName: document.getElementById('customerName').value || "ลูกค้า"
+          }) 
+      }).then(r => r.json()).then(r => { if (r.success) Swal.fire('สำเร็จ!', 'ส่งใบเสนอราคาเรียบร้อย', 'success'); else Swal.fire('ผิดพลาด', r.error, 'error'); }).catch(e => Swal.fire('ผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error'));
     }
   </script>
 </body>
