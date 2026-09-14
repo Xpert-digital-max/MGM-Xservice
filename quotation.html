@@ -21,8 +21,10 @@
     .editable-cell:hover { background-color: #fef08a !important; }
     .editable-cell:focus { background-color: #fef08a !important; outline: none; border-bottom: 2px solid #eab308; }
     #authOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+    
+    /* 🌟 เปลี่ยนจาก checkbox เป็น radio style */
     .cat-label { cursor: pointer; transition: all 0.2s; }
-    .cat-checkbox:checked + div { background-color: #dbeafe; border-color: #3b82f6; color: #1e3a8a; font-weight: bold; }
+    .cat-radio:checked + div { background-color: #dbeafe; border-color: #3b82f6; color: #1e3a8a; font-weight: bold; }
   </style>
 </head>
 <body class="p-4 md:p-8 relative">
@@ -42,54 +44,54 @@
       </button>
     </div>
     
-    <!-- 🌟 ส่วนที่ 1: เลือกหมวดหมู่ -->
+    <!-- 🌟 ส่วนที่ 1: เลือกหมวดหมู่ (แบบทีละหมวด / Radio) -->
     <div class="mb-5 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-      <label class="font-bold text-blue-900 mb-3 block text-lg">1. เลือกหมวดหมู่ประกันที่ต้องการเปรียบเทียบ (เลือกได้หลายข้อ)</label>
+      <label class="font-bold text-blue-900 mb-3 block text-lg">1. เลือกหมวดหมู่รายการ</label>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <label class="cat-label relative">
-          <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto1">
+          <input type="radio" name="catSelection" class="cat-radio absolute opacity-0 w-0 h-0" value="Package_Auto1">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🚗</span> ป.1
           </div>
         </label>
         <label class="cat-label relative">
-          <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto1+">
+          <input type="radio" name="catSelection" class="cat-radio absolute opacity-0 w-0 h-0" value="Package_Auto1+">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🛡️</span> ป.1+
           </div>
         </label>
         <label class="cat-label relative">
-          <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto2">
+          <input type="radio" name="catSelection" class="cat-radio absolute opacity-0 w-0 h-0" value="Package_Auto2">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🚙</span> ป.2
           </div>
         </label>
         <label class="cat-label relative">
-          <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto2+">
+          <input type="radio" name="catSelection" class="cat-radio absolute opacity-0 w-0 h-0" value="Package_Auto2+">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">✨</span> ป.2+
           </div>
         </label>
         <label class="cat-label relative">
-          <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto3">
+          <input type="radio" name="catSelection" class="cat-radio absolute opacity-0 w-0 h-0" value="Package_Auto3">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🚘</span> ป.3
           </div>
         </label>
         <label class="cat-label relative">
-          <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto3+">
+          <input type="radio" name="catSelection" class="cat-radio absolute opacity-0 w-0 h-0" value="Package_Auto3+">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🔥</span> ป.3+
           </div>
         </label>
         <label class="cat-label relative">
-          <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_PA">
+          <input type="radio" name="catSelection" class="cat-radio absolute opacity-0 w-0 h-0" value="Package_PA">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🩹</span> อุบัติเหตุ (PA)
           </div>
         </label>
         <label class="cat-label relative">
-          <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Life">
+          <input type="radio" name="catSelection" class="cat-radio absolute opacity-0 w-0 h-0" value="Package_Life">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">📄</span> ทั่วไป/อื่นๆ
           </div>
@@ -311,11 +313,11 @@
       });
     }
 
-    // 🌟 ฟังก์ชันโหลดแพ็กเกจ (รองรับ Checkbox หมวดหมู่)
+    // 🌟 เปลี่ยนมาดึงข้อมูลจาก .cat-radio
     async function loadPackages() {
-      const checkedBoxes = document.querySelectorAll('.cat-checkbox:checked');
+      const checkedBoxes = document.querySelectorAll('.cat-radio:checked');
       if (checkedBoxes.length === 0) {
-        return Swal.fire('แจ้งเตือน', 'กรุณาเลือกหมวดหมู่รายการอย่างน้อย 1 ข้อ', 'warning');
+        return Swal.fire('แจ้งเตือน', 'กรุณาเลือกหมวดหมู่รายการก่อนครับ', 'warning');
       }
 
       Swal.fire({ title: 'กำลังโหลดรายการ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
@@ -447,11 +449,8 @@
       document.getElementById('docCustomer').innerText = document.getElementById('customerName').value || "ไม่ระบุ";
       document.getElementById('docExtra').innerText = document.getElementById('extraInfo').value || "-";
       
-      // ดึงชื่อหัวข้อจากหมวดหมู่ที่ถูกติ๊ก
-      const checkedCatBoxes = document.querySelectorAll('.cat-checkbox:checked');
-      let catNames = Array.from(checkedCatBoxes).map(cb => cb.nextElementSibling.innerText.trim().replace(/[^a-zA-Z0-9ก-๙\.+ ]/g, '').trim());
-      let docTitleText = "ใบเสนอราคา " + catNames.join(", ");
-      if (catNames.length > 1) docTitleText = "เปรียบเทียบ " + catNames.join(", ");
+      // ตั้งชื่อเอกสารตามของในตะกร้า
+      let docTitleText = compareCart.length > 1 ? "ใบเสนอราคาเปรียบเทียบ" : "ใบเสนอราคา";
       document.getElementById('docTitle').innerText = docTitleText;
 
       if (currentAgent) {
