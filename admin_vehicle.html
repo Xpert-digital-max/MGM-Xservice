@@ -229,20 +229,19 @@
     let adminId = "";
     let rawPending = [];
 
-    // 🌟 ระบบโหลดเริ่มต้นใหม่ ป้องกันหน้าจอค้างขาว
+    // 🌟 ระบบโหลดเริ่มต้นใหม่ ป้องกันหน้าจอค้างขาว และเรียกใช้ LIFF ID จาก config.js โดยตรง
     window.onload = async function() {
       const loadText = document.getElementById("loadingText");
       try {
-          loadText.innerText = "กำลังเชื่อมต่อระบบหลังบ้าน... ⏳";
-          
-          const res = await fetch(GAS_API_URL + "?action=getSettings");
-          if (!res.ok) throw new Error("การเชื่อมต่อเซิร์ฟเวอร์ล้มเหลว");
-          const config = await res.json();
-          
-          if (!config.OUTSOURCE_LIFF_ID) throw new Error("ไม่พบข้อมูล LIFF ID ในระบบหลังบ้าน");
-          
           loadText.innerText = "กำลังเชื่อมต่อ LINE... ⏳";
-          await liff.init({ liffId: config.OUTSOURCE_LIFF_ID });
+          
+          // เช็กว่ามีการดึงไฟล์ config.js เข้ามาและมีตัวแปร LIFF ID หรือยัง
+          // *หมายเหตุ: เปลี่ยนชื่อตัวแปรให้ตรงกับที่คุณตั้งใน config.js
+          if (typeof ADMIN_VEHICLE_LIFF_ID === 'undefined') {
+              throw new Error("ไม่พบตัวแปร ADMIN_VEHICLE_LIFF_ID ในไฟล์ config.js");
+          }
+          
+          await liff.init({ liffId: ADMIN_VEHICLE_LIFF_ID });
           
           if (!liff.isLoggedIn()) {
               liff.login();
@@ -262,7 +261,7 @@
           document.getElementById("loadingScreen").innerHTML = `
             <div style="text-align:center; padding: 20px;">
                 <h3 style="color:#c0392b;">❌ ไม่สามารถเริ่มระบบได้</h3>
-                <p style="color:#7f8c8d; font-size: 14px;">${error.message}</p>
+                <p style="color:#7f8c8d; font-size: 14px;">Invalid LIFF ID หรือ ${error.message}</p>
                 <button onclick="window.location.reload()" class="btn btn-primary" style="width:auto; padding:10px 30px; margin-top:10px;">ลองใหม่อีกครั้ง</button>
             </div>
           `;
