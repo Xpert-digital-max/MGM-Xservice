@@ -652,7 +652,17 @@
           method: 'POST',
           body: JSON.stringify({ action: "getVehicleReport", startDate: sd, endDate: ed })
        })
-       .then(res => res.json())
+       .then(async res => {
+          // ดักจับ Error ที่เป็นหน้าเว็บ HTML (ส่วนใหญ่เกิดจากการลืม Deploy)
+          const text = await res.text();
+          try {
+             const data = JSON.parse(text);
+             return data;
+          } catch (e) {
+             console.error("Backend Error Response:", text);
+             throw new Error("เซิร์ฟเวอร์ส่งข้อมูลกลับมาผิดปกติ (กรุณากด Deploy โค้ดหลังบ้านเป็น New Deployment อีกครั้ง)");
+          }
+       })
        .then(data => {
           Swal.close();
           if(data.status === "success") {
@@ -660,11 +670,14 @@
              document.getElementById("reportCount").innerText = data.count.toLocaleString();
              document.getElementById("reportGross").innerText = data.totalGross.toLocaleString() + " ฿";
              document.getElementById("reportNet").innerText = data.totalNet.toLocaleString() + " ฿";
+          } else {
+             // โชว์ Error จริงๆ จากหลังบ้าน
+             Swal.fire("ข้อผิดพลาดจากเซิร์ฟเวอร์", data.message || data.error || "ไม่สามารถดึงข้อมูลได้", "error");
           }
        })
        .catch(err => {
           Swal.close();
-          Swal.fire("ข้อผิดพลาด", "ไม่สามารถดึงรายงานจากเซิร์ฟเวอร์ได้", "error");
+          Swal.fire("ข้อผิดพลาดระบบ", err.message || "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้", "error");
        });
     }
   </script>
