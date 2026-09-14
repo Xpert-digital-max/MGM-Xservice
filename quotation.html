@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- 🌟 ดึงค่า URL กลางจาก config.js -->
   <script src="config.js"></script>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -22,8 +21,6 @@
     .editable-cell:hover { background-color: #fef08a !important; }
     .editable-cell:focus { background-color: #fef08a !important; outline: none; border-bottom: 2px solid #eab308; }
     #authOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; }
-    
-    /* ซ่อน Checkbox เดิมแล้วแต่งให้เป็นปุ่มสวยๆ */
     .cat-label { cursor: pointer; transition: all 0.2s; }
     .cat-checkbox:checked + div { background-color: #dbeafe; border-color: #3b82f6; color: #1e3a8a; font-weight: bold; }
   </style>
@@ -45,60 +42,52 @@
       </button>
     </div>
     
-    <!-- 🌟 ส่วนที่ 1: เลือกหมวดหมู่ด้วย Checkbox -->
+    <!-- 🌟 ส่วนที่ 1: เลือกหมวดหมู่ -->
     <div class="mb-5 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
       <label class="font-bold text-blue-900 mb-3 block text-lg">1. เลือกหมวดหมู่ประกันที่ต้องการเปรียบเทียบ (เลือกได้หลายข้อ)</label>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        
         <label class="cat-label relative">
           <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto1">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🚗</span> ป.1
           </div>
         </label>
-        
         <label class="cat-label relative">
           <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto1+">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🛡️</span> ป.1+
           </div>
         </label>
-
         <label class="cat-label relative">
           <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto2">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🚙</span> ป.2
           </div>
         </label>
-
         <label class="cat-label relative">
           <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto2+">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">✨</span> ป.2+
           </div>
         </label>
-
         <label class="cat-label relative">
           <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto3">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🚘</span> ป.3
           </div>
         </label>
-
         <label class="cat-label relative">
           <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Auto3+">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🔥</span> ป.3+
           </div>
         </label>
-
         <label class="cat-label relative">
           <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_PA">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
             <span class="text-xl">🩹</span> อุบัติเหตุ (PA)
           </div>
         </label>
-
         <label class="cat-label relative">
           <input type="checkbox" class="cat-checkbox absolute opacity-0 w-0 h-0" value="Package_Life">
           <div class="w-full p-3 border rounded-lg bg-white text-gray-600 text-center hover:bg-gray-50 flex items-center justify-center gap-2">
@@ -108,7 +97,7 @@
       </div>
 
       <button onclick="loadPackages()" class="mt-4 w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow transition flex items-center justify-center">
-        <span class="mr-2">⬇️</span> ค้นหาแพ็กเกจที่เลือก
+        <span class="mr-2">⬇️</span> โหลดแพ็กเกจที่เลือก
       </button>
     </div>
 
@@ -128,11 +117,20 @@
       </div>
     </div>
 
+    <!-- 🌟 ส่วนที่ 3: พื้นที่เลือกแพ็กเกจ -->
     <div id="packageSelectionArea" class="hidden mb-6 p-4 bg-gray-50 rounded-lg border">
-      <h3 class="font-bold text-blue-800 mb-2">2. เลือกแพ็กเกจเปรียบเทียบ (สูงสุด 3 รายการ)</h3>
-      <div id="checkboxContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-      <button onclick="generatePreview()" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow">
-        📄 สร้างตัวอย่างใบเสนอราคา
+      
+      <!-- 🌟 ตะกร้าเก็บของ (รายการที่เลือกเปรียบเทียบ) -->
+      <div id="compareCartArea" class="hidden mb-6 p-4 bg-blue-100 rounded-lg border border-blue-300">
+         <h4 class="font-bold text-blue-900 mb-3 flex items-center text-lg"><span class="mr-2">📥</span> รายการที่เตรียมเปรียบเทียบ (<span id="cartCount">0</span>/3)</h4>
+         <div id="cartItems" class="flex flex-col gap-2"></div>
+      </div>
+
+      <h3 class="font-bold text-blue-800 mb-2 border-b pb-2">2. ติ๊กเลือกแพ็กเกจจากรายการด้านล่าง</h3>
+      <div id="checkboxContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"></div>
+      
+      <button onclick="generatePreview()" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow text-lg flex justify-center items-center">
+        <span class="mr-2">📄</span> สร้างใบเสนอราคาจากรายการในตะกร้า
       </button>
     </div>
 
@@ -153,7 +151,6 @@
     </div>
   </div>
 
-  <!-- ส่วนแสดงผล Canvas -->
   <div class="overflow-x-auto pb-10">
     <div id="quotationCanvas" class="export-container mx-auto hidden shadow-2xl">
       <div class="export-body">
@@ -193,6 +190,7 @@
   <script>
     let currentPackages = []; let currentHeaders = []; let currentAgent = null; let userProfile = {};
     let AGENT_REG_LIFF_URL = "";
+    let compareCart = []; // 🌟 ตัวแปรเก็บตะกร้าเปรียบเทียบ
 
     window.onload = async () => {
       let safetyTimer = setTimeout(() => {
@@ -207,7 +205,6 @@
         }
 
         AGENT_REG_LIFF_URL = "https://liff.line.me/" + AGENT_LIFF_ID;
-
         document.getElementById('loadingText').innerText = "กำลังเชื่อมต่อระบบ LINE...";
         await liff.init({ liffId: QUOTATION_LIFF_ID });
         
@@ -218,7 +215,6 @@
         
         userProfile = await liff.getProfile();
         document.getElementById('loadingText').innerText = "กำลังตรวจสอบสิทธิ์ตัวแทน...";
-        
         authenticateAgent(userProfile.userId, safetyTimer);
 
       } catch (err) {
@@ -235,16 +231,8 @@
         document.getElementById('authOverlay').style.display = 'none'; 
 
         if (!res.isRegistered) {
-          Swal.fire({ 
-            icon: 'warning', 
-            title: 'ยังไม่ลงทะเบียน', 
-            text: 'ไปหน้าลงทะเบียนก่อนใช้งานครับ', 
-            confirmButtonText: 'ไปหน้าลงทะเบียน'
-          }).then(() => { 
-            if (typeof AGENT_LIFF_ID !== 'undefined') {
-              window.location.href = "https://liff.line.me/" + AGENT_LIFF_ID; 
-            }
-          }); 
+          Swal.fire({ icon: 'warning', title: 'ยังไม่ลงทะเบียน', text: 'ไปหน้าลงทะเบียนก่อนใช้งานครับ', confirmButtonText: 'ไปหน้าลงทะเบียน' })
+          .then(() => { if (typeof AGENT_LIFF_ID !== 'undefined') window.location.href = "https://liff.line.me/" + AGENT_LIFF_ID; }); 
           return;
         }
 
@@ -254,8 +242,6 @@
         }
         
         currentAgent = res;
-
-        // ดึงข้อมูล ลูกค้า และ รถยนต์ จากลิงก์มากรอกอัตโนมัติ
         const urlParams = new URLSearchParams(window.location.search);
         const targetUid = urlParams.get('uid');
         const targetName = urlParams.get('cname');
@@ -268,19 +254,10 @@
         if (targetInfo) document.getElementById('extraInfo').value = targetInfo;
 
         if (targetUid && targetName) {
-            fetch(GAS_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: "notifyLeadClaim",
-                    adminName: currentAgent.fullName, 
-                    customerName: targetName
-                })
-            });
+            fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "notifyLeadClaim", adminName: currentAgent.fullName, customerName: targetName }) });
         }
-      })
-      .catch(err => {
-        clearTimeout(safetyTimer);
-        document.getElementById('authOverlay').style.display = 'none';
+      }).catch(err => {
+        clearTimeout(safetyTimer); document.getElementById('authOverlay').style.display = 'none';
       });
     }
 
@@ -305,8 +282,7 @@
             </button>
           </div>
         `,
-        showConfirmButton: false,
-        showCloseButton: true,
+        showConfirmButton: false, showCloseButton: true,
         didOpen: () => {
           document.getElementById('btnShareLine').addEventListener('click', async () => {
             if (liff.isApiAvailable('shareTargetPicker')) {
@@ -320,32 +296,26 @@
                         { type: "text", text: "มิสเตอร์เอ็กซ์ Group", weight: "bold", size: "xl", color: "#1e3a8a" },
                         { type: "text", text: `ชวนคุณมาร่วมทีมกับ ${currentAgent.fullName}`, size: "sm", color: "#666666", wrap: true, margin: "md" },
                         { type: "text", text: "สมัครตัวแทนฟรี! ออกใบเสนอราคาง่ายผ่านมือถือ", size: "xs", color: "#aaaaaa", wrap: true, margin: "md" }
-                      ]
-                    },
+                      ] },
                     footer: { type: "box", layout: "vertical", contents: [ { type: "button", style: "primary", color: "#1e3a8a", action: { type: "uri", label: "สมัครตัวแทนคลิกที่นี่", uri: shareUrl } } ] }
                   }
                 }]);
                 if (res) Swal.fire('สำเร็จ', 'ส่งลิงก์แนะนำให้เพื่อนเรียบร้อยแล้ว', 'success');
-              } catch (e) { console.log("Share canceled"); }
-            } else {
-              Swal.fire('แจ้งเตือน', 'อุปกรณ์นี้ไม่รองรับการส่งเข้าแชท LINE ให้ใช้วิธีคัดลอกลิงก์แทนครับ', 'warning');
-            }
+              } catch (e) {}
+            } else { Swal.fire('แจ้งเตือน', 'อุปกรณ์นี้ไม่รองรับการส่งเข้าแชท LINE ให้ใช้วิธีคัดลอกลิงก์แทนครับ', 'warning'); }
           });
-
           document.getElementById('btnCopyLink').addEventListener('click', () => {
-            navigator.clipboard.writeText(shareUrl);
-            Swal.fire('คัดลอกลิงก์แล้ว!', 'นำลิงก์ไปวางส่งให้เพื่อนได้เลยครับ', 'success');
+            navigator.clipboard.writeText(shareUrl); Swal.fire('คัดลอกลิงก์แล้ว!', 'นำลิงก์ไปวางส่งให้เพื่อนได้เลยครับ', 'success');
           });
         }
       });
     }
 
-    // 🌟 เปลี่ยนระบบโหลดแพ็กเกจให้ดึงจาก Checkbox
+    // 🌟 ฟังก์ชันโหลดแพ็กเกจ (รองรับ Checkbox หมวดหมู่)
     async function loadPackages() {
       const checkedBoxes = document.querySelectorAll('.cat-checkbox:checked');
       if (checkedBoxes.length === 0) {
-        Swal.fire('แจ้งเตือน', 'กรุณาเลือกหมวดหมู่รายการอย่างน้อย 1 ข้อ', 'warning');
-        return;
+        return Swal.fire('แจ้งเตือน', 'กรุณาเลือกหมวดหมู่รายการอย่างน้อย 1 ข้อ', 'warning');
       }
 
       Swal.fire({ title: 'กำลังโหลดรายการ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
@@ -354,26 +324,22 @@
       let mainHeaders = [];
       let isAutoOrHealth = false;
 
-      // สร้างลิสต์ของ Sheet ที่ต้องดึงข้อมูล
       const selectedSheets = Array.from(checkedBoxes).map(cb => {
-          let labelText = cb.nextElementSibling.innerText.trim().replace(/[^a-zA-Z0-9ก-๙\.+ ]/g, '').trim(); // ลบ Emoji ออก
+          let labelText = cb.nextElementSibling.innerText.trim().replace(/[^a-zA-Z0-9ก-๙\.+ ]/g, '').trim(); 
           if (cb.value.includes('Auto') || cb.value.includes('Health')) isAutoOrHealth = true;
           return { value: cb.value, label: labelText };
       });
 
       let promises = selectedSheets.map(s => 
           fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getPackages", sheetName: s.value }) })
-          .then(r => r.json())
-          .catch(e => ({ success: false }))
+          .then(r => r.json()).catch(e => ({ success: false }))
       );
       
       let results = await Promise.all(promises);
-      
       results.forEach((res, idx) => {
         if (res.success && res.data && res.data.length > 0) {
           if (mainHeaders.length === 0) mainHeaders = res.headers;
           let typeName = selectedSheets[idx].label;
-          // ใส่ชื่อประเภทนำหน้าชื่อบริษัท เช่น (ป.1) วิริยะ
           res.data.forEach(p => { p[mainHeaders[1]] = `(${typeName}) ${p[mainHeaders[1]]}`; });
           allPkgs = allPkgs.concat(res.data);
         }
@@ -391,6 +357,7 @@
       renderCheckboxes(isAutoOrHealth);
     }
 
+    // 🌟 แสดงรายการแพ็กเกจให้เลือก และผูกกับระบบตะกร้า
     function renderCheckboxes(isAutoOrHealth) {
       const container = document.getElementById('checkboxContainer'); container.innerHTML = '';
       currentPackages.forEach((pkg, index) => {
@@ -398,24 +365,89 @@
         if (isAutoOrHealth) {
           labelHTML += ` <br><span class="text-xs text-blue-600">(ทุน: ${pkg[currentHeaders[2]]||"-"} | เบี้ย: ${pkg[currentHeaders[3]]||"-"})</span>`;
         }
+        
+        let isChecked = compareCart.some(p => p[currentHeaders[0]] === pkg[currentHeaders[0]] && p[currentHeaders[1]] === pkg[currentHeaders[1]]) ? 'checked' : '';
+
         let div = document.createElement('div'); div.className = "flex items-center p-3 border rounded-lg bg-white hover:bg-blue-50 transition shadow-sm";
-        div.innerHTML = `<input type="checkbox" id="pkg_${index}" value="${index}" class="pkg-checkbox w-6 h-6 mr-3 text-blue-600"><label for="pkg_${index}" class="text-sm font-medium text-gray-700 cursor-pointer flex-1 leading-tight">${labelHTML}</label>`;
+        div.innerHTML = `<input type="checkbox" id="pkg_${index}" value="${index}" class="pkg-checkbox w-6 h-6 mr-3 text-blue-600" onchange="toggleCartItem(${index}, this)" ${isChecked}><label for="pkg_${index}" class="text-sm font-medium text-gray-700 cursor-pointer flex-1 leading-tight">${labelHTML}</label>`;
         container.appendChild(div);
       });
       document.getElementById('packageSelectionArea').classList.remove('hidden');
     }
 
-    function generatePreview() {
-      const checkboxes = document.querySelectorAll('.pkg-checkbox:checked');
-      if (checkboxes.length === 0) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกอย่างน้อย 1 รายการ', 'warning');
-      if (checkboxes.length > 3) return Swal.fire('แจ้งเตือน', 'เลือกได้สูงสุด 3 รายการ', 'warning');
+    // 🌟 ฟังก์ชันจัดการตะกร้าเปรียบเทียบ
+    function toggleCartItem(index, checkbox) {
+      let pkg = currentPackages[index];
+      let matchKey0 = pkg[currentHeaders[0]];
+      let matchKey1 = pkg[currentHeaders[1]];
 
-      let selectedData = []; checkboxes.forEach(cb => selectedData.push(currentPackages[cb.value]));
-      let d = new Date(); document.getElementById('docDate').innerText = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`;
+      if (checkbox.checked) {
+        if (compareCart.length >= 3) {
+           Swal.fire('แจ้งเตือน', 'เลือกเปรียบเทียบได้สูงสุด 3 รายการครับ', 'warning');
+           checkbox.checked = false;
+           return;
+        }
+        let cartItem = {...pkg, _cartId: Date.now().toString()};
+        compareCart.push(cartItem);
+      } else {
+        compareCart = compareCart.filter(p => p[currentHeaders[0]] !== matchKey0 || p[currentHeaders[1]] !== matchKey1);
+      }
+      renderCartUI();
+    }
+
+    // 🌟 ฟังก์ชันลบออกจากตะกร้า
+    function removeCartItem(cartId) {
+      compareCart = compareCart.filter(p => p._cartId !== cartId);
+      renderCartUI();
+      
+      const checkboxes = document.querySelectorAll('.pkg-checkbox');
+      checkboxes.forEach(cb => {
+         let pkg = currentPackages[cb.value];
+         let exists = compareCart.some(p => p[currentHeaders[0]] === pkg[currentHeaders[0]] && p[currentHeaders[1]] === pkg[currentHeaders[1]]);
+         cb.checked = exists;
+      });
+    }
+
+    // 🌟 อัปเดตหน้าตาตะกร้า
+    function renderCartUI() {
+      const cartDiv = document.getElementById('compareCartArea');
+      const cartItemsDiv = document.getElementById('cartItems');
+      const cartCount = document.getElementById('cartCount');
+      
+      if(!cartDiv) return; 
+      
+      cartCount.innerText = compareCart.length;
+
+      if (compareCart.length === 0) {
+         cartDiv.classList.add('hidden');
+         cartItemsDiv.innerHTML = '';
+         return;
+      }
+      
+      cartDiv.classList.remove('hidden');
+      let html = '';
+      compareCart.forEach(p => {
+         html += `
+         <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-blue-200 shadow-sm">
+             <span class="text-sm font-medium text-gray-800 line-clamp-1 flex-1">✔️ ${p[currentHeaders[0]]} - ${p[currentHeaders[1]]}</span>
+             <button onclick="removeCartItem('${p._cartId}')" class="text-red-500 hover:text-white hover:bg-red-500 rounded-full w-8 h-8 flex items-center justify-center font-bold ml-2 transition">&times;</button>
+         </div>`;
+      });
+      cartItemsDiv.innerHTML = html;
+    }
+
+    // 🌟 ฟังก์ชันสร้างใบเสนอราคา (ดึงจากตะกร้า)
+    function generatePreview() {
+      if (compareCart.length === 0) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกแพ็กเกจใส่ตะกร้าอย่างน้อย 1 รายการ', 'warning');
+      if (compareCart.length > 3) return Swal.fire('แจ้งเตือน', 'เลือกเปรียบเทียบได้สูงสุด 3 รายการ', 'warning');
+
+      let selectedData = [...compareCart]; 
+      let d = new Date(); 
+      document.getElementById('docDate').innerText = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`;
       document.getElementById('docCustomer').innerText = document.getElementById('customerName').value || "ไม่ระบุ";
       document.getElementById('docExtra').innerText = document.getElementById('extraInfo').value || "-";
       
-      // 🌟 สร้างชื่อเอกสารจากหมวดหมู่ที่ถูกติ๊กเลือก
+      // ดึงชื่อหัวข้อจากหมวดหมู่ที่ถูกติ๊ก
       const checkedCatBoxes = document.querySelectorAll('.cat-checkbox:checked');
       let catNames = Array.from(checkedCatBoxes).map(cb => cb.nextElementSibling.innerText.trim().replace(/[^a-zA-Z0-9ก-๙\.+ ]/g, '').trim());
       let docTitleText = "ใบเสนอราคา " + catNames.join(", ");
