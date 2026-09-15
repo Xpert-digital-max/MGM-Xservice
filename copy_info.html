@@ -17,7 +17,7 @@
       <span class="mr-2">📋</span> รายละเอียดการรับบริการ
     </h2>
     
-    <textarea id="infoText" rows="18" class="w-full p-4 border border-gray-300 rounded-lg mb-4 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm leading-relaxed" readonly></textarea>
+    <textarea id="infoText" rows="16" class="w-full p-4 border border-gray-300 rounded-lg mb-4 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm leading-relaxed" readonly></textarea>
     
     <button onclick="copyToClipboard()" id="copyBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow flex items-center justify-center">
       <span class="mr-2">✂️</span> กดเพื่อคัดลอกข้อความ
@@ -32,7 +32,6 @@
     }
 
     const params = new URLSearchParams(window.location.search);
-    const j = params.get('j') || '-';
     const d = params.get('d') || '-';
     const p = params.get('p') || '-';
     const c = params.get('c') || '-';
@@ -52,7 +51,7 @@
     const dep = Number(params.get('dep') || 0);
     const l = params.get('l') || '-';
 
-    // 🌟 ดึงรายการแยกย่อยมาแสดงให้ครบถ้วนในกล่องคัดลอก
+    // ดึงรายการมาแสดง
     let breakdown = "";
     if (prb > 0) breakdown += "พ.ร.บ.: " + fmt(prb) + " บาท\n";
     if (tor > 0) breakdown += "ตรวจสภาพ: " + fmt(tor) + " บาท\n";
@@ -61,27 +60,23 @@
     if (fee > 0) breakdown += "ค่าบริการ: " + fmt(fee) + " บาท\n";
     if (ins > 0) breakdown += "ประกัน (" + i + "): " + fmt(ins) + " บาท\n";
 
-    // 🌟 เช็คการแสดงผลมัดจำ ให้ตรงกับ Flex Message
+    // จัดการยอดมัดจำและเปลี่ยนคำว่า "สุทธิรวมทั้งสิ้น" เป็น "รวม"
     let totalText = "";
     if (dep > 0) {
         totalText = "รวมยอดสุทธิเต็ม: " + fmt(tot) + " บาท\n" +
                     "หักมัดจำล่วงหน้า: -" + fmt(dep) + " บาท\n" +
                     "ยอดคงเหลือค้างชำระ: " + fmt(tot - dep) + " บาท";
     } else {
-        totalText = "สุทธิรวมทั้งสิ้น: " + fmt(tot) + " บาท";
+        totalText = "รวม: " + fmt(tot) + " บาท";
     }
 
-    const textData = "📌 รายละเอียดการใช้บริการ\n" +
-                     "วันที่: " + d + "\n" +
-                     "Job ID: " + j + "\n\n" +
-                     "👤 ข้อมูลลูกค้า\n" +
-                     "เบอร์โทร: " + p + "\n\n" +
-                     "🚗 ข้อมูลรถยนต์\n" +
+    // 🌟 นำหัวข้อและ Job ID ออกตามที่คุณต้องการ
+    const textData = "วันที่: " + d + "\n" +
+                     "เบอร์โทร: " + p + "\n" +
                      "ทะเบียน: " + c + "\n" +
                      "ประเภทรถ: " + t + "\n" +
                      "ขนาด/น้ำหนัก: " + w + "\n" +
                      "จดทะเบียน: " + r + " (อายุ " + a + " ปี)\n\n" +
-                     "💰 สรุปยอดบริการ\n" +
                      breakdown +
                      "-------------------\n" +
                      totalText + "\n\n" +
