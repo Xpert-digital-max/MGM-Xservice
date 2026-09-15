@@ -1,5 +1,5 @@
 // ลิงก์ Web App ของ Google Apps Script
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyzFxHS2LMwdh0d2BvggdBiUMDY79wRQr_xfJLBUzo8RB9XbxPQIWaNe6S8PpvGeAJDmw/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyzFxHS2LMwdh0d2BvggdBiUMDY79wRQr_xfJLBUzo8RB9XbxPQIWaNe6S8PpvGeAJDmw/exec"; 
 
 // รวม LIFF ID ของทุกหน้าเว็บไว้ที่นี่
 const RECEPTION_LIFF_ID = "2000218686-sKmiajH7"; // สำหรับแผนกรับรถ
