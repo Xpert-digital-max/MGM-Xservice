@@ -17,7 +17,7 @@
       <span class="mr-2">📋</span> รายละเอียดการรับบริการ
     </h2>
     
-    <textarea id="infoText" rows="15" class="w-full p-4 border border-gray-300 rounded-lg mb-4 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm leading-relaxed" readonly></textarea>
+    <textarea id="infoText" rows="18" class="w-full p-4 border border-gray-300 rounded-lg mb-4 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm leading-relaxed" readonly></textarea>
     
     <button onclick="copyToClipboard()" id="copyBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow flex items-center justify-center">
       <span class="mr-2">✂️</span> กดเพื่อคัดลอกข้อความ
@@ -25,7 +25,12 @@
   </div>
 
   <script>
-    // 🌟 รับค่าตัวแปรสั้นๆ จาก URL แล้วประกอบร่างเป็นข้อความสวยงาม
+    function fmt(numStr) {
+        let n = Number(numStr);
+        if (!n || n <= 0) return 0;
+        return n.toLocaleString();
+    }
+
     const params = new URLSearchParams(window.location.search);
     const j = params.get('j') || '-';
     const d = params.get('d') || '-';
@@ -36,8 +41,35 @@
     const r = params.get('r') || '-';
     const a = params.get('a') || '-';
     const i = params.get('i') || '-';
-    const s = params.get('s') || '-';
+    
+    const prb = Number(params.get('prb') || 0);
+    const tor = Number(params.get('tor') || 0);
+    const tax = Number(params.get('tax') || 0);
+    const fine = Number(params.get('fine') || 0);
+    const fee = Number(params.get('fee') || 0);
+    const ins = Number(params.get('ins') || 0);
+    const tot = Number(params.get('tot') || 0);
+    const dep = Number(params.get('dep') || 0);
     const l = params.get('l') || '-';
+
+    // 🌟 ดึงรายการแยกย่อยมาแสดงให้ครบถ้วนในกล่องคัดลอก
+    let breakdown = "";
+    if (prb > 0) breakdown += "พ.ร.บ.: " + fmt(prb) + " บาท\n";
+    if (tor > 0) breakdown += "ตรวจสภาพ: " + fmt(tor) + " บาท\n";
+    if (tax > 0) breakdown += "ภาษีประจำปี: " + fmt(tax) + " บาท\n";
+    if (fine > 0) breakdown += "ค่าปรับ: " + fmt(fine) + " บาท\n";
+    if (fee > 0) breakdown += "ค่าบริการ: " + fmt(fee) + " บาท\n";
+    if (ins > 0) breakdown += "ประกัน (" + i + "): " + fmt(ins) + " บาท\n";
+
+    // 🌟 เช็คการแสดงผลมัดจำ ให้ตรงกับ Flex Message
+    let totalText = "";
+    if (dep > 0) {
+        totalText = "รวมยอดสุทธิเต็ม: " + fmt(tot) + " บาท\n" +
+                    "หักมัดจำล่วงหน้า: -" + fmt(dep) + " บาท\n" +
+                    "ยอดคงเหลือค้างชำระ: " + fmt(tot - dep) + " บาท";
+    } else {
+        totalText = "สุทธิรวมทั้งสิ้น: " + fmt(tot) + " บาท";
+    }
 
     const textData = "📌 รายละเอียดการใช้บริการ\n" +
                      "วันที่: " + d + "\n" +
@@ -50,8 +82,9 @@
                      "ขนาด/น้ำหนัก: " + w + "\n" +
                      "จดทะเบียน: " + r + " (อายุ " + a + " ปี)\n\n" +
                      "💰 สรุปยอดบริการ\n" +
-                     "ประกัน: " + i + "\n" +
-                     s + "\n\n" +
+                     breakdown +
+                     "-------------------\n" +
+                     totalText + "\n\n" +
                      "🔗 ลิงก์เอกสารรถ:\n" + l;
                      
     document.getElementById('infoText').value = textData;
