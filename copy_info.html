@@ -14,25 +14,46 @@
 
   <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md border-t-4 border-blue-600">
     <h2 class="text-xl font-bold text-blue-900 mb-4 flex items-center">
-      <span class="mr-2">📋</span> รายละเอียด
+      <span class="mr-2">📋</span> รายละเอียดการรับบริการ
     </h2>
     
-    <textarea id="infoText" rows="6" class="w-full p-4 border border-gray-300 rounded-lg mb-4 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" readonly></textarea>
+    <textarea id="infoText" rows="15" class="w-full p-4 border border-gray-300 rounded-lg mb-4 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm leading-relaxed" readonly></textarea>
     
     <button onclick="copyToClipboard()" id="copyBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow flex items-center justify-center">
-      <span class="mr-2">✂️</span> กดเพื่อคัดลอก
+      <span class="mr-2">✂️</span> กดเพื่อคัดลอกข้อความ
     </button>
   </div>
 
   <script>
+    // 🌟 รับค่าตัวแปรสั้นๆ จาก URL แล้วประกอบร่างเป็นข้อความสวยงาม
     const params = new URLSearchParams(window.location.search);
-    const name = params.get('name') || '';
-    const car = params.get('car') || '';
-    const ins = params.get('ins') || '-';
-    const total = params.get('total') || '';
-    
-    const textData = `${name}\nทะเบียน: ${car}\nประเภทประกัน: ${ins}\n\n${total}`;
-    
+    const j = params.get('j') || '-';
+    const d = params.get('d') || '-';
+    const p = params.get('p') || '-';
+    const c = params.get('c') || '-';
+    const t = params.get('t') || '-';
+    const w = params.get('w') || '-';
+    const r = params.get('r') || '-';
+    const a = params.get('a') || '-';
+    const i = params.get('i') || '-';
+    const s = params.get('s') || '-';
+    const l = params.get('l') || '-';
+
+    const textData = "📌 รายละเอียดการใช้บริการ\n" +
+                     "วันที่: " + d + "\n" +
+                     "Job ID: " + j + "\n\n" +
+                     "👤 ข้อมูลลูกค้า\n" +
+                     "เบอร์โทร: " + p + "\n\n" +
+                     "🚗 ข้อมูลรถยนต์\n" +
+                     "ทะเบียน: " + c + "\n" +
+                     "ประเภทรถ: " + t + "\n" +
+                     "ขนาด/น้ำหนัก: " + w + "\n" +
+                     "จดทะเบียน: " + r + " (อายุ " + a + " ปี)\n\n" +
+                     "💰 สรุปยอดบริการ\n" +
+                     "ประกัน: " + i + "\n" +
+                     s + "\n\n" +
+                     "🔗 ลิงก์เอกสารรถ:\n" + l;
+                     
     document.getElementById('infoText').value = textData;
 
     function copyToClipboard() {
@@ -42,7 +63,7 @@
       document.execCommand('copy');
       
       const btn = document.getElementById('copyBtn');
-      btn.innerHTML = "✅ คัดลอกสำเร็จ!";
+      btn.innerHTML = "✅ คัดลอกสำเร็จ! (ปิดหน้าต่างได้เลย)";
       btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
       btn.classList.add('bg-green-600', 'hover:bg-green-700');
     }
