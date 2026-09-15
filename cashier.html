@@ -17,7 +17,7 @@
     .price-row { display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px dashed #eee; }
     .grand-total { font-size: 1.8rem; color: #198754; font-weight: bold; text-align: right; margin-top: 10px; background: #e8f5e9; padding: 10px; border-radius: 10px; }
     #edit, #previewSection, #preSaveButtons, #postSaveButtons, #successBanner { display: none; }
-    #mainContent { display: none; } /* 🌟 ซ่อนเนื้อหาหลักไว้จนกว่าจะล็อกอินผ่าน */
+    #mainContent { display: none; } 
   </style>
 </head>
 <body>
@@ -185,7 +185,6 @@
 
     async function initLiff() {
         try {
-            // 🌟 ดึงค่า CASHIER_LIFF_ID จาก config.js มาใช้โดยตรง
             await liff.init({ liffId: CASHIER_LIFF_ID });
             if (!liff.isLoggedIn()) { liff.login(); } 
             else { verifyPermission(); }
@@ -196,14 +195,22 @@
         Swal.fire({ title: 'กำลังตรวจสอบสิทธิ์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const profile = await liff.getProfile();
         try {
-            const res = await (await fetch(GAS_API_URL, {
+            const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ 
                     action: "verifyUserAccess", 
                     userId: profile.userId, 
                     pageName: "cashier.html" 
                 })
-            })).json();
+            });
+            const textResponse = await response.text();
+            let res;
+            try {
+                res = JSON.parse(textResponse);
+            } catch (e) {
+                console.error(textResponse);
+                throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ");
+            }
 
             if (res.valid) {
                 Swal.close();
@@ -223,7 +230,7 @@
                 document.getElementById('staffNameDisplay').className = "badge bg-danger fs-6";
             }
         } catch(e) { 
-            Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้', 'error'); 
+            Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้: ' + e.message, 'error'); 
         }
     }
 
@@ -254,10 +261,17 @@
         btn.innerHTML = '⏳...'; btn.disabled = true;
 
         try {
-            const res = await (await fetch(GAS_API_URL, {
+            const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "searchJobData", keyword: k, branch: branch })
-            })).json();
+            });
+            const textResponse = await response.text();
+            let res;
+            try {
+                res = JSON.parse(textResponse);
+            } catch (e) {
+                throw new Error("เซิร์ฟเวอร์ส่งข้อมูลกลับมาผิดปกติ (กรุณาเช็คเน็ตหรือกด Deploy หลังบ้านใหม่)");
+            }
 
             btn.innerHTML = originalText; btn.disabled = false;
             if (!res) return Swal.fire('Error', 'Server returned null', 'error');
@@ -361,14 +375,24 @@
         saveBtn.setAttribute('data-payload', JSON.stringify(payload));
 
         let btn = document.getElementById('calcBtn');
-        btn.innerText="⏳ กำลังคำนวณ..."; btn.disabled=true;
+        btn.innerText="⏳ กำลังคำนวณ..."; btn.disabled=true; // 🌟 ล็อกปุ่ม
         let plate = document.getElementById('v').innerText; 
 
         try {
-            const res = await (await fetch(GAS_API_URL, {
+            const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 body: JSON.stringify(payload)
-            })).json();
+            });
+            const textResponse = await response.text();
+            let res;
+            
+            // 🌟 ดักจับ Error Unexpected Token '<'
+            try {
+                res = JSON.parse(textResponse);
+            } catch (jsonErr) {
+                console.error("HTML Error Response:", textResponse);
+                throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ (ระบบอาจประมวลผลเสร็จแล้ว กรุณารีเฟรชหน้าเว็บ หรือค้นหาคิวใหม่ เพื่อเช็คก่อนกดซ้ำ!)");
+            }
 
             btn.innerText="🚀 คำนวณ & ตรวจสอบ"; btn.disabled=false;
             saveBtn.setAttribute('data-result', JSON.stringify(res));
@@ -381,7 +405,12 @@
             document.getElementById('postSaveButtons').style.display = 'none';
         } catch(e) {
             btn.innerText="🚀 คำนวณ & ตรวจสอบ"; btn.disabled=false;
-            Swal.fire('Error', e.message, 'error');
+            Swal.fire({
+                title: 'ระบบขัดข้อง',
+                text: e.message,
+                icon: 'error',
+                confirmButtonText: 'รับทราบ'
+            });
         }
     }
 
@@ -399,19 +428,33 @@
         let calcResult = JSON.parse(resultJson);
         payload.action = "saveJobFinal";
 
-        btn.innerText = "⏳ กำลังบันทึก..."; btn.disabled = true;
+        btn.innerText = "⏳ กำลังบันทึก..."; btn.disabled = true; // 🌟 ล็อกปุ่มป้องกันกดซ้ำ
 
         try {
-            await fetch(GAS_API_URL, {
+            const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "saveJobFinal", payload: payload, calcResult: calcResult })
             });
+            const textResponse = await response.text();
+            
+            // 🌟 ดักจับ Error Unexpected Token '<' ตรงจุดเซฟด้วย
+            try {
+                JSON.parse(textResponse);
+            } catch (jsonErr) {
+                console.error("HTML Error Response:", textResponse);
+                throw new Error("ระบบหน่วงเวลา (ข้อมูลอาจบันทึกไปแล้ว ห้ามกดซ้ำ! ให้รีเฟรชหน้าค้นหาคิวใหม่)");
+            }
+
             document.getElementById('preSaveButtons').style.display = 'none';
             document.getElementById('successBanner').style.display = 'block';
             document.getElementById('postSaveButtons').style.display = 'grid';
         } catch(err) {
             btn.innerText = "✅ ยืนยันและบันทึก"; btn.disabled = false;
-            Swal.fire('Error', err.message, 'error');
+            Swal.fire({
+                title: 'โปรดระวัง!',
+                text: err.message,
+                icon: 'warning'
+            });
         }
     }
 
