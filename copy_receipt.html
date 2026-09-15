@@ -3,48 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>สรุปยอดบริการ (คัดลอก)</title>
+  <title>คัดลอกรายละเอียด</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
   </style>
 </head>
-<body class="flex flex-col min-h-screen p-4 items-center justify-center">
+<body class="flex items-center justify-center min-h-screen p-4">
 
   <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md border-t-4 border-blue-600">
     <h2 class="text-xl font-bold text-blue-900 mb-4 flex items-center">
-      <span class="mr-2">📋</span> สรุปยอดบริการ (กดปุ่มเพื่อคัดลอก)
+      <span class="mr-2">📋</span> รายละเอียด
     </h2>
     
-    <textarea id="infoText" rows="12" class="w-full p-4 border border-gray-300 rounded-lg mb-4 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm" readonly></textarea>
+    <textarea id="infoText" rows="6" class="w-full p-4 border border-gray-300 rounded-lg mb-4 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" readonly></textarea>
     
     <button onclick="copyToClipboard()" id="copyBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow flex items-center justify-center">
-      <span class="mr-2">✂️</span> คลิกคัดลอกข้อความ
+      <span class="mr-2">✂️</span> กดเพื่อคัดลอก
     </button>
   </div>
 
   <script>
-    // 🌟 ดึงข้อมูลที่ส่งมาจาก URL แล้วประกอบร่างเป็น Text
     const params = new URLSearchParams(window.location.search);
+    const name = params.get('name') || '';
+    const car = params.get('car') || '';
+    const ins = params.get('ins') || '-';
+    const total = params.get('total') || '';
     
-    const textData = 
-      `วันที่ใช้บริการ: ${params.get('date') || '-'}\n` +
-      `ทะเบียนรถ: ${params.get('reg') || '-'}\n` +
-      `เบอร์โทร: ${params.get('phone') || '-'}\n` +
-      `ชนิดรถ: ${params.get('type') || '-'}\n` +
-      `CC/น้ำหนัก: ${params.get('cc') || '-'}\n` +
-      `วันจดทะเบียน: ${params.get('regdate') || '-'}\n` +
-      `----------------------\n` +
-      `พ.ร.บ.: ${params.get('prb') || '0'}\n` +
-      `ตรอ.: ${params.get('tor') || '0'}\n` +
-      `ภาษี: ${params.get('tax') || '0'}\n` +
-      `ค่าปรับ: ${params.get('fine') || '0'}\n` +
-      `บริการ: ${params.get('srv') || '0'}\n` +
-      `ประกัน ${params.get('instype') || '-'}: ${params.get('ins') || '0'}\n` +
-      `----------------------\n` +
-      `ยอดสุทธิรวม: ${params.get('total') || '0'} บาท\n\n` +
-      `แนบรูปรถ: ${params.get('link') || '-'}`;
+    const textData = `${name}\nทะเบียน: ${car}\nประเภทประกัน: ${ins}\n\n${total}`;
     
     document.getElementById('infoText').value = textData;
 
@@ -55,10 +42,11 @@
       document.execCommand('copy');
       
       const btn = document.getElementById('copyBtn');
-      btn.innerHTML = "✅ คัดลอกสำเร็จ! (ปิดหน้านี้ได้เลย)";
+      btn.innerHTML = "✅ คัดลอกสำเร็จ!";
       btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
       btn.classList.add('bg-green-600', 'hover:bg-green-700');
     }
   </script>
+
 </body>
 </html>
