@@ -53,28 +53,28 @@
 
     // ดึงรายการมาแสดง
     let breakdown = "";
-    if (prb > 0) breakdown += "พ.ร.บ.: " + fmt(prb) + " บาท\n";
-    if (tor > 0) breakdown += "ตรวจสภาพ: " + fmt(tor) + " บาท\n";
-    if (tax > 0) breakdown += "ภาษีประจำปี: " + fmt(tax) + " บาท\n";
-    if (fine > 0) breakdown += "ค่าปรับ: " + fmt(fine) + " บาท\n";
-    if (fee > 0) breakdown += "ค่าบริการ: " + fmt(fee) + " บาท\n";
-    if (ins > 0) breakdown += "ประกัน (" + i + "): " + fmt(ins) + " บาท\n";
+    if (prb > 0) breakdown += "พ.ร.บ.: " + fmt(prb) + " บ.\n";
+    if (tor > 0) breakdown += "ตรวจ: " + fmt(tor) + " บ.\n";
+    if (tax > 0) breakdown += "ภาษี: " + fmt(tax) + " บ.\n";
+    if (fine > 0) breakdown += "ปรับ: " + fmt(fine) + " บ.\n";
+    if (fee > 0) breakdown += "ค่าบริการ: " + fmt(fee) + " บ.\n";
+    if (ins > 0) breakdown += "ประกัน (" + i + "): " + fmt(ins) + " บ.\n";
 
     // จัดการยอดมัดจำและเปลี่ยนคำว่า "สุทธิรวมทั้งสิ้น" เป็น "รวม"
     let totalText = "";
     if (dep > 0) {
-        totalText = "รวมยอดสุทธิเต็ม: " + fmt(tot) + " บาท\n" +
-                    "หักมัดจำล่วงหน้า: -" + fmt(dep) + " บาท\n" +
-                    "ยอดคงเหลือค้างชำระ: " + fmt(tot - dep) + " บาท";
+        totalText = "รวมยอดสุทธิเต็ม: " + fmt(tot) + " บ.\n" +
+                    "หักมัดจำล่วงหน้า: -" + fmt(dep) + " บ.\n" +
+                    "ยอดคงเหลือค้างชำระ: " + fmt(tot - dep) + " บ.";
     } else {
         totalText = "รวม: " + fmt(tot) + " บาท";
     }
 
     // 🌟 นำหัวข้อและ Job ID ออกตามที่คุณต้องการ
     const textData = "วันที่: " + d + "\n" +
-                     "เบอร์โทร: " + p + "\n" +
+                     "โทร: " + p + "\n" +
                      "ทะเบียน: " + c + "\n" +
-                     "ประเภทรถ: " + t + "\n" +
+                     "ประเภท: " + t + "\n" +
                      "ขนาด/น้ำหนัก: " + w + "\n" +
                      "จดทะเบียน: " + r + " (อายุ " + a + " ปี)\n\n" +
                      breakdown +
