@@ -45,7 +45,6 @@
           <select id="branch" class="form-select mb-3 border-danger">
             <option value="สาขาพระยืน">สาขาพระยืน</option>
             <option value="สาขาท่าใหม่">สาขาท่าใหม่</option>
-            <option value="All">🌐 ทุกสาขา (แอดมิน)</option>
           </select>
           
           <label class="fw-bold">ทะเบียนรถ</label>
@@ -129,7 +128,6 @@
     // 🌟 1. ฟังก์ชันโหลด LIFF และตรวจสอบสิทธิ์
     async function initLiff() {
         try {
-            // 🌟 ดึงค่า RECEPTION_LIFF_ID จาก config.js มาใช้โดยตรง 
             await liff.init({ liffId: RECEPTION_LIFF_ID });
             if (!liff.isLoggedIn()) { 
                 liff.login(); 
@@ -153,7 +151,14 @@
                     pageName: "receiption.html" // 🌟 ส่งชื่อหน้าไปเช็คช่อง D
                 })
             });
-            const res = await response.json();
+            const resText = await response.text();
+            let res;
+            try {
+                res = JSON.parse(resText);
+            } catch (err) {
+                console.error("Backend Error:", resText);
+                throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ (Invalid JSON)");
+            }
 
             if (res.valid) {
                 Swal.close();
@@ -185,7 +190,7 @@
                 document.getElementById('staffNameDisplay').className = "badge bg-danger fs-6 shadow-sm";
             }
         } catch(e) { 
-            Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้', 'error'); 
+            Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้: ' + e.message, 'error'); 
         }
     }
 
@@ -276,7 +281,16 @@
                 method: 'POST',
                 body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch, todayOnly: true })
             });
-            const res = await response.json();
+            const textResponse = await response.text();
+            
+            // 🌟 ดักจับ Error ตรงนี้
+            let res;
+            try {
+                res = JSON.parse(textResponse);
+            } catch (err) {
+                throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ (กรุณาเช็คอินเทอร์เน็ต)");
+            }
+
             btn.innerText = oldText; btn.disabled = false;
 
             if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบคิวนี้ในสาขาที่เลือก หรือ ไม่ใช่คิวของวันนี้', 'info');
@@ -302,7 +316,7 @@
             saveBtn.innerText = "💾 บันทึกการแก้ไข";
             saveBtn.className = "btn btn-warning w-100 py-3 fw-bold shadow";
             
-            Swal.fire('ดึงข้อมูลสำเร็จ', 'คอลัมน์ Y ว่างเปล่า สามารถแก้ไขข้อมูลได้เลยครับ', 'success');
+            Swal.fire('ดึงข้อมูลสำเร็จ', 'สามารถแก้ไขข้อมูลแล้วกดบันทึกใหม่ได้เลยครับ', 'success');
 
         } catch (e) {
             btn.innerText = oldText; btn.disabled = false;
@@ -321,7 +335,10 @@
       if(!reg || !phone) return Swal.fire('ข้อมูลไม่ครบ','กรุณากรอก ทะเบียน และ เบอร์โทร','warning');
       
       const btn = document.querySelector('#ui button.btn-primary') || document.querySelector('#btnSubmitQueue');
-      btn.disabled = true; btn.innerText = "⏳ กำลังบันทึก...";
+      
+      // 🌟 บล็อกปุ่มกันกดซ้ำ
+      btn.disabled = true; 
+      btn.innerText = "⏳ กำลังบันทึก...";
       
       let payload = {
           action: "saveQueue",
@@ -339,7 +356,16 @@
               method: 'POST',
               body: JSON.stringify(payload)
           });
-          const r = await response.json();
+          const textResponse = await response.text();
+          
+          // 🌟 ดักจับ Error แบบ HTML (Unexpected Token)
+          let r;
+          try {
+              r = JSON.parse(textResponse);
+          } catch(err) {
+              console.error(textResponse);
+              throw new Error("ระบบหน่วงเวลา (ข้อมูลอาจบันทึกไปแล้ว! ห้ามกดซ้ำ ให้เช็คข้อมูลก่อน)");
+          }
           
           if(r.status === "success") {
               document.getElementById('ui').style.display = 'none';
@@ -354,11 +380,17 @@
               document.getElementById('qrImage').src = qrApi;
               
           } else {
-              throw new Error("Save failed");
+              throw new Error("บันทึกข้อมูลไม่สำเร็จ");
           }
       } catch(e) {
-          Swal.fire('Error', 'เกิดข้อผิดพลาด: ' + e, 'error');
-          btn.disabled = false; btn.innerText = document.getElementById('editRowIndex').value ? "💾 บันทึกการแก้ไข" : "ออกบัตรคิว";
+          Swal.fire({
+              title: 'โปรดระวัง',
+              text: e.message,
+              icon: 'warning',
+              confirmButtonText: 'รับทราบ'
+          });
+          btn.disabled = false; 
+          btn.innerText = document.getElementById('editRowIndex').value ? "💾 บันทึกการแก้ไข" : "ออกบัตรคิว";
       }
     }
     
