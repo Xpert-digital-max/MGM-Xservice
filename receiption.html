@@ -232,8 +232,8 @@
                     let canvas = document.createElement('canvas');
                     let ctx = canvas.getContext('2d');
                     
-                    // 🌟 3. ลดความกว้างลงมานิดนึงเพื่อแก้แอปเด้งหลุดตอนเซฟไฟล์
-                    const MAX_WIDTH = 600; const MAX_HEIGHT = 600; 
+                    // 🌟 ปรับลดขนาดลงเหลือแค่ 500px เพื่อให้มือถือประมวลผลไวที่สุด
+                    const MAX_WIDTH = 500; const MAX_HEIGHT = 500; 
                     
                     let width = img.width; let height = img.height;
                     if (width > height) {
@@ -244,8 +244,8 @@
                     canvas.width = width; canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // 🌟 4. ลด Quality ลงเพื่อไม่ให้ Payload ใหญ่เกินไป
-                    let dataUrl = canvas.toDataURL('image/jpeg', 0.4); 
+                    // 🌟 บีบอัดเหลือ 30% จะได้ไฟล์เล็กจิ๋ว ส่งผ่านเน็ตมือถือได้ใน 1 วินาที
+                    let dataUrl = canvas.toDataURL('image/jpeg', 0.3); 
                     resolve({ name: file.name, type: 'image/jpeg', data: dataUrl.split(',')[1] });
                 }
                 img.onerror = reject;
