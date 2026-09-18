@@ -17,7 +17,7 @@
     .btn-camera { background-color: #ffc107; color: #000; border: none; font-weight: bold; }
     .btn-gallery { background-color: #6c757d; color: #fff; border: none; }
     #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
-    #mainContent { display: none; } /* 🌟 ซ่อนไว้ก่อนจนกว่าจะล็อกอินผ่าน */
+    #mainContent { display: none; } 
   </style>
 </head>
 <body>
@@ -29,12 +29,10 @@
 
   <div class="container" style="max-width:450px;">
     
-    <!-- 🌟 ส่วนแสดงชื่อพนักงานที่ล็อกอิน -->
     <div class="text-end mb-2">
         <span id="staffNameDisplay" class="badge bg-secondary fs-6 shadow-sm">กำลังตรวจสอบสิทธิ์...</span>
     </div>
 
-    <!-- 🌟 ห่อเนื้อหาทั้งหมดไว้ใน mainContent -->
     <div id="mainContent">
       <div class="card p-4 shadow-sm" id="box">
         <h3 class="text-center text-primary fw-bold">🚗 แผนกรับรถ</h3>
@@ -86,14 +84,12 @@
           <button type="button" id="btnSubmitQueue" class="btn btn-primary w-100 py-3 fw-bold shadow" onclick="sendData()">ออกบัตรคิว</button>
           
           <hr class="my-4">
-          <!-- 🌟 ส่วนค้นหาคิวเพื่อแก้ไข -->
           <div class="input-group">
             <input type="text" id="searchQueue" class="form-control border-primary" placeholder="🔎 ระบุเลขคิว หรือ ทะเบียน เพื่อแก้ไข">
             <button class="btn btn-outline-primary fw-bold" onclick="searchQueueData()">ค้นหา</button>
           </div>
           <div class="text-muted small mt-1 text-center">*ค้นหาและแก้ไขได้เฉพาะคิวของวันนี้เท่านั้น</div>
           
-          <!-- 🌟 ซ่อน ID และแถวไว้สำหรับอัปเดต -->
           <input type="hidden" id="editRowIndex" value="">
           <input type="hidden" id="editJobId" value="">
         </div>
@@ -119,13 +115,13 @@
   <script>
     var currentStaff = "";
     var currentBranch = "";
+    var currentUserId = ""; // 🌟 1. เพิ่มตัวแปรเก็บรหัสพนักงานไว้แต่เนิ่นๆ ป้องกันระบบค้าง
     let processedFiles = []; 
 
     window.onload = function() { 
         initLiff(); 
     };
 
-    // 🌟 1. ฟังก์ชันโหลด LIFF และตรวจสอบสิทธิ์
     async function initLiff() {
         try {
             await liff.init({ liffId: RECEPTION_LIFF_ID });
@@ -142,13 +138,16 @@
     async function verifyPermission() {
         Swal.fire({ title: 'กำลังตรวจสอบสิทธิ์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const profile = await liff.getProfile();
+        
+        currentUserId = profile.userId; // 🌟 2. เก็บ UserId ไว้ใช้ยาวๆ เลย
+
         try {
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ 
                     action: "verifyUserAccess", 
-                    userId: profile.userId, 
-                    pageName: "receiption.html" // 🌟 ส่งชื่อหน้าไปเช็คช่อง D
+                    userId: currentUserId, 
+                    pageName: "receiption.html" 
                 })
             });
             const resText = await response.text();
@@ -156,7 +155,6 @@
             try {
                 res = JSON.parse(resText);
             } catch (err) {
-                console.error("Backend Error:", resText);
                 throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ (Invalid JSON)");
             }
 
@@ -165,11 +163,9 @@
                 currentStaff = res.name;
                 currentBranch = res.branch;
                 
-                // แสดงชื่อพนักงาน
                 document.getElementById('staffNameDisplay').innerHTML = `👤 ${currentStaff} <br><small class="text-light">(${currentBranch})</small>`;
                 document.getElementById('staffNameDisplay').className = "badge bg-success fs-6 shadow-sm";
                 
-                // 🌟 เลื่อนเลือกสาขาให้อัตโนมัติตามสิทธิ์พนักงาน
                 let branchSelect = document.getElementById('branch');
                 if (currentBranch && currentBranch !== "All") {
                     for (let i = 0; i < branchSelect.options.length; i++) {
@@ -182,7 +178,6 @@
                     branchSelect.value = "All";
                 }
                 
-                // ปลดล็อกหน้าจอ
                 document.getElementById('mainContent').style.display = 'block';
             } else {
                 Swal.fire('ไม่มีสิทธิ์เข้าถึง', res.message, 'error');
@@ -194,9 +189,6 @@
         }
     }
 
-    // ==========================================
-    // ฟังก์ชันเดิม (จัดการรูปภาพ และส่งข้อมูล)
-    // ==========================================
     async function handleFileSelect(input) {
       if (input.files && input.files.length > 0) {
          document.getElementById('loadingOverlay').style.display = 'flex'; 
@@ -239,7 +231,10 @@
                 img.onload = () => {
                     let canvas = document.createElement('canvas');
                     let ctx = canvas.getContext('2d');
-                    const MAX_WIDTH = 800; const MAX_HEIGHT = 800;
+                    
+                    // 🌟 3. ลดความกว้างลงมานิดนึงเพื่อแก้แอปเด้งหลุดตอนเซฟไฟล์
+                    const MAX_WIDTH = 600; const MAX_HEIGHT = 600; 
+                    
                     let width = img.width; let height = img.height;
                     if (width > height) {
                         if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
@@ -248,7 +243,9 @@
                     }
                     canvas.width = width; canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
-                    let dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                    
+                    // 🌟 4. ลด Quality ลงเพื่อไม่ให้ Payload ใหญ่เกินไป
+                    let dataUrl = canvas.toDataURL('image/jpeg', 0.4); 
                     resolve({ name: file.name, type: 'image/jpeg', data: dataUrl.split(',')[1] });
                 }
                 img.onerror = reject;
@@ -283,7 +280,6 @@
             });
             const textResponse = await response.text();
             
-            // 🌟 ดักจับ Error ตรงนี้
             let res;
             try {
                 res = JSON.parse(textResponse);
@@ -336,7 +332,6 @@
       
       const btn = document.querySelector('#ui button.btn-primary') || document.querySelector('#btnSubmitQueue');
       
-      // 🌟 บล็อกปุ่มกันกดซ้ำ
       btn.disabled = true; 
       btn.innerText = "⏳ กำลังบันทึก...";
       
@@ -358,13 +353,11 @@
           });
           const textResponse = await response.text();
           
-          // 🌟 ดักจับ Error แบบ HTML (Unexpected Token)
           let r;
           try {
               r = JSON.parse(textResponse);
           } catch(err) {
-              console.error(textResponse);
-              throw new Error("ระบบหน่วงเวลา (ข้อมูลอาจบันทึกไปแล้ว! ห้ามกดซ้ำ ให้เช็คข้อมูลก่อน)");
+              throw new Error("ระบบหน่วงเวลา (ข้อมูลอาจบันทึกไปแล้ว! ให้เช็คข้อมูลอีกครั้ง)");
           }
           
           if(r.status === "success") {
@@ -373,13 +366,8 @@
               document.getElementById('qNum').innerText = r.queueNo;
               document.getElementById('jId').innerText = r.jobID;
 
-              // ==========================================
-              // 🌟 [อัปเดตใหม่] ฝังพารามิเตอร์ส่งไปให้หน้าลงทะเบียน
-              // ==========================================
-              const profile = await liff.getProfile();
-              
-              // สร้าง Query Parameters จากข้อมูลที่พนักงานคีย์เข้ามา
-              let queryString = "?refId=" + encodeURIComponent(profile.userId) +
+              // 🌟 5. ใช้ currentUserId ที่เตรียมไว้แล้ว สร้าง QR Code ได้ทันที ไม่มีค้างชัวร์!
+              let queryString = "?refId=" + encodeURIComponent(currentUserId) +
                                 "&tel=" + encodeURIComponent(phone) +
                                 "&reg=" + encodeURIComponent(reg) +
                                 "&type=" + encodeURIComponent(carType);
@@ -387,7 +375,6 @@
               let targetUrl = "https://liff.line.me/" + REGISTER_LIFF_ID + queryString;
               let qrApi = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(targetUrl);
               document.getElementById('qrImage').src = qrApi;
-              // ==========================================
               
           } else {
               throw new Error("บันทึกข้อมูลไม่สำเร็จ");
