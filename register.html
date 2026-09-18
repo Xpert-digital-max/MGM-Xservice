@@ -114,9 +114,14 @@
       }
     }
 
-    // ฟังก์ชันปิดหน้าต่าง LIFF กลับเข้าแชท
+    // 🌟 ฟังก์ชันบังคับเปิดห้องแชทของร้านโดยตรง (ใส่ ID ร้านของคุณที่นี่)
     function returnToChat() {
-      liff.closeWindow();
+      // ⚠️ เปลี่ยน @YOUR_OA_ID เป็น LINE ID ของร้านคุณจริงๆ (เช่น @mr.xservice)
+      window.location.href = "https://line.me/R/ti/p/@xservice"; 
+      
+      setTimeout(() => { 
+          liff.closeWindow(); 
+      }, 500);
     }
   </script>
 </body>
