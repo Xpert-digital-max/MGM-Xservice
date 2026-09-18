@@ -11,18 +11,14 @@
     body { background-color: #f0f2f5; padding: 20px; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
     .container-box { width: 100%; max-width: 450px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .btn-green { background-color: #1DB446; color: white; font-weight: bold; }
-    
-    /* สไตล์สำหรับปุ่มและกล่องพรีเมียม */
-    .btn-gold { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); color: #4A3300; font-weight: 800; border: none; box-shadow: 0 4px 10px rgba(253, 185, 49, 0.4); transition: transform 0.2s; }
-    .btn-gold:hover { transform: scale(1.02); color: #332200; }
-    .premium-box { background-color: #FFFDF0; border: 1px solid #FFE8A1; border-radius: 12px; }
   </style>
 </head>
 <body>
 
+  <!-- หน้าจอที่ 1: ปุ่มยืนยัน -->
   <div class="container-box" id="formSection">
     <h4 class="text-center mb-3 text-dark fw-bold">🔍 ยืนยันการรับคิวงาน</h4>
-    <p class="text-center text-muted small mb-4">ระบบได้เตรียมข้อมูลของคุณไว้แล้ว<br>กรุณากดปุ่มด้านล่างเพื่อตรวจสอบประวัติรถ<br>และรับสิทธิพิเศษทันที</p>
+    <p class="text-center text-muted small mb-4">ระบบได้เตรียมข้อมูลของคุณไว้แล้ว<br>กรุณากดปุ่มด้านล่างเพื่อรับการแจ้งเตือนทันที</p>
 
     <div class="alert alert-light border mb-4 text-center">
         <div class="small text-muted mb-1">เบอร์โทรศัพท์</div>
@@ -35,23 +31,12 @@
     <button class="btn btn-green w-100 btn-lg shadow-sm rounded-pill" id="submitBtn" onclick="triggerBotPush()">กดยืนยันตรวจสอบคิว</button>
   </div>
 
+  <!-- หน้าจอที่ 2: หน้าสำเร็จ (ตัดปัญหาเรื่องหมุนค้าง และจบแค่หน้านี้ตามที่คุณต้องการ) -->
   <div class="container-box text-center" id="successSection" style="display:none;">
     <div class="mb-3"><span style="font-size: 3.5rem;">✨</span></div>
-    <h4 class="text-success fw-bold mb-2">เชื่อมโยงข้อมูลสำเร็จ</h4>
-    <p class="text-muted small mb-4">ระบบได้จัดส่งรายละเอียดและประวัติรถของคุณ<br>ไปยังช่องแชทเรียบร้อยแล้ว</p>
-    
-    <!-- 🌟 กล่องของรางวัลที่ซ่อนไว้ จะโชว์ก็ต่อเมื่อดึงลิงก์สำเร็จ -->
-    <div class="premium-box p-4 mb-4" id="premiumBox" style="display:none;">
-      <h5 class="fw-bold mb-3" style="color: #B8860B;">อัปเกรดสิทธิประโยชน์ของคุณ</h5>
-      <p class="small text-muted mb-4">
-        สัมผัสการดูแลที่เหนือกว่าและคุ้มค่ากว่าที่เคย<br>เพราะการเลื่อนระดับสมาชิกคือการลงทุน<br>เพื่อสิทธิประโยชน์ที่ดีที่สุดสำหรับคุณ
-      </p>
-      <a href="#" id="surveyBtn" class="btn btn-gold w-100 btn-lg rounded-pill" target="_blank">
-        👑 กดรับสิทธิพิเศษ
-      </a>
-    </div>
-
-    <button class="btn btn-outline-secondary w-100 rounded-pill mt-2" onclick="returnToChat()">กลับสู่หน้าแชท</button>
+    <h4 class="text-success fw-bold mb-2">ส่งข้อมูลสำเร็จ</h4>
+    <p class="text-muted small mb-4">กรุณากดปิดหน้าต่างนี้เพื่อกลับสู่ช่องแชท<br>ระบบได้จัดส่งรายละเอียดให้ท่านเรียบร้อยแล้ว</p>
+    <button class="btn btn-outline-secondary w-100 rounded-pill mt-4" onclick="returnToChat()">ปิดเพื่อกลับสู่หน้าแชท</button>
   </div>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -77,9 +62,15 @@
 
       try {
         await liff.init({ liffId: REGISTER_LIFF_ID }); 
-        if (!liff.isLoggedIn()) { liff.login(); } 
-        else { btn.disabled = false; btn.innerText = "กดยืนยันตรวจสอบคิว"; }
-      } catch (err) { btn.innerText = "การเชื่อมต่อล้มเหลว"; }
+        if (!liff.isLoggedIn()) {
+          liff.login();
+        } else {
+          btn.disabled = false;
+          btn.innerText = "กดยืนยันตรวจสอบคิว";
+        }
+      } catch (err) {
+        btn.innerText = "การเชื่อมต่อล้มเหลว";
+      }
     };
 
     async function triggerBotPush() {
@@ -88,45 +79,44 @@
       btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังส่งข้อมูล...'; 
 
       try {
-          if (!liff.isLoggedIn()) { liff.login(); return; }
-
-          const profile = await liff.getProfile();
-          const payload = {
-              action: "confirmQueueAndPush",
-              phone: qTel, reg: qReg, type: qType,
-              userId: profile.userId, displayName: profile.displayName, refId: globalRefId
-          };
-
-          // 🌟 ให้หลังบ้านยิงข้อมูลและส่งแชทให้รอบเดียวจบ ไม่ต้องสั่งพิมพ์ข้อความซ้ำซ้อน
-          const response = await fetch(GAS_API_URL, {
-              method: 'POST',
-              body: JSON.stringify(payload)
-          });
-
-          const result = await response.json();
-          const finalUrl = result.formUrl || result.surveyUrl || (result.detail && result.detail.formUrl);
-          
-          if (finalUrl) {
-              document.getElementById('surveyBtn').href = finalUrl;
-              document.getElementById('premiumBox').style.display = 'block';
+          if (!liff.isLoggedIn()) {
+              liff.login();
+              return;
           }
 
+          const profile = await liff.getProfile();
+
+          // ส่งข้อมูลไปให้หลังบ้าน (Code.gs) ทำการ Push ข้อความชุดเดียวจบ
+          const payload = {
+              action: "confirmQueueAndPush",
+              phone: qTel,
+              reg: qReg,
+              type: qType,
+              userId: profile.userId,
+              displayName: profile.displayName,
+              refId: globalRefId
+          };
+
+          // ยิง API แบบไม่รอผลลัพธ์นาน เพื่อป้องกันหน้าจอหมุนค้าง
+          fetch(GAS_API_URL, {
+              method: 'POST',
+              body: JSON.stringify(payload)
+          }).catch(err => console.log(err));
+
+          // ตัดมาแสดงหน้าจอสำเร็จทันทีแบบสมูท ไม่ต้องรอ
           document.getElementById('formSection').style.display = 'none';
           document.getElementById('successSection').style.display = 'block';
 
       } catch (err) {
-          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งข้อมูลได้', 'error');
-          btn.disabled = false; btn.innerText = "กดยืนยันตรวจสอบคิว";
+          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งข้อมูลได้: ' + err.message, 'error');
+          btn.disabled = false; 
+          btn.innerText = "กดยืนยันตรวจสอบคิว";
       }
     }
 
-    // 🌟 ฟังก์ชันบังคับเด้งกลับเข้าหน้าแชท LINE แบบ 100%
+    // ฟังก์ชันปิดหน้าต่าง LIFF กลับเข้าแชท
     function returnToChat() {
-      // ⚠️ รบกวนเปลี่ยน @YOUR_OA_ID ด้านล่างนี้ เป็นไอดี LINE OA ของร้านคุณนะครับ (เช่น @mr.xservice)
-      window.location.href = "https://line.me/R/ti/p/@xservice"; 
-      
-      // ปิดหน้าต่าง LIFF เผื่อไว้
-      setTimeout(() => { liff.closeWindow(); }, 1000);
+      liff.closeWindow();
     }
   </script>
 </body>
