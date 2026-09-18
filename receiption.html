@@ -86,7 +86,7 @@
           <button type="button" id="btnSubmitQueue" class="btn btn-primary w-100 py-3 fw-bold shadow" onclick="sendData()">ออกบัตรคิว</button>
           
           <hr class="my-4">
-          <!-- 🌟 ส่วนค้นหาคิวเพื่อแก้ไข (ย้ายมาไว้ข้างล่าง) -->
+          <!-- 🌟 ส่วนค้นหาคิวเพื่อแก้ไข -->
           <div class="input-group">
             <input type="text" id="searchQueue" class="form-control border-primary" placeholder="🔎 ระบุเลขคิว หรือ ทะเบียน เพื่อแก้ไข">
             <button class="btn btn-outline-primary fw-bold" onclick="searchQueueData()">ค้นหา</button>
@@ -373,11 +373,21 @@
               document.getElementById('qNum').innerText = r.queueNo;
               document.getElementById('jId').innerText = r.jobID;
 
-              // 🌟 ดึงข้อมูลพนักงานที่ล็อกอินอยู่ แล้วเอา userId ไปต่อท้ายเป็นรหัสผู้แนะนำ
+              // ==========================================
+              // 🌟 [อัปเดตใหม่] ฝังพารามิเตอร์ส่งไปให้หน้าลงทะเบียน
+              // ==========================================
               const profile = await liff.getProfile();
-              let targetUrl = "https://liff.line.me/" + REGISTER_LIFF_ID + "?refId=" + encodeURIComponent(profile.userId);
+              
+              // สร้าง Query Parameters จากข้อมูลที่พนักงานคีย์เข้ามา
+              let queryString = "?refId=" + encodeURIComponent(profile.userId) +
+                                "&tel=" + encodeURIComponent(phone) +
+                                "&reg=" + encodeURIComponent(reg) +
+                                "&type=" + encodeURIComponent(carType);
+
+              let targetUrl = "https://liff.line.me/" + REGISTER_LIFF_ID + queryString;
               let qrApi = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(targetUrl);
               document.getElementById('qrImage').src = qrApi;
+              // ==========================================
               
           } else {
               throw new Error("บันทึกข้อมูลไม่สำเร็จ");
