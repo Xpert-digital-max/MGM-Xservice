@@ -114,8 +114,15 @@
       }
     }
 
+    // 🌟 ดึงลิงก์ LINE OA กลับมาใส่ให้แล้วครับ (บังคับเด้งเข้าห้องแชทโดยตรง)
     function returnToChat() {
-      liff.closeWindow();
+      // พากลับเข้าห้องแชทของ @xservice
+      window.location.href = "https://line.me/R/ti/p/@xservice"; 
+      
+      // หน่วงเวลาปิดหน้าต่าง LIFF
+      setTimeout(() => { 
+          liff.closeWindow(); 
+      }, 500);
     }
   </script>
 </body>
