@@ -79,38 +79,33 @@
       btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังส่งข้อมูล...'; 
 
       try {
-          if (!liff.isLoggedIn()) {
-              liff.login();
-              return;
-          }
+          if (!liff.isLoggedIn()) { liff.login(); return; }
 
           const profile = await liff.getProfile();
-
-          // ส่งข้อมูลไปให้หลังบ้าน (Code.gs) ทำการ Push ข้อความชุดเดียวจบ
           const payload = {
               action: "confirmQueueAndPush",
-              phone: qTel,
-              reg: qReg,
-              type: qType,
-              userId: profile.userId,
-              displayName: profile.displayName,
-              refId: globalRefId
+              phone: qTel, reg: qReg, type: qType,
+              userId: profile.userId, displayName: profile.displayName, refId: globalRefId
           };
 
-          // ยิง API แบบไม่รอผลลัพธ์นาน เพื่อป้องกันหน้าจอหมุนค้าง
+          // 🌟 พิมพ์รหัสลับ "LIFF_REGISTER_QUEUE" แบบเนียนๆ ไปพร้อมข้อความ
+          if (liff.isInClient()) {
+              const msgText = "📌 ตรวจสอบประวัติด้วยเบอร์โทรศัพท์: " + qTel + "\n(LIFF_REGISTER_QUEUE)";
+              await liff.sendMessages([{ type: "text", text: msgText }]);
+          }
+
+          // ส่งข้อมูลไปให้หลังบ้าน (Code.gs)
           fetch(GAS_API_URL, {
               method: 'POST',
               body: JSON.stringify(payload)
           }).catch(err => console.log(err));
 
-          // ตัดมาแสดงหน้าจอสำเร็จทันทีแบบสมูท ไม่ต้องรอ
           document.getElementById('formSection').style.display = 'none';
           document.getElementById('successSection').style.display = 'block';
 
       } catch (err) {
-          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งข้อมูลได้: ' + err.message, 'error');
-          btn.disabled = false; 
-          btn.innerText = "กดยืนยันตรวจสอบคิว";
+          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งข้อมูลได้', 'error');
+          btn.disabled = false; btn.innerText = "กดยืนยันตรวจสอบคิว";
       }
     }
 
