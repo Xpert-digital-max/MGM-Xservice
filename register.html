@@ -18,7 +18,7 @@
 
   <div class="container-box" id="formSection">
     <h4 class="text-center mb-3 text-dark fw-bold">🔍 ยืนยันการรับคิวงาน</h4>
-    <p class="text-center text-muted small mb-4">ระบบได้เตรียมข้อมูลของคุณไว้แล้ว<br>กรุณากดปุ่มด้านล่างเพื่อตรวจสอบประวัติรถ<br>และรับการแจ้งเตือนทันที</p>
+    <p class="text-center text-muted small mb-4">ระบบได้เตรียมข้อมูลของคุณไว้แล้ว<br>กรุณากดปุ่มด้านล่างเพื่อรับการแจ้งเตือนทันที</p>
 
     <div class="alert alert-light border mb-4 text-center">
         <div class="small text-muted mb-1">เบอร์โทรศัพท์</div>
@@ -35,7 +35,6 @@
     <div class="mb-3"><span style="font-size: 3.5rem;">✨</span></div>
     <h4 class="text-success fw-bold mb-2">ส่งข้อมูลสำเร็จ</h4>
     <p class="text-muted small mb-4">กรุณากดปิดหน้าต่างนี้เพื่อกลับสู่ช่องแชท<br>ระบบได้จัดส่งรายละเอียดให้ท่านเรียบร้อยแล้ว</p>
-    
     <button class="btn btn-outline-secondary w-100 rounded-pill mt-4" onclick="liff.closeWindow()">ปิดเพื่อกลับสู่หน้าแชท</button>
   </div>
 
@@ -84,18 +83,27 @@
               return;
           }
 
-          // 🌟 1. ส่งข้อความสีเขียวเข้าแชท (เพื่อให้ Webhook ตอบกลับรอบเดียว และแอดมินค้นหาเบอร์ได้)
-          if (liff.isInClient()) {
-              const msgText = "ตรวจสอบประวัติด้วยเบอร์โทรศัพท์: " + qTel + " ทะเบียน: " + qReg + " ประเภท: " + qType;
-              await liff.sendMessages([
-                  {
-                      type: "text",
-                      text: msgText
-                  }
-              ]);
-          }
+          const profile = await liff.getProfile();
 
-          // 🌟 2. โชว์หน้าสำเร็จ แล้วให้ลูกค้ากดปิดหน้าต่างกลับไปดูแชทเลย (ตัดการยิง API ซ้ำซ้อนออก)
+          // 🌟 ส่งข้อมูลไปให้หลังบ้าน (Code.gs) สร้างบับเบิ้ลส่งเข้าแชทให้เอง
+          const payload = {
+              action: "confirmQueueAndPush",
+              phone: qTel,
+              reg: qReg,
+              type: qType,
+              userId: profile.userId,
+              displayName: profile.displayName,
+              refId: globalRefId
+          };
+
+          const response = await fetch(GAS_API_URL, {
+              method: 'POST',
+              body: JSON.stringify(payload) 
+          });
+
+          await response.json(); // รอให้เซิร์ฟเวอร์ยิงแชทเสร็จ
+
+          // โชว์หน้าสำเร็จ
           document.getElementById('formSection').style.display = 'none';
           document.getElementById('successSection').style.display = 'block';
 
