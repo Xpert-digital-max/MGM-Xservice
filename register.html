@@ -31,7 +31,7 @@
     <button class="btn btn-green w-100 btn-lg shadow-sm rounded-pill" id="submitBtn" onclick="triggerBotPush()">กดยืนยันตรวจสอบคิว</button>
   </div>
 
-  <!-- หน้าจอที่ 2: หน้าสำเร็จ (ตัดปัญหาเรื่องหมุนค้าง และจบแค่หน้านี้ตามที่คุณต้องการ) -->
+  <!-- หน้าจอที่ 2: หน้าสำเร็จ -->
   <div class="container-box text-center" id="successSection" style="display:none;">
     <div class="mb-3"><span style="font-size: 3.5rem;">✨</span></div>
     <h4 class="text-success fw-bold mb-2">ส่งข้อมูลสำเร็จ</h4>
@@ -76,47 +76,46 @@
     async function triggerBotPush() {
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังส่งข้อมูล...'; 
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังประมวลผล...'; 
 
       try {
-          if (!liff.isLoggedIn()) { liff.login(); return; }
-
-          const profile = await liff.getProfile();
-          const payload = {
-              action: "confirmQueueAndPush",
-              phone: qTel, reg: qReg, type: qType,
-              userId: profile.userId, displayName: profile.displayName, refId: globalRefId
-          };
-
-          // 🌟 พิมพ์รหัสลับ "LIFF_REGISTER_QUEUE" แบบเนียนๆ ไปพร้อมข้อความ
-          if (liff.isInClient()) {
-              const msgText = "📌 ตรวจสอบประวัติด้วยเบอร์โทรศัพท์: " + qTel + "\n(LIFF_REGISTER_QUEUE)";
-              await liff.sendMessages([{ type: "text", text: msgText }]);
+          if (!liff.isLoggedIn()) {
+              liff.login();
+              return;
           }
 
-          // ส่งข้อมูลไปให้หลังบ้าน (Code.gs)
+          const profile = await liff.getProfile();
+
+          // ส่งคำสั่งไปหลังบ้าน (Code.gs)
+          const payload = {
+              action: "confirmQueueAndPush",
+              phone: qTel,
+              reg: qReg,
+              type: qType,
+              userId: profile.userId,
+              displayName: profile.displayName,
+              refId: globalRefId
+          };
+
+          // ยิง API ทิ้งไว้ ไม่ต้องรอผลลัพธ์ (แก้ปัญหาหมุนค้าง)
           fetch(GAS_API_URL, {
               method: 'POST',
               body: JSON.stringify(payload)
           }).catch(err => console.log(err));
 
+          // แสดงหน้าสำเร็จทันที
           document.getElementById('formSection').style.display = 'none';
           document.getElementById('successSection').style.display = 'block';
 
       } catch (err) {
-          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งข้อมูลได้', 'error');
-          btn.disabled = false; btn.innerText = "กดยืนยันตรวจสอบคิว";
+          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งข้อมูลได้: ' + err.message, 'error');
+          btn.disabled = false; 
+          btn.innerText = "กดยืนยันตรวจสอบคิว";
       }
     }
 
-    // 🌟 ฟังก์ชันบังคับเปิดห้องแชทของร้านโดยตรง (ใส่ ID ร้านของคุณที่นี่)
     function returnToChat() {
-      // ⚠️ เปลี่ยน @YOUR_OA_ID เป็น LINE ID ของร้านคุณจริงๆ (เช่น @mr.xservice)
-      window.location.href = "https://line.me/R/ti/p/@xservice"; 
-      
-      setTimeout(() => { 
-          liff.closeWindow(); 
-      }, 500);
+      liff.closeWindow();
     }
   </script>
 </body>
