@@ -113,7 +113,7 @@
     async function triggerBotPush() {
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังส่งข้อความ...'; 
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังประมวลผล...'; 
 
       try {
           if (!liff.isLoggedIn()) {
@@ -121,21 +121,17 @@
               return;
           }
 
-          // 🌟 1. ส่งข้อความเข้าแชทลูกค้าในนามตัวลูกค้าเอง เพื่อกระตุ้น Webhook 
-          // (เงื่อนไขนี้ใช้เฉพาะเวลาคุยกับแชทบอทเท่านั้น)
-          if (liff.isInClient()) {
-              const msgText = "ตรวจสอบประวัติด้วยเบอร์โทรศัพท์: " + qTel + " ทะเบียน: " + qReg + " ประเภท: " + qType;
-              await liff.sendMessages([
-                  {
-                      type: "text",
-                      text: msgText
-                  }
-              ]);
-          }
+          const profile = await liff.getProfile();
 
-          // 🌟 2. ดึงลิงก์ Survey จากหลังบ้านมาเตรียมรอไว้
+          // 🌟 1. ส่งคำสั่งตรงไปที่ Google Apps Script ให้ประมวลผลและส่งแชทให้แทน
           const payload = {
-              action: "getSurveyLinkOnly" // <--- ⚠️ หมายเหตุ: เราเปลี่ยน Action เพื่อขอแค่ดึงลิงก์ ไม่ได้ดึงการบันทึกแล้ว เพราะการบันทึกย้ายไปอยู่ฝั่ง Webhook แทน
+              action: "confirmQueueAndPush", // คำสั่งใหม่ที่เดี๋ยวเราจะไปเขียนรับในหลังบ้าน
+              phone: qTel,
+              reg: qReg,
+              type: qType,
+              userId: profile.userId,
+              displayName: profile.displayName,
+              refId: globalRefId
           };
 
           const response = await fetch(GAS_API_URL, {
@@ -144,15 +140,14 @@
           });
 
           const result = await response.json();
-          // ค้นหาลิงก์ใน object แบบต่างๆ ที่มักจะเขียนมา
           const finalUrl = result.formUrl || result.surveyUrl || (result.detail && result.detail.formUrl);
 
+          // 🌟 2. แสดงหน้าสำเร็จ และปุ่มสีทอง
           if (finalUrl) {
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
               document.getElementById('surveyBtn').href = finalUrl;
           } else {
-              // ถ้าหาลิงก์ไม่เจอ ก็แค่ปิดหน้าต่างไปเลย เพราะระบบหลักได้ทำงานผ่าน Webhook แล้ว
               Swal.fire({
                   title: 'สำเร็จ!',
                   text: 'กรุณาตรวจสอบข้อความตอบกลับในแชท LINE ของคุณ',
@@ -163,7 +158,7 @@
               });
           }
       } catch (err) {
-          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งข้อความได้: ' + err.message, 'error');
+          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบได้: ' + err.message, 'error');
           btn.disabled = false; 
           btn.innerText = "กดยืนยันรับคิวและสิทธิพิเศษ";
       }
