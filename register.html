@@ -32,15 +32,21 @@
 </head>
 <body>
 
-  <!-- 📱 หน้าต่างที่ 1: ฟอร์มกรอกเบอร์เช็คข้อมูล -->
+  <!-- 📱 หน้าต่างที่ 1: หน้าจอหลักให้กดยืนยัน (แบบไม่ให้กรอก) -->
   <div class="container-box" id="formSection">
-    <h4 class="text-center mb-3 text-dark fw-bold">🔍 ตรวจสอบประวัติรถ</h4>
-    <p class="text-center text-muted small mb-4">กรุณากรอกเบอร์โทรศัพท์เพื่อดึงข้อมูลเข้าระบบ<br>และรับการแจ้งเตือนผ่านช่องแชท</p>
+    <h4 class="text-center mb-3 text-dark fw-bold">🔍 ยืนยันการรับคิวงาน</h4>
+    <p class="text-center text-muted small mb-4">ระบบได้เตรียมข้อมูลของคุณไว้แล้ว<br>กรุณากดปุ่มด้านล่างเพื่อตรวจสอบประวัติรถ<br>และรับสิทธิพิเศษเข้าระบบทันที</p>
 
-    <div class="mb-4">
-      <input type="tel" class="form-control form-control-lg text-center fw-bold" id="phone" placeholder="08XXXXXXXX" maxlength="10" style="letter-spacing: 2px;">
+    <!-- 🌟 โชว์สรุปให้ลูกค้าดู (แบบอ่านอย่างเดียว) -->
+    <div class="alert alert-light border mb-4 text-center">
+        <div class="small text-muted mb-1">เบอร์โทรศัพท์</div>
+        <div id="displayTel" class="fw-bold fs-5 text-primary">-</div>
+        <hr class="my-2">
+        <div class="small text-muted mb-1">ทะเบียนรถ</div>
+        <div id="displayReg" class="fw-bold fs-5 text-dark">-</div>
     </div>
-    <button class="btn btn-green w-100 btn-lg shadow-sm rounded-pill" id="submitBtn" onclick="triggerBotPush()">ดำเนินการตรวจสอบ</button>
+
+    <button class="btn btn-green w-100 btn-lg shadow-sm rounded-pill" id="submitBtn" onclick="triggerBotPush()">กดยืนยันรับคิวและสิทธิพิเศษ</button>
   </div>
 
   <!-- 🎁 หน้าต่างที่ 2: อัปเกรดสิทธิพิเศษ (ปุ่มสีทอง) -->
@@ -66,16 +72,27 @@
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
+    // 🌟 ตัวแปรเตรียมไว้ดึงจาก URL
     let globalRefId = "";
+    let qTel = "";
+    let qReg = "";
+    let qType = "";
 
     window.onload = async () => {
-      // 🌟 1. ล็อกปุ่มไว้ก่อน ป้องกันคนกดก่อนที่ LIFF จะดึง Token เสร็จ
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
       btn.innerText = "กำลังเชื่อมต่อระบบ LINE...";
 
+      // 🌟 ดึงค่าพารามิเตอร์ที่แผนกรับรถฝังมาใน URL
       const urlParams = new URLSearchParams(window.location.search);
       globalRefId = urlParams.get('refId') || "";
+      qTel = urlParams.get('tel') || "ไม่ระบุเบอร์";
+      qReg = urlParams.get('reg') || "ไม่ระบุทะเบียน";
+      qType = urlParams.get('type') || "ไม่ระบุประเภท";
+
+      // นำมาแสดงผลหน้าจอให้ลูกค้าดู
+      document.getElementById('displayTel').innerText = qTel;
+      document.getElementById('displayReg').innerText = qReg;
 
       try {
         await liff.init({ liffId: REGISTER_LIFF_ID }); 
@@ -83,9 +100,9 @@
         if (!liff.isLoggedIn()) {
           liff.login();
         } else {
-          // 🌟 2. ปลดล็อกปุ่มเมื่อมั่นใจ 100% ว่าเข้าสู่ระบบและมี Token แล้ว
+          // ปลดล็อกปุ่ม
           btn.disabled = false;
-          btn.innerText = "ดำเนินการตรวจสอบ";
+          btn.innerText = "กดยืนยันรับคิวและสิทธิพิเศษ";
         }
       } catch (err) {
         console.error("LIFF Init Error:", err);
@@ -94,27 +111,31 @@
     };
 
     async function triggerBotPush() {
-      const phone = document.getElementById('phone').value.replace(/[^0-9]/g, '');
-      if(phone.length < 9) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง', 'warning');
-
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังดึงข้อมูล...'; 
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังส่งข้อความ...'; 
 
       try {
-          // เช็คย้ำอีกรอบเพื่อความชัวร์ก่อนดึง Profile
           if (!liff.isLoggedIn()) {
               liff.login();
               return;
           }
 
-          const profile = await liff.getProfile();
+          // 🌟 1. ส่งข้อความเข้าแชทลูกค้าในนามตัวลูกค้าเอง เพื่อกระตุ้น Webhook 
+          // (เงื่อนไขนี้ใช้เฉพาะเวลาคุยกับแชทบอทเท่านั้น)
+          if (liff.isInClient()) {
+              const msgText = "ตรวจสอบประวัติด้วยเบอร์โทรศัพท์: " + qTel + " ทะเบียน: " + qReg + " ประเภท: " + qType;
+              await liff.sendMessages([
+                  {
+                      type: "text",
+                      text: msgText
+                  }
+              ]);
+          }
+
+          // 🌟 2. ดึงลิงก์ Survey จากหลังบ้านมาเตรียมรอไว้
           const payload = {
-              action: "processPhoneFromLiff", 
-              phone: phone, 
-              userId: profile.userId, 
-              displayName: profile.displayName,
-              refId: globalRefId 
+              action: "getSurveyLinkOnly" // <--- ⚠️ หมายเหตุ: เราเปลี่ยน Action เพื่อขอแค่ดึงลิงก์ ไม่ได้ดึงการบันทึกแล้ว เพราะการบันทึกย้ายไปอยู่ฝั่ง Webhook แทน
           };
 
           const response = await fetch(GAS_API_URL, {
@@ -123,19 +144,28 @@
           });
 
           const result = await response.json();
-          const finalUrl = result.formUrl || (result.detail && result.detail.formUrl);
+          // ค้นหาลิงก์ใน object แบบต่างๆ ที่มักจะเขียนมา
+          const finalUrl = result.formUrl || result.surveyUrl || (result.detail && result.detail.formUrl);
 
           if (finalUrl) {
               document.getElementById('formSection').style.display = 'none';
               document.getElementById('successSection').style.display = 'block';
               document.getElementById('surveyBtn').href = finalUrl;
           } else {
-              throw new Error(result.message || "ไม่พบลิงก์ปลายทางในระบบ");
+              // ถ้าหาลิงก์ไม่เจอ ก็แค่ปิดหน้าต่างไปเลย เพราะระบบหลักได้ทำงานผ่าน Webhook แล้ว
+              Swal.fire({
+                  title: 'สำเร็จ!',
+                  text: 'กรุณาตรวจสอบข้อความตอบกลับในแชท LINE ของคุณ',
+                  icon: 'success',
+                  confirmButtonText: 'ตกลง'
+              }).then(() => {
+                  liff.closeWindow();
+              });
           }
       } catch (err) {
-          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบหลังบ้านได้: ' + err.message, 'error');
+          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งข้อความได้: ' + err.message, 'error');
           btn.disabled = false; 
-          btn.innerText = "ดำเนินการตรวจสอบ";
+          btn.innerText = "กดยืนยันรับคิวและสิทธิพิเศษ";
       }
     }
   </script>
