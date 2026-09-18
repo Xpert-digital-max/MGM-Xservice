@@ -97,28 +97,18 @@
               userId: profile.userId, displayName: profile.displayName, refId: globalRefId
           };
 
-          // 🌟 ตั้งเวลาป้องกันการหมุนค้าง (ถ้าหลังบ้านตอบช้าเกิน 6 วินาที จะตัดจบให้เลย)
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          // 🌟 ให้หลังบ้านยิงข้อมูลและส่งแชทให้รอบเดียวจบ ไม่ต้องสั่งพิมพ์ข้อความซ้ำซ้อน
+          const response = await fetch(GAS_API_URL, {
+              method: 'POST',
+              body: JSON.stringify(payload)
+          });
 
-          try {
-              const response = await fetch(GAS_API_URL, {
-                  method: 'POST',
-                  body: JSON.stringify(payload),
-                  signal: controller.signal
-              });
-              clearTimeout(timeoutId);
-              const result = await response.json();
-              
-              // ดึงลิงก์ของรางวัลมาใส่ในปุ่มสีทอง
-              const finalUrl = result.formUrl || result.surveyUrl || (result.detail && result.detail.formUrl);
-              if (finalUrl) {
-                  document.getElementById('surveyBtn').href = finalUrl;
-                  document.getElementById('premiumBox').style.display = 'block';
-              }
-          } catch (fetchErr) {
-              console.log("Fetch Timeout or Error, showing success screen anyway.");
-              // ถ้าระบบค้างนานๆ ปล่อยผ่านไปโชว์หน้าสำเร็จเลย แชทค่อยให้ระบบหลังบ้านยิงตามไป
+          const result = await response.json();
+          const finalUrl = result.formUrl || result.surveyUrl || (result.detail && result.detail.formUrl);
+          
+          if (finalUrl) {
+              document.getElementById('surveyBtn').href = finalUrl;
+              document.getElementById('premiumBox').style.display = 'block';
           }
 
           document.getElementById('formSection').style.display = 'none';
