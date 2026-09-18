@@ -5,39 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ตรวจสอบข้อมูล & รับสิทธิ์</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- 🌟 ดึงค่าตัวแปรกลางทั้งหมดจาก config.js -->
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { background-color: #f0f2f5; padding: 20px; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
     .container-box { width: 100%; max-width: 450px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .btn-green { background-color: #1DB446; color: white; font-weight: bold; }
-    
-    /* สไตล์สำหรับปุ่มสีทอง */
-    .btn-gold {
-      background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
-      color: #4A3300;
-      font-weight: 800;
-      border: none;
-      box-shadow: 0 4px 10px rgba(253, 185, 49, 0.4);
-      transition: transform 0.2s;
-    }
-    .btn-gold:hover { transform: scale(1.02); color: #332200; }
-    .premium-box {
-      background-color: #FFFDF0;
-      border: 1px solid #FFE8A1;
-      border-radius: 12px;
-    }
+    .premium-box { background-color: #FFFDF0; border: 1px solid #FFE8A1; border-radius: 12px; }
   </style>
 </head>
 <body>
 
-  <!-- 📱 หน้าต่างที่ 1: หน้าจอหลักให้กดยืนยัน (แบบไม่ให้กรอก) -->
   <div class="container-box" id="formSection">
     <h4 class="text-center mb-3 text-dark fw-bold">🔍 ยืนยันการรับคิวงาน</h4>
-    <p class="text-center text-muted small mb-4">ระบบได้เตรียมข้อมูลของคุณไว้แล้ว<br>กรุณากดปุ่มด้านล่างเพื่อตรวจสอบประวัติรถ<br>และรับสิทธิพิเศษเข้าระบบทันที</p>
+    <p class="text-center text-muted small mb-4">ระบบได้เตรียมข้อมูลของคุณไว้แล้ว<br>กรุณากดปุ่มด้านล่างเพื่อตรวจสอบประวัติรถ<br>และรับการแจ้งเตือนทันที</p>
 
-    <!-- 🌟 โชว์สรุปให้ลูกค้าดู (แบบอ่านอย่างเดียว) -->
     <div class="alert alert-light border mb-4 text-center">
         <div class="small text-muted mb-1">เบอร์โทรศัพท์</div>
         <div id="displayTel" class="fw-bold fs-5 text-primary">-</div>
@@ -46,33 +28,19 @@
         <div id="displayReg" class="fw-bold fs-5 text-dark">-</div>
     </div>
 
-    <button class="btn btn-green w-100 btn-lg shadow-sm rounded-pill" id="submitBtn" onclick="triggerBotPush()">กดยืนยันรับคิวและสิทธิพิเศษ</button>
+    <button class="btn btn-green w-100 btn-lg shadow-sm rounded-pill" id="submitBtn" onclick="triggerBotPush()">กดยืนยันตรวจสอบคิว</button>
   </div>
 
-  <!-- 🎁 หน้าต่างที่ 2: อัปเกรดสิทธิพิเศษ (ปุ่มสีทอง) -->
   <div class="container-box text-center" id="successSection" style="display:none;">
     <div class="mb-3"><span style="font-size: 3.5rem;">✨</span></div>
-    <h4 class="text-success fw-bold mb-2">เชื่อมโยงข้อมูลสำเร็จ</h4>
-    <p class="text-muted small mb-4">ระบบได้จัดส่งรายละเอียดและประวัติรถของคุณ<br>ไปยังช่องแชทเรียบร้อยแล้ว</p>
+    <h4 class="text-success fw-bold mb-2">ส่งข้อมูลสำเร็จ</h4>
+    <p class="text-muted small mb-4">กรุณากดปิดหน้าต่างนี้เพื่อกลับสู่ช่องแชท<br>ระบบได้จัดส่งรายละเอียดให้ท่านเรียบร้อยแล้ว</p>
     
-    <div class="premium-box p-4 mb-4">
-      <h5 class="fw-bold mb-3" style="color: #B8860B;">อัปเกรดสิทธิประโยชน์ของคุณ</h5>
-      <p class="small text-muted mb-4">
-        รับการดูแลที่เหนือกว่าและสัมผัสความคุ้มค่าที่มากกว่า<br>ผ่านการเข้าร่วมเป็นสมาชิกระดับพรีเมียมของเรา
-      </p>
-      
-      <!-- 🌟 ปุ่มสีทองดึงลิงก์จาก Settings หลังบ้าน -->
-      <a href="#" id="surveyBtn" class="btn btn-gold w-100 btn-lg rounded-pill" target="_blank">
-        👑 กดรับสิทธิพิเศษ
-      </a>
-    </div>
-
-    <button class="btn btn-outline-secondary w-100 rounded-pill mt-2" onclick="liff.closeWindow()">กลับสู่หน้าแชท</button>
+    <button class="btn btn-outline-secondary w-100 rounded-pill mt-4" onclick="liff.closeWindow()">ปิดเพื่อกลับสู่หน้าแชท</button>
   </div>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    // 🌟 ตัวแปรเตรียมไว้ดึงจาก URL
     let globalRefId = "";
     let qTel = "";
     let qReg = "";
@@ -83,29 +51,24 @@
       btn.disabled = true;
       btn.innerText = "กำลังเชื่อมต่อระบบ LINE...";
 
-      // 🌟 ดึงค่าพารามิเตอร์ที่แผนกรับรถฝังมาใน URL
       const urlParams = new URLSearchParams(window.location.search);
       globalRefId = urlParams.get('refId') || "";
       qTel = urlParams.get('tel') || "ไม่ระบุเบอร์";
       qReg = urlParams.get('reg') || "ไม่ระบุทะเบียน";
       qType = urlParams.get('type') || "ไม่ระบุประเภท";
 
-      // นำมาแสดงผลหน้าจอให้ลูกค้าดู
       document.getElementById('displayTel').innerText = qTel;
       document.getElementById('displayReg').innerText = qReg;
 
       try {
         await liff.init({ liffId: REGISTER_LIFF_ID }); 
-        
         if (!liff.isLoggedIn()) {
           liff.login();
         } else {
-          // ปลดล็อกปุ่ม
           btn.disabled = false;
-          btn.innerText = "กดยืนยันรับคิวและสิทธิพิเศษ";
+          btn.innerText = "กดยืนยันตรวจสอบคิว";
         }
       } catch (err) {
-        console.error("LIFF Init Error:", err);
         btn.innerText = "การเชื่อมต่อล้มเหลว";
       }
     };
@@ -113,7 +76,7 @@
     async function triggerBotPush() {
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังประมวลผล...'; 
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังส่งข้อมูล...'; 
 
       try {
           if (!liff.isLoggedIn()) {
@@ -121,46 +84,25 @@
               return;
           }
 
-          const profile = await liff.getProfile();
-
-          // 🌟 1. ส่งคำสั่งตรงไปที่ Google Apps Script ให้ประมวลผลและส่งแชทให้แทน
-          const payload = {
-              action: "confirmQueueAndPush", // คำสั่งใหม่ที่เดี๋ยวเราจะไปเขียนรับในหลังบ้าน
-              phone: qTel,
-              reg: qReg,
-              type: qType,
-              userId: profile.userId,
-              displayName: profile.displayName,
-              refId: globalRefId
-          };
-
-          const response = await fetch(GAS_API_URL, {
-              method: 'POST',
-              body: JSON.stringify(payload) 
-          });
-
-          const result = await response.json();
-          const finalUrl = result.formUrl || result.surveyUrl || (result.detail && result.detail.formUrl);
-
-          // 🌟 2. แสดงหน้าสำเร็จ และปุ่มสีทอง
-          if (finalUrl) {
-              document.getElementById('formSection').style.display = 'none';
-              document.getElementById('successSection').style.display = 'block';
-              document.getElementById('surveyBtn').href = finalUrl;
-          } else {
-              Swal.fire({
-                  title: 'สำเร็จ!',
-                  text: 'กรุณาตรวจสอบข้อความตอบกลับในแชท LINE ของคุณ',
-                  icon: 'success',
-                  confirmButtonText: 'ตกลง'
-              }).then(() => {
-                  liff.closeWindow();
-              });
+          // 🌟 1. ส่งข้อความสีเขียวเข้าแชท (เพื่อให้ Webhook ตอบกลับรอบเดียว และแอดมินค้นหาเบอร์ได้)
+          if (liff.isInClient()) {
+              const msgText = "ตรวจสอบประวัติด้วยเบอร์โทรศัพท์: " + qTel + " ทะเบียน: " + qReg + " ประเภท: " + qType;
+              await liff.sendMessages([
+                  {
+                      type: "text",
+                      text: msgText
+                  }
+              ]);
           }
+
+          // 🌟 2. โชว์หน้าสำเร็จ แล้วให้ลูกค้ากดปิดหน้าต่างกลับไปดูแชทเลย (ตัดการยิง API ซ้ำซ้อนออก)
+          document.getElementById('formSection').style.display = 'none';
+          document.getElementById('successSection').style.display = 'block';
+
       } catch (err) {
-          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบได้: ' + err.message, 'error');
+          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งข้อความได้: ' + err.message, 'error');
           btn.disabled = false; 
-          btn.innerText = "กดยืนยันรับคิวและสิทธิพิเศษ";
+          btn.innerText = "กดยืนยันตรวจสอบคิว";
       }
     }
   </script>
