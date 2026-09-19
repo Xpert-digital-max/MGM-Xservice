@@ -344,74 +344,49 @@
         }
     }
 
+    // 🛑 ลบคำสั่ง setTimeout scrollIntoView ออกทั้งหมด เพื่อป้องกันหน้าจอกระชากและแอปเด้ง
+    
     function selectCar(el, val) {
         document.querySelectorAll('input[name="carType"]').forEach(i => i.parentElement.classList.remove('active'));
         el.classList.add('active'); el.querySelector('input').checked = true;
         document.getElementById('step2').style.display = 'block';
-        setTimeout(() => document.getElementById('step2').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
     function selectBrand(el, val) {
         document.querySelectorAll('#brandOptions .chip-btn').forEach(e => e.classList.remove('active'));
         el.classList.add('active'); document.getElementById('selectedBrand').value = val; document.getElementById('otherBrand').value = "";
         document.getElementById('step3').style.display = 'block';
-        setTimeout(() => document.getElementById('step3').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
     
     function selectOtherBrand(sel) {
         document.querySelectorAll('#brandOptions .chip-btn').forEach(e => e.classList.remove('active'));
         document.getElementById('selectedBrand').value = sel.value;
         document.getElementById('step3').style.display = 'block';
-        setTimeout(() => document.getElementById('step3').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
     function selectUsage(el, val) {
         document.querySelectorAll('input[name="usageType"]').forEach(i => i.parentElement.classList.remove('active'));
         el.classList.add('active'); el.querySelector('input').checked = true;
         document.getElementById('step4').style.display = 'block';
-        setTimeout(() => document.getElementById('step4').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
     function selectInsListItem(el, val) {
         document.querySelectorAll('.ins-list-item').forEach(e => e.classList.remove('active'));
         el.classList.add('active'); 
         document.getElementById('selectedIns').value = val;
-        
-        // 🌟 เปลี่ยนไปเปิด Step 5 แทน
         document.getElementById('step5').style.display = 'block';
-        setTimeout(() => document.getElementById('step5').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
-    // 🌟 ฟังก์ชันใหม่สำหรับจัดการ การเลือกประเภทประกัน
     function selectInterestedIns(el, val) {
         document.querySelectorAll('.radio-list-item').forEach(e => e.classList.remove('active'));
         el.classList.add('active'); 
         el.querySelector('input').checked = true;
         document.getElementById('interestedIns').value = val;
-        
-        // เปิด Step 6 ต่อไป
         document.getElementById('step6').style.display = 'block';
-        setTimeout(() => document.getElementById('step6').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
-    }
-
-    function filterInsList() {
-        let input = document.getElementById('insSearchInput');
-        let filter = input.value.toLowerCase();
-        let items = document.querySelectorAll('.ins-list-item');
-
-        items.forEach(item => {
-            let text = item.querySelector('.ins-item-name').innerText.toLowerCase();
-            if (text.indexOf(filter) > -1) {
-                item.style.display = "flex";
-            } else {
-                item.style.display = "none";
-            }
-        });
     }
 
     function showFinalStep() {
         document.getElementById('step7').style.display = 'block';
-        setTimeout(() => document.getElementById('step7').scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
     }
 
     function closeThankYouPage() {
