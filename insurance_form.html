@@ -21,11 +21,9 @@
     .section-title { font-weight: 700; font-size: 16px; color: #1a237e; margin-bottom: 15px; text-align: center; }
     label.title-label { font-weight: 700; font-size: 15px; color: #37474f; display: block; margin: 20px 0 10px 0; }
 
-    /* ซ่อนสเต็ปที่ยังไม่ถึง */
     .step-section { display: none; animation: fadeIn 0.5s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Grid Layout */
     .chip-grid { display: grid; gap: 10px; margin-bottom: 10px; min-width: 0; }
     .chip-grid.col-2 { grid-template-columns: 1fr 1fr; }
     .chip-grid.col-3 { grid-template-columns: repeat(3, 1fr); }
@@ -43,7 +41,6 @@
     .chip-icon { font-size: 30px; margin-bottom: 5px; }
     .logo-img { height: 30px; width: auto; max-width: 100%; object-fit: contain; margin-bottom: 6px; }
 
-    /* สไตล์เฉพาะ List บริษัทประกัน & ประเภทประกัน */
     .ins-search-container { position: relative; margin-bottom: 10px; }
     .ins-search-container input { padding-left: 35px; width: 100%; padding-top: 12px; padding-bottom: 12px; border: 1px solid #1976d2; border-radius: 8px; font-family: 'Sarabun'; font-size: 15px;}
     .ins-search-icon { position: absolute; left: 12px; top: 12px; font-size: 16px; color: #7f8c8d; }
@@ -57,14 +54,12 @@
     .ins-item-icon { width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; margin-right: 15px; background: #eceff1; border-radius: 4px; color: #546e7a; font-weight: bold; font-size: 12px;}
     .ins-item-name { font-size: 15px; color: #2c3e50; font-weight: 500; }
 
-    /* 🌟 สไตล์ Radio List สำหรับเลือกประเภทประกัน */
     .radio-list-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 15px; border-bottom: 1px solid #f0f2f5; cursor: pointer; transition: 0.2s; background: #fff;}
     .radio-list-item:hover, .radio-list-item.active { background: #e3f2fd; }
     .radio-list-item:last-child { border-bottom: none; }
     .radio-list-item input[type="radio"] { width: 20px; height: 20px; accent-color: #1976d2; cursor: pointer; margin: 0; }
     .radio-label { font-size: 15px; color: #2c3e50; font-weight: 500; flex: 1; cursor: pointer;}
 
-    /* Input ธรรมดา */
     input[type="text"]:not(#insSearchInput), input[type="tel"], input[type="email"], input[type="date"], select { 
         width: 100%; padding: 14px 15px; margin-bottom: 10px; 
         border: 1px solid #cfd8dc; border-radius: 8px; box-sizing: border-box; 
@@ -232,7 +227,7 @@
           </div>
         </div>
 
-        <!-- 🌟 Step 5: ประเภทประกันที่สนใจ (เพิ่มเข้ามาใหม่) -->
+        <!-- Step 5: ประเภทประกันที่สนใจ -->
         <div id="step5" class="step-section">
           <label class="title-label">ประเภทประกันที่สนใจ</label>
           <input type="hidden" id="interestedIns" value="">
@@ -307,14 +302,18 @@
     let lineUserId = "", lineDisplayName = "", linePicUrl = "";
     const MY_LIFF_ID = typeof INSURANCE_LIFF_ID !== 'undefined' ? INSURANCE_LIFF_ID : "";
 
-    window.onload = async function() {
+    // 🌟 เปลี่ยนมาใช้ DOMContentLoaded ไม่รอโหลดรูป เพื่อป้องกันจอค้าง
+    document.addEventListener("DOMContentLoaded", async function() {
         populateYears(); 
         const today = new Date().toISOString().split('T')[0];
-        document.getElementById('effectiveDate').setAttribute('min', today);
+        const dateEl = document.getElementById('effectiveDate');
+        if (dateEl) dateEl.setAttribute('min', today);
 
         try {
-            if(!MY_LIFF_ID) throw new Error("ไม่พบ INSURANCE_LIFF_ID ใน config.js");
+            if(!MY_LIFF_ID) throw new Error("ยังไม่ได้ตั้งค่า INSURANCE_LIFF_ID ในไฟล์ config.js");
+            
             await liff.init({ liffId: MY_LIFF_ID });
+            
             if (liff.isLoggedIn()) {
                 const profile = await liff.getProfile();
                 lineUserId = profile.userId;
@@ -328,9 +327,12 @@
                 liff.login();
             }
         } catch(err) {
-            Swal.fire("ข้อผิดพลาด", "ไม่สามารถเชื่อมต่อ LINE ได้: " + err.message, "error");
+            // โชว์แจ้งเตือนตรงกลางจอแทน ถ้ามี Error ซ่อนอยู่
+            document.getElementById('loadingText').innerHTML = "❌ ระบบขัดข้อง: " + err.message;
+            document.getElementById('loadingText').style.color = "red";
+            Swal.fire("พบปัญหาขัดข้อง", err.message, "error");
         }
-    };
+    });
 
     function populateYears() {
         const yearSelect = document.getElementById("year");
@@ -343,8 +345,6 @@
             yearSelect.appendChild(option);
         }
     }
-
-    // 🛑 ลบคำสั่ง setTimeout scrollIntoView ออกทั้งหมด เพื่อป้องกันหน้าจอกระชากและแอปเด้ง
     
     function selectCar(el, val) {
         document.querySelectorAll('input[name="carType"]').forEach(i => i.parentElement.classList.remove('active'));
@@ -383,6 +383,20 @@
         el.querySelector('input').checked = true;
         document.getElementById('interestedIns').value = val;
         document.getElementById('step6').style.display = 'block';
+    }
+
+    function filterInsList() {
+        let input = document.getElementById('insSearchInput');
+        let filter = input.value.toLowerCase();
+        let items = document.querySelectorAll('.ins-list-item');
+        items.forEach(item => {
+            let text = item.querySelector('.ins-item-name').innerText.toLowerCase();
+            if (text.indexOf(filter) > -1) {
+                item.style.display = "flex";
+            } else {
+                item.style.display = "none";
+            }
+        });
     }
 
     function showFinalStep() {
@@ -429,7 +443,7 @@
          province: document.getElementById("province").value,
          usage: usageEl.value,
          currentIns: insVal,
-         interestedIns: interestedInsVal, // 🌟 ส่งข้อมูลประเภทประกันที่สนใจไปด้วย
+         interestedIns: interestedInsVal,
          effectiveDate: document.getElementById("effectiveDate").value,
          customerName: document.getElementById("customerName").value,
          phone: phone,
