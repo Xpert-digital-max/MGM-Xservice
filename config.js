@@ -13,7 +13,8 @@ const QRCODE_LIFF_ID = "2000218686-8pMjNxWW";    // สำหรับหน้�
 const QUOTATION_LIFF_ID = "2000218686-axiOXqBh"; // สำหรับหน้าใบเสนอราคา
 const REGISTER_LIFF_ID = "2000218686-nFUV3rHq"; // สำหรับหน้าลงทะเบียน / กรอกเบอร์
 const BOOKING_LIFF_ID = "2000218686-thfL9vPM"; // สำหรับหน้าจองคิวตรวจสภาพ
-const INSURANCE_LIFF_ID = "2000218686-RA0TBJhc"; // สำหรับหน้าขอใบเสนอราคาประกันรถยนต์
+const INSURANCE_LIFF_ID = "2000218686-RA0TBJhc"; // สำหรับหน้าขอใบเสนอราคาประกันรถยนต์ ป1-3
+const SHORT_INSURANCE_LIFF_ID = "2000218686-KOAbYp2j"; // สำหรับหน้าขอใบเสนอราคาประกันรถยนต์ 3-3+2+
 const ADMIN_VEHICLE_LIFF_ID = "2000218686-HFu9GIm3"; // สำหรับหน้า Vehicle
 // เพิ่มบรรทัดนี้ต่อท้ายไฟล์ config.js
 const QUOTATION_WEB_URL = "https://liff.line.me/2000218686-axiOXqBh"; // เปลี่ยนเป็นลิงก์หน้าใบเสนอราคาของคุณ
