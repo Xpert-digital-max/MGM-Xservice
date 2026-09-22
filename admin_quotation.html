@@ -95,7 +95,9 @@
 
   <script>
     let currentTotal = 0;
-    // สร้างตัวแปร LIFF ID สำหรับหน้า Admin (อย่าลืมไปสร้างและเพิ่มใน config.js นะครับ)
+    let adminName = "แอดมิน"; // 🌟 สร้างตัวแปรเก็บชื่อแอดมิน (ค่าเริ่มต้น)
+    
+    // ดึง LIFF ID แอดมินมาจาก config.js
     const ADMIN_QT_LIFF_ID = typeof ADMIN_QUOTATION_LIFF_ID !== 'undefined' ? ADMIN_QUOTATION_LIFF_ID : "";
 
     document.addEventListener("DOMContentLoaded", async function() {
@@ -108,7 +110,11 @@
                 return;
             }
 
-            // อ่านรหัส qtId จาก URL parameter (ที่แนบมาจากปุ่มในกลุ่ม LINE)
+            // 🌟 ดึงชื่อแอดมินจาก LINE Profile ที่กำลังล็อกอินอยู่
+            const profile = await liff.getProfile();
+            adminName = profile.displayName; 
+
+            // อ่านรหัส qtId จาก URL parameter
             const urlParams = new URLSearchParams(window.location.search);
             const qtId = urlParams.get('qtId');
 
@@ -152,6 +158,16 @@
                     btnDoc.style.display = "inline-block";
                 }
 
+                // 🌟 ยิงคำสั่งไปแจ้งในกลุ่มทันทีว่า แอดมินคนนี้กดดึงข้อมูลรถไปดูแล้ว 🌟
+                fetch(GAS_API_URL, {
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        action: "notifyLeadClaim", 
+                        adminName: adminName, 
+                        customerName: info.displayName 
+                    })
+                });
+
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'block';
             } else {
@@ -173,8 +189,6 @@
         const ins = parseFloat(document.getElementById('priceIns').value) || 0;
         
         currentTotal = inspect + prb + tax + service + ins;
-        
-        // ใส่คอมม่าให้ตัวเลขสวยงาม
         document.getElementById('txtTotal').innerText = currentTotal.toLocaleString('en-US');
     }
 
@@ -191,6 +205,7 @@
 
         const payload = {
             action: "sendQuotationToCustomer",
+            adminName: adminName, // 🌟 ส่งชื่อแอดมินกลับไปเพื่อแจ้งเตือนว่าใครเป็นคนออกราคา
             qtId: document.getElementById('hidQtId').value,
             userId: document.getElementById('hidUserId').value,
             carReg: document.getElementById('lblCarReg').innerText,
@@ -218,9 +233,7 @@
             } else { throw new Error(data.message); }
         })
         .catch(err => {
-            btn.innerHTML = "ส่งใบเสนอราคาให้ลูกค้า 🚀";
-            btn.disabled = false;
-            // กรณีติด CORS no-cors ปิดหน้าต่างไปเลย
+            // ปิดหน้าต่างเลยเมื่อเสร็จสิ้นเพื่อความลื่นไหลของระบบ (กรณีติด No-CORS)
             liff.closeWindow();
         });
     }
