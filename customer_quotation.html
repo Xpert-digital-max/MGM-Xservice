@@ -2,292 +2,301 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ขอใบเสนอราคาค่าใช้จ่ายและประกันภัย</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ขอใบเสนอราคา</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="config.js"></script> 
+  <script src="config.js"></script>
   <style>
-    body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
-    .container { background: white; width: 100%; max-width: 480px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; padding-bottom: 30px;}
+    body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; color: #333; scroll-behavior: smooth; }
     
-    .hero-header { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 25px 20px; text-align: center; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; border-bottom: 4px solid #1565c0;}
-    .hero-header h2 { color: #0d47a1; margin: 0; font-size: 22px; font-weight: 700; }
-    .hero-header h2 span { color: #f39c12; text-decoration: underline; }
-    .hero-header p { color: #455a64; font-size: 14px; margin: 8px 0 0 0; }
-
-    .form-content { padding: 20px; }
-    .section-title { font-weight: 700; font-size: 16px; color: #1a237e; margin-bottom: 15px; text-align: left; }
-    label.title-label { font-weight: 700; font-size: 15px; color: #37474f; display: block; margin: 20px 0 10px 0; }
-
-    .step-section { display: none; animation: fadeIn 0.5s ease-in-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .chip-grid { display: grid; gap: 10px; margin-bottom: 10px; min-width: 0; }
-    .chip-grid.col-2 { grid-template-columns: 1fr 1fr; }
-    
-    .chip-btn {
-        background: #fff; border: 1px solid #cfd8dc; border-radius: 8px; 
-        padding: 10px 5px; text-align: center; font-size: 13px; color: #455a64; 
-        cursor: pointer; transition: 0.2s; font-weight: 600; display: flex; 
-        flex-direction: column; align-items: center; justify-content: center; 
-        min-height: 75px; line-height: 1.2; box-sizing: border-box; min-width: 0; overflow: hidden;
+    /* ส่วนหัว Header */
+    .header-banner {
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+      padding: 30px 20px 25px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      border-bottom: 4px solid #1976D2;
+      margin-bottom: 25px;
     }
-    .chip-btn:hover { background: #f8fbff; border-color: #90caf9; }
-    .chip-btn.active { background: #e3f2fd; border-color: #1976d2; color: #1565c0; box-shadow: 0 2px 8px rgba(25,118,210,0.15); }
-    .chip-btn input { display: none; }
-    .chip-icon { font-size: 24px; margin-bottom: 4px; }
+    .header-banner h2 { font-weight: 700; color: #0d47a1; font-size: 22px; margin-bottom: 10px; }
+    .header-banner h2 span { color: #f57c00; }
+    .header-banner p { font-size: 14px; color: #546e7a; margin: 0; line-height: 1.4; }
 
-    .ins-list-container { max-height: 380px; overflow-y: auto; border: 1px solid #cfd8dc; border-radius: 8px; background: #fff; padding-bottom: 10px; }
-    
-    .radio-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f2f5; cursor: pointer; transition: 0.2s; background: #fff;}
-    .radio-list-item:hover, .radio-list-item.active { background: #e3f2fd; }
-    .radio-list-item:last-child { border-bottom: none; }
-    .radio-list-item input[type="radio"] { width: 18px; height: 18px; accent-color: #1976d2; cursor: pointer; margin: 0; }
-    .radio-label { font-size: 14px; color: #2c3e50; font-weight: 500; flex: 1; cursor: pointer;}
-
-    input[type="text"], input[type="tel"] { 
-        width: 100%; padding: 14px 15px; margin-bottom: 10px; 
-        border: 1px solid #cfd8dc; border-radius: 8px; box-sizing: border-box; 
-        font-family: 'Sarabun', sans-serif; font-size: 15px; color: #263238; background: #fff; transition: 0.2s;
+    /* โครงสร้างแต่ละข้อ */
+    .question-section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 0 15px 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
     }
-    input:focus { outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15); }
+    .question-title { font-weight: 700; color: #1565c0; font-size: 17px; margin-bottom: 15px; }
 
-    .file-upload-box { border: 2px dashed #1976d2; padding: 20px; text-align: center; border-radius: 8px; background: #f8fbff; cursor: pointer; margin-bottom: 15px; }
-    .file-upload-box input { display: none; }
+    /* ปุ่มเลือกประเภทรถ */
+    .car-type-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 15px 5px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fff;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .car-type-card.active { border-color: #1976D2; background-color: #e3f2fd; box-shadow: 0 4px 10px rgba(25,118,210,0.2); transform: translateY(-2px); }
+    .car-icon { font-size: 24px; margin-bottom: 5px; }
+    .car-label { font-size: 14px; font-weight: 600; color: #455a64; }
+    .car-type-card.active .car-label { color: #1976D2; }
 
-    .divider { border-top: 2px dashed #eceff1; margin: 25px 0; }
-    .btn-submit { width: 100%; padding: 16px; border: none; border-radius: 12px; background: linear-gradient(to right, #1e88e5, #1565c0); color: white; font-weight: 700; font-family: 'Sarabun', sans-serif; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3); transition: 0.3s; }
-    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(21, 101, 192, 0.4); }
-    #loadingScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
-    #thankYouScreen { display: none; text-align: center; padding: 40px 20px; }
+    /* Input Fields */
+    .form-control { border-radius: 8px; padding: 12px 15px; font-size: 16px; border: 1px solid #cfd8dc; }
+    .form-control:focus { border-color: #1976D2; box-shadow: 0 0 0 0.2rem rgba(25,118,210,0.25); }
+    
+    /* ปุ่มอัปโหลดรูป */
+    .upload-box {
+      border: 2px dashed #90caf9;
+      background: #f8fbff;
+      border-radius: 10px;
+      padding: 25px 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-box.has-file { border-color: #4caf50; background: #e8f5e9; }
+    .upload-box i { font-size: 30px; color: #1976D2; margin-bottom: 10px; display: block; }
+    
+    .btn-next { background-color: #e0e0e0; color: #333; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; margin-top: 10px; width: 100%; }
+    .btn-submit { background-color: #2E7D32; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: 700; font-size: 18px; width: 100%; box-shadow: 0 4px 15px rgba(46,125,50,0.3); margin-bottom: 30px; }
+    
+    #loadingScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; display: none; }
   </style>
 </head>
 <body>
 
   <div id="loadingScreen">
-    <h3 style="color:#1565c0;" id="loadingText">กำลังเตรียมระบบ... ⏳</h3>
+    <div class="spinner-border text-primary mb-3" role="status"></div>
+    <h5 id="loadingText" class="text-primary fw-bold">กำลังตรวจสอบข้อมูล...</h5>
   </div>
 
-  <div class="container" id="appContainer" style="display:none;">
-    <div id="mainFormArea">
-      <div class="hero-header">
-        <h2>ขอใบเสนอราคาค่าใช้จ่าย <span>ฟรี</span></h2>
-        <p>กรอกข้อมูลและแนบสำเนารถ เพื่อให้แอดมินจัดทำใบเสนอราคาให้ทันที</p>
+  <div id="appContainer">
+    <!-- Header -->
+    <div class="header-banner">
+      <h2>ขอใบเสนอราคาค่าใช้จ่าย <span>ฟรี</span></h2>
+      <p>กรอกข้อมูลและแนบสำเนารถ เพื่อให้แอดมินจัดทำ<br>ใบเสนอราคาให้ทันที</p>
+    </div>
+
+    <!-- ข้อ 1. ประเภทรถ -->
+    <div id="q1" class="question-section">
+      <div class="question-title">1. ประเภทรถที่ต้องการเช็คค่าใช้จ่าย</div>
+      <div class="row g-2">
+        <div class="col-6"><div class="car-type-card" onclick="selectCarType(this, 'รถเก๋ง', 'q2')"><div class="car-icon">🚗</div><div class="car-label">รถเก๋ง</div></div></div>
+        <div class="col-6"><div class="car-type-card" onclick="selectCarType(this, 'รถกระบะ', 'q2')"><div class="car-icon">🚙</div><div class="car-label">รถกระบะ</div></div></div>
+        <div class="col-6"><div class="car-type-card" onclick="selectCarType(this, '4ประตู', 'q2')"><div class="car-icon">🚐</div><div class="car-label">4ประตู</div></div></div>
+        <div class="col-6"><div class="car-type-card" onclick="selectCarType(this, 'รถตู้', 'q2')"><div class="car-icon">🚌</div><div class="car-label">รถตู้</div></div></div>
+        <div class="col-6"><div class="car-type-card" onclick="selectCarType(this, 'รถไฟฟ้า', 'q2')"><div class="car-icon">⚡</div><div class="car-label">รถไฟฟ้า</div></div></div>
+        <div class="col-6"><div class="car-type-card" onclick="selectCarType(this, 'รถจักรยานยนต์', 'q2')"><div class="car-icon">🏍️</div><div class="car-label">รถจักรยานยนต์</div></div></div>
+        <div class="col-12"><div class="car-type-card" onclick="selectCarType(this, 'รถอื่นๆ', 'q2')"><div class="car-icon">🚘</div><div class="car-label">รถอื่นๆ</div></div></div>
       </div>
-
-      <form class="form-content" id="insuranceForm" onsubmit="submitQuotationRequest(event)">
-        
-        <!-- 1. ประเภทรถ -->
-        <div class="section-title">1. ประเภทรถที่ต้องการเช็คค่าใช้จ่าย</div>
-        <div class="chip-grid col-2">
-          <label class="chip-btn" onclick="selectCar(this, 'รถเก๋ง')">
-            <input type="radio" name="carType" value="รถเก๋ง">
-            <span class="chip-icon">🚗</span> <span>รถเก๋ง</span>
-          </label>
-          <label class="chip-btn" onclick="selectCar(this, 'รถกระบะ')">
-            <input type="radio" name="carType" value="รถกระบะ">
-            <span class="chip-icon">🚙</span> <span>รถกระบะ</span>
-          </label>
-          <label class="chip-btn" onclick="selectCar(this, '4ประตู')">
-            <input type="radio" name="carType" value="4ประตู">
-            <span class="chip-icon">🚐</span> <span>4ประตู</span>
-          </label>
-          <label class="chip-btn" onclick="selectCar(this, 'รถตู้')">
-            <input type="radio" name="carType" value="รถตู้">
-            <span class="chip-icon">🚐</span> <span>รถตู้</span>
-          </label>
-          <label class="chip-btn" onclick="selectCar(this, 'รถไฟฟ้า')">
-            <input type="radio" name="carType" value="รถไฟฟ้า">
-            <span class="chip-icon">⚡</span> <span>รถไฟฟ้า</span>
-          </label>
-          <label class="chip-btn" onclick="selectCar(this, 'รถจักรยานยนต์')">
-            <input type="radio" name="carType" value="รถจักรยานยนต์">
-            <span class="chip-icon">🏍️</span> <span>รถจักรยานยนต์</span>
-          </label>
-          <label class="chip-btn" onclick="selectCar(this, 'รถอื่นๆ')" style="grid-column: span 2;">
-            <input type="radio" name="carType" value="รถอื่นๆ">
-            <span class="chip-icon">🚗</span> <span>รถอื่นๆ</span>
-          </label>
-        </div>
-
-        <!-- 2. ทะเบียนรถ -->
-        <label class="title-label">2. ทะเบียนรถ (คันที่ต้องการตรวจสอบ)</label>
-        <input type="text" id="carReg" required placeholder="เช่น กก 1234 จันทบุรี">
-
-        <!-- 3. เบอร์โทรศัพท์ -->
-        <label class="title-label">3. เบอร์โทรศัพท์ติดต่อกลับ (บังคับกรอก)</label>
-        <input type="tel" id="phone" required placeholder="08XXXXXXXX" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-
-        <!-- 4. แนบรูปสำเนารถ -->
-        <label class="title-label">4. แนบรูปสำเนารถ (บังคับแนบไฟล์)</label>
-        <div class="file-upload-box" onclick="document.getElementById('carDocFile').click()">
-          <span id="fileNameDisplay" style="color: #1976d2; font-weight: 600;">📁 คลิกเพื่อแนบรูปสำเนารถที่นี่</span>
-          <input type="file" id="carDocFile" accept="image/*" required onchange="previewFile(this)">
-        </div>
-
-        <!-- 5. สนใจประกันเพิ่มเติม -->
-        <label class="title-label">5. สนใจประกันเพิ่มเติม (เลือกประเภทที่สนใจ)</label>
-        <input type="hidden" id="interestedIns" value="">
-        
-        <div class="ins-list-container">
-          <label class="radio-list-item" onclick="selectInterestedIns(this, 'ประเภท 3')">
-            <span class="radio-label">ประกันภัย ประเภท 3</span>
-            <input type="radio" name="intInsType" value="ประเภท 3">
-          </label>
-          <label class="radio-list-item" onclick="selectInterestedIns(this, 'ประเภท 3+')">
-            <span class="radio-label">ประกันภัย ประเภท 3+</span>
-            <input type="radio" name="intInsType" value="ประเภท 3+">
-          </label>
-          <label class="radio-list-item" onclick="selectInterestedIns(this, 'ประเภท 2+')">
-            <span class="radio-label">ประกันภัย ประเภท 2+</span>
-            <input type="radio" name="intInsType" value="ประเภท 2+">
-          </label>
-          <label class="radio-list-item" onclick="selectInterestedIns(this, 'ประเภท 2')">
-            <span class="radio-label">ประกันภัย ประเภท 2</span>
-            <input type="radio" name="intInsType" value="ประเภท 2">
-          </label>
-          <label class="radio-list-item" onclick="selectInterestedIns(this, 'ประเภท 1+')">
-            <span class="radio-label">ประกันภัย ประเภท 1+</span>
-            <input type="radio" name="intInsType" value="ประเภท 1+">
-          </label>
-          <label class="radio-list-item" onclick="selectInterestedIns(this, 'ประเภท 1')">
-            <span class="radio-label">ประกันภัย ประเภท 1</span>
-            <input type="radio" name="intInsType" value="ประเภท 1">
-          </label>
-          <label class="radio-list-item" onclick="selectInterestedIns(this, 'ไม่สนใจประกัน / เช็คเฉพาะค่าบริการอื่น')">
-            <span class="radio-label" style="color: #7f8c8d;">ไม่สนใจประกัน (เช็คเฉพาะรายการอื่น)</span>
-            <input type="radio" name="intInsType" value="ไม่สนใจประกัน / เช็คเฉพาะค่าบริการอื่น">
-          </label>
-        </div>
-
-        <div class="divider"></div>
-        <button type="submit" id="btnSubmit" class="btn-submit">ส่งคำขอใบเสนอราคา 🚀</button>
-
-      </form>
+      <input type="hidden" id="carType" value="">
     </div>
 
-    <!-- หน้าจอขอบคุณ -->
-    <div id="thankYouScreen">
-      <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="Success" style="margin: 0 auto; width: 120px;">
-      <h2 style="color: #1a237e; font-size: 24px; margin-bottom: 10px;">ส่งคำขอสำเร็จเรียบร้อย!</h2>
-      <p style="color: #455a64; margin-bottom: 30px;">แอดมินได้รับข้อมูลและรูปสำเนารถของท่านแล้ว กำลังคำนวณยอดและจะส่งใบเสนอราคาให้ทาง LINE ทันทีครับ</p>
-      <button class="btn-submit" onclick="closeWindow()">ปิดหน้าต่าง</button>
+    <!-- ข้อ 2. ทะเบียนรถ -->
+    <div id="q2" class="question-section">
+      <div class="question-title">2. ทะเบียนรถ (ไม่ต้องระบุจังหวัด)</div>
+      <input type="text" id="carReg" class="form-control" placeholder="เช่น กก1111 หรือ กก 1111" oninput="checkInput('carReg', 'btnQ2')">
+      <button id="btnQ2" class="btn-next" style="display:none;" onclick="scrollToNext('q3')">ถัดไป 👇</button>
     </div>
 
+    <!-- ข้อ 3. เบอร์โทรติดต่อ -->
+    <div id="q3" class="question-section">
+      <div class="question-title">3. เบอร์โทรศัพท์สำหรับติดต่อกลับ</div>
+      <input type="tel" id="phone" class="form-control" placeholder="08xxxxxxxx" maxlength="10" oninput="checkInput('phone', 'btnQ3')">
+      <button id="btnQ3" class="btn-next" style="display:none;" onclick="scrollToNext('q4')">ถัดไป 👇</button>
+    </div>
+
+    <!-- ข้อ 4. อัปโหลดสำเนารถ -->
+    <div id="q4" class="question-section">
+      <div class="question-title">4. แนบสำเนาทะเบียนรถ <span class="text-danger">*จำเป็น</span></div>
+      <label class="upload-box w-100" id="uploadBox">
+        <i class="fs-1">📸</i>
+        <div id="uploadText" class="fw-bold mt-2 text-primary">คลิกเพื่อถ่ายรูป / เลือกรูป</div>
+        <div class="text-muted small mt-1">อัปโหลดสำเนารถเพื่อให้การประเมินราคาแม่นยำที่สุด</div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileUpload(this)">
+      </label>
+      <input type="hidden" id="imageBase64" value="">
+    </div>
+
+    <!-- ข้อ 5. ประกันที่สนใจ -->
+    <div id="q5" class="question-section">
+      <div class="question-title">5. ประเภทประกันที่สนใจ</div>
+      <select id="insuranceType" class="form-select" onchange="scrollToNext('submitZone')">
+        <option value="" disabled selected>-- เลือกประเภทที่สนใจ --</option>
+        <option value="ประเภท 1">ประกันชั้น 1</option>
+        <option value="ประเภท 2+">ประกันชั้น 2+</option>
+        <option value="ประเภท 2">ประกันชั้น 2</option>
+        <option value="ประเภท 3+">ประกันชั้น 3+</option>
+        <option value="ประเภท 3">ประกันชั้น 3</option>
+        <option value="ไม่สนใจประกัน / เช็คพรบ.และภาษีเท่านั้น">ไม่สนใจประกัน / เช็ค พ.ร.บ. อย่างเดียว</option>
+      </select>
+    </div>
+
+    <!-- ปุ่มส่งข้อมูล -->
+    <div id="submitZone" class="px-3">
+      <button type="button" class="btn-submit" onclick="submitQuotation()">🚀 ส่งข้อมูลขอใบเสนอราคา</button>
+    </div>
   </div>
 
   <script>
-    let lineUserId = "", lineDisplayName = "", linePicUrl = "";
-    let base64Image = "";
-    const MY_LIFF_ID = typeof CUSTOMER_QUOTATION_LIFF_ID !== 'undefined' ? CUSTOMER_QUOTATION_LIFF_ID : "";
+    let userProfile = {};
+    const CUSTOMER_QT_LIFF_ID = typeof CUSTOMER_QUOTATION_LIFF_ID !== 'undefined' ? CUSTOMER_QUOTATION_LIFF_ID : "";
 
-    document.addEventListener("DOMContentLoaded", async function() {
-        try {
-            if(!MY_LIFF_ID) throw new Error("ไม่พบ LIFF ID ใน config.js");
-            await liff.init({ liffId: MY_LIFF_ID });
-            
-            if (liff.isLoggedIn()) {
-                const profile = await liff.getProfile();
-                lineUserId = profile.userId;
-                lineDisplayName = profile.displayName;
-                linePicUrl = profile.pictureUrl || "";
-                
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('appContainer').style.display = 'block';
-            } else {
-                liff.login();
-            }
-        } catch(err) {
-            document.getElementById('loadingText').innerHTML = "❌ ระบบขัดข้อง: " + err.message;
-            document.getElementById('loadingText').style.color = "red";
-            Swal.fire("พบปัญหาขัดข้อง", err.message, "error");
+    window.onload = async function() {
+        if(!CUSTOMER_QT_LIFF_ID) {
+            Swal.fire("ข้อผิดพลาด", "ไม่ได้ตั้งค่า CUSTOMER_QUOTATION_LIFF_ID", "error"); return;
         }
-    });
+        await liff.init({ liffId: CUSTOMER_QT_LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        userProfile = await liff.getProfile();
+    };
 
-    function selectCar(el, val) {
-        document.querySelectorAll('input[name="carType"]').forEach(i => i.parentElement.classList.remove('active'));
-        el.classList.add('active'); el.querySelector('input').checked = true;
+    // 🌟 ฟังก์ชัน: เลื่อนหน้าจออัตโนมัติ
+    function scrollToNext(elementId) {
+        setTimeout(() => {
+            const el = document.getElementById(elementId);
+            if(el) {
+                const y = el.getBoundingClientRect().top + window.pageYOffset - 20;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+        }, 150);
     }
 
-    function selectInterestedIns(el, val) {
-        document.querySelectorAll('.radio-list-item').forEach(e => e.classList.remove('active'));
-        el.classList.add('active'); 
-        el.querySelector('input').checked = true;
-        document.getElementById('interestedIns').value = val;
+    // 🌟 ฟังก์ชัน: เลือกประเภทรถ
+    function selectCarType(el, type, nextId) {
+        document.querySelectorAll('.car-type-card').forEach(card => card.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('carType').value = type;
+        scrollToNext(nextId);
+        document.getElementById('carReg').focus();
     }
 
-    function previewFile(input) {
+    // 🌟 ฟังก์ชัน: ตรวจสอบการพิมพ์ เพื่อแสดงปุ่ม "ถัดไป"
+    function checkInput(inputId, btnId) {
+        const val = document.getElementById(inputId).value;
+        const btn = document.getElementById(btnId);
+        if(val.length > 2) {
+            btn.style.display = "block";
+            btn.classList.add('bg-primary', 'text-white');
+        } else {
+            btn.style.display = "none";
+        }
+    }
+
+    // 🌟 ฟังก์ชัน: จัดการอัปโหลดและบีบอัดรูป
+    function handleFileUpload(input) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
-            document.getElementById('fileNameDisplay').innerText = "📄 แนบไฟล์แล้ว: " + file.name;
-            
             const reader = new FileReader();
+            
             reader.onload = function(e) {
-                base64Image = e.target.result;
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_WIDTH = 800; const MAX_HEIGHT = 800;
+                    let width = img.width; let height = img.height;
+                    
+                    if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                    else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                    
+                    canvas.width = width; canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // บีบอัดรูปเป็น Base64
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    document.getElementById('imageBase64').value = dataUrl;
+                    
+                    // เปลี่ยน UI กล่องอัปโหลดให้เป็นสีเขียว
+                    const box = document.getElementById('uploadBox');
+                    box.classList.add('has-file');
+                    box.innerHTML = `<i class="fs-1">✅</i><div class="fw-bold mt-2 text-success">แนบรูปสำเร็จ!</div><div class="text-muted small mt-1">${file.name}</div>`;
+                    
+                    // เลื่อนไปข้อถัดไป
+                    scrollToNext('q5');
+                }
             }
             reader.readAsDataURL(file);
         }
     }
 
-    function closeWindow() {
-        if (liff.isInClient()) {
-            liff.closeWindow(); 
-        } else {
-            window.location.href = "https://line.me/R/ti/p/@xservice"; 
+    // 🌟 ฟังก์ชัน: กดส่งข้อมูล + ระบบดักจับการแจ้งเตือน
+    async function submitQuotation() {
+        const carType = document.getElementById('carType').value;
+        const carReg = document.getElementById('carReg').value;
+        const phone = document.getElementById('phone').value;
+        const imageBase64 = document.getElementById('imageBase64').value;
+        const insuranceType = document.getElementById('insuranceType').value;
+
+        // ดักจับข้อมูลไม่ครบ
+        if(!carType) return Swal.fire("แจ้งเตือน", "กรุณาเลือกประเภทรถครับ", "warning");
+        if(!carReg) return Swal.fire("แจ้งเตือน", "กรุณาระบุทะเบียนรถครับ", "warning");
+        if(phone.length < 9) return Swal.fire("แจ้งเตือน", "กรุณาระบุเบอร์โทรให้ถูกต้องครับ", "warning");
+        
+        // 🚨 ดักจับกรณีไม่แนบรูป
+        if(!imageBase64) {
+            scrollToNext('q4');
+            return Swal.fire({
+                icon: "warning",
+                title: "คุณยังไม่ได้แนบสำเนารถ",
+                text: "กรุณาแนบสำเนาทะเบียนรถเพื่อความถูกต้องในการทำใบเสนอราคาด้วยครับ 🙏",
+                confirmButtonColor: "#1976D2"
+            });
         }
-    }
+        
+        if(!insuranceType) return Swal.fire("แจ้งเตือน", "กรุณาเลือกประกันที่สนใจครับ", "warning");
 
-    function submitQuotationRequest(event) {
-      event.preventDefault();
-      
-      const carTypeEl = document.querySelector('input[name="carType"]:checked');
-      if(!carTypeEl) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกประเภทรถ", "warning");
+        // กำลังส่งข้อมูล
+        document.getElementById('loadingScreen').style.display = 'flex';
+        document.getElementById('loadingText').innerText = 'กำลังส่งข้อมูล... ⏳';
 
-      const carReg = document.getElementById("carReg").value.trim();
-      if(!carReg) return Swal.fire("ข้อมูลไม่ครบ", "กรุณากรอกทะเบียนรถ", "warning");
+        const payload = {
+            action: "saveQuotationRequest",
+            userId: userProfile.userId,
+            displayName: userProfile.displayName,
+            carType: carType,
+            carReg: carReg,
+            phone: phone,
+            insuranceType: insuranceType,
+            imageBase64: imageBase64
+        };
 
-      const phone = document.getElementById("phone").value.trim();
-      if (!phone.startsWith("0") || phone.length < 9) { return Swal.fire("เบอร์โทรไม่ถูกต้อง", "กรุณาใส่เลข 0 นำหน้า และกรอกให้ครบ 10 หลัก", "warning"); }
-
-      if(!base64Image) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาแนบรูปสำเนารถเพื่อประกอบการออกใบเสนอราคา", "warning");
-
-      const interestedInsVal = document.getElementById("interestedIns").value;
-      if(!interestedInsVal) return Swal.fire("ข้อมูลไม่ครบ", "กรุณาเลือกความต้องการด้านประกันภัย", "warning");
-
-      const btn = document.getElementById("btnSubmit");
-      btn.innerHTML = "กำลังส่งข้อมูล... ⏳";
-      btn.disabled = true;
-
-      const payload = {
-         action: "saveQuotationRequest",
-         carType: carTypeEl.value,
-         carReg: carReg,
-         phone: phone,
-         insuranceType: interestedInsVal,
-         imageBase64: base64Image,
-         userId: lineUserId,
-         displayName: lineDisplayName,
-         pictureUrl: linePicUrl
-      };
-
-      fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) })
-      .then(res => res.json())
-      .then(data => {
-          if (data.status === "success") {
-              document.getElementById('mainFormArea').style.display = 'none';
-              document.getElementById('thankYouScreen').style.display = 'block';
-              window.scrollTo(0, 0);
-          } else { throw new Error("Save failed"); }
-      })
-      .catch(err => {
-          btn.innerHTML = "ส่งคำขอใบเสนอราคา 🚀";
-          btn.disabled = false;
-          // รองรับโหมด no-cors ป้องกันหน้าค้าง
-          document.getElementById('mainFormArea').style.display = 'none';
-          document.getElementById('thankYouScreen').style.display = 'block';
-      });
+        try {
+            const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            
+            if(result.status === "success") {
+                Swal.fire({
+                    title: "ส่งข้อมูลสำเร็จ!",
+                    text: "ระบบได้รับเรื่องเรียบร้อยแล้ว แอดมินจะจัดทำใบเสนอราคาส่งให้ท่านทางแชท LINE ในไม่ช้าครับ",
+                    icon: "success",
+                    confirmButtonText: "ตกลง"
+                }).then(() => {
+                    liff.closeWindow();
+                });
+            } else { throw new Error(result.message); }
+        } catch(e) {
+            document.getElementById('loadingScreen').style.display = 'none';
+            Swal.fire("ข้อผิดพลาด", e.message || "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้", "error");
+        }
     }
   </script>
 </body>
