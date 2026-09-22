@@ -18,13 +18,14 @@
     .btn-gallery { background-color: #6c757d; color: #fff; border: none; }
     #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
     #mainContent { display: none; } 
+    .qt-alert { background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 14px; display: none; border: 1px solid #c3e6cb; }
   </style>
 </head>
 <body>
   
   <div id="loadingOverlay">
       <div class="spinner-border text-primary" role="status"></div>
-      <div class="mt-2 fw-bold text-primary">กำลังประมวลผลรูปภาพ...</div>
+      <div class="mt-2 fw-bold text-primary">กำลังประมวลผล...</div>
   </div>
 
   <div class="container" style="max-width:450px;">
@@ -37,6 +38,13 @@
       <div class="card p-4 shadow-sm" id="box">
         <h3 class="text-center text-primary fw-bold">🚗 แผนกรับรถ</h3>
         <hr>
+        
+        <!-- 🌟 แบนเนอร์แจ้งเตือนถ้าดึงข้อมูลมาจากใบเสนอราคาสำเร็จ -->
+        <div id="qtBanner" class="qt-alert fw-bold">
+            📥 ดึงข้อมูลจากใบเสนอราคาสำเร็จ!<br>
+            <small class="fw-normal">(รูปรถจะถูกเชื่อมโยงให้อัตโนมัติ)</small>
+        </div>
+
         <div id="ui">
 
           <label class="fw-bold text-danger">สาขาที่รับรถ</label>
@@ -92,6 +100,8 @@
           
           <input type="hidden" id="editRowIndex" value="">
           <input type="hidden" id="editJobId" value="">
+          <!-- 🌟 เก็บ qtId ที่ดึงมาจาก URL เพื่อส่งไปให้หลังบ้านรู้ว่าเป็นคิวที่มาจากใบเสนอราคา -->
+          <input type="hidden" id="hiddenQtId" value=""> 
         </div>
         
         <div id="res" class="text-center" style="display:none;">
@@ -115,7 +125,7 @@
   <script>
     var currentStaff = "";
     var currentBranch = "";
-    var currentUserId = ""; // 🌟 1. เพิ่มตัวแปรเก็บรหัสพนักงานไว้แต่เนิ่นๆ ป้องกันระบบค้าง
+    var currentUserId = ""; 
     let processedFiles = []; 
 
     window.onload = function() { 
@@ -138,25 +148,16 @@
     async function verifyPermission() {
         Swal.fire({ title: 'กำลังตรวจสอบสิทธิ์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const profile = await liff.getProfile();
-        
-        currentUserId = profile.userId; // 🌟 2. เก็บ UserId ไว้ใช้ยาวๆ เลย
+        currentUserId = profile.userId;
 
         try {
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
-                body: JSON.stringify({ 
-                    action: "verifyUserAccess", 
-                    userId: currentUserId, 
-                    pageName: "receiption.html" 
-                })
+                body: JSON.stringify({ action: "verifyUserAccess", userId: currentUserId, pageName: "receiption.html" })
             });
             const resText = await response.text();
             let res;
-            try {
-                res = JSON.parse(resText);
-            } catch (err) {
-                throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ (Invalid JSON)");
-            }
+            try { res = JSON.parse(resText); } catch (err) { throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ"); }
 
             if (res.valid) {
                 Swal.close();
@@ -170,22 +171,54 @@
                 if (currentBranch && currentBranch !== "All") {
                     for (let i = 0; i < branchSelect.options.length; i++) {
                         if (branchSelect.options[i].value === currentBranch) {
-                            branchSelect.selectedIndex = i;
-                            break;
+                            branchSelect.selectedIndex = i; break;
                         }
                     }
-                } else if (currentBranch === "All") {
-                    branchSelect.value = "All";
-                }
+                } else if (currentBranch === "All") { branchSelect.value = "All"; }
                 
                 document.getElementById('mainContent').style.display = 'block';
+
+                // 🌟 ตรวจสอบว่ามีรหัส qtId ส่งมาด้วยหรือไม่ (ดึงข้อมูลใบเสนอราคามาหยอดอัตโนมัติ)
+                checkQuotationData();
+
             } else {
                 Swal.fire('ไม่มีสิทธิ์เข้าถึง', res.message, 'error');
                 document.getElementById('staffNameDisplay').innerText = "❌ ไม่มีสิทธิ์";
                 document.getElementById('staffNameDisplay').className = "badge bg-danger fs-6 shadow-sm";
             }
-        } catch(e) { 
-            Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้: ' + e.message, 'error'); 
+        } catch(e) { Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้: ' + e.message, 'error'); }
+    }
+
+    // 🌟 ฟังก์ชันดึงข้อมูลจากใบเสนอราคามาแสดง
+    function checkQuotationData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const qtId = urlParams.get('qtId');
+        
+        if (qtId) {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('hiddenQtId').value = qtId; // แอบเก็บค่าไว้ส่งให้ Code.gs
+
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "getQuotationDataByQtId", qtId: qtId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                if (data.status === "success") {
+                    const info = data.data;
+                    document.getElementById('reg').value = info.carReg || "";
+                    document.getElementById('phone').value = (info.phone || "").replace(/'/g, ''); // เอาเครื่องหมาย ' ออกตอนโชว์
+                    
+                    let selType = document.getElementById('carType');
+                    for(let i=0; i<selType.options.length; i++) {
+                        if(selType.options[i].value === info.carType) { selType.selectedIndex = i; break; }
+                    }
+                    
+                    document.getElementById('qtBanner').style.display = 'block';
+                }
+            })
+            .catch(err => document.getElementById('loadingOverlay').style.display = 'none');
         }
     }
 
@@ -203,10 +236,7 @@
              try {
                  let compressedData = await compressImage(file);
                  processedFiles.push(compressedData);
-             } catch (err) {
-                 console.error(err);
-                 alert('ไม่สามารถประมวลผลไฟล์: ' + file.name);
-             }
+             } catch (err) { alert('ไม่สามารถประมวลผลไฟล์: ' + file.name); }
          }
          updateFileList();
          input.value = ''; 
@@ -232,9 +262,7 @@
                     let canvas = document.createElement('canvas');
                     let ctx = canvas.getContext('2d');
                     
-                    // 🌟 ปรับลดขนาดลงเหลือแค่ 500px เพื่อให้มือถือประมวลผลไวที่สุด
                     const MAX_WIDTH = 500; const MAX_HEIGHT = 500; 
-                    
                     let width = img.width; let height = img.height;
                     if (width > height) {
                         if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
@@ -244,7 +272,6 @@
                     canvas.width = width; canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // 🌟 บีบอัดเหลือ 30% จะได้ไฟล์เล็กจิ๋ว ส่งผ่านเน็ตมือถือได้ใน 1 วินาที
                     let dataUrl = canvas.toDataURL('image/jpeg', 0.3); 
                     resolve({ name: file.name, type: 'image/jpeg', data: dataUrl.split(',')[1] });
                 }
@@ -256,15 +283,14 @@
 
     function updateFileList() {
       const list = document.getElementById('fileList'); list.innerHTML = '';
-      if(processedFiles.length === 0) {
-          list.innerHTML = '<div class="text-center text-muted small">- ยังไม่มีไฟล์แนบ -</div>'; return;
-      }
+      if(processedFiles.length === 0) { list.innerHTML = '<div class="text-center text-muted small">- ยังไม่มีไฟล์แนบ -</div>'; return; }
       processedFiles.forEach((file, index) => {
         list.innerHTML += `<div class="file-item"><span>📎 ${file.name}</span><button class="btn btn-danger btn-sm" onclick="removeFile(${index})">x</button></div>`;
       });
     }
 
     async function searchQueueData() {
+        // ... (โค้ดค้นหาคิวเหมือนเดิม) ...
         let keyword = document.getElementById('searchQueue').value.trim();
         if (!keyword) return Swal.fire('แจ้งเตือน', 'กรุณากรอกเลขคิว หรือ ทะเบียน', 'warning');
         
@@ -275,27 +301,19 @@
 
         try {
             const response = await fetch(GAS_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch, todayOnly: true })
+                method: 'POST', body: JSON.stringify({ action: "searchJobData", keyword: keyword, branch: branch, todayOnly: true })
             });
             const textResponse = await response.text();
-            
             let res;
-            try {
-                res = JSON.parse(textResponse);
-            } catch (err) {
-                throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ (กรุณาเช็คอินเทอร์เน็ต)");
-            }
+            try { res = JSON.parse(textResponse); } catch (err) { throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ"); }
 
             btn.innerText = oldText; btn.disabled = false;
-
             if (!res || !res.found) return Swal.fire('ไม่พบข้อมูล', 'ไม่พบคิวนี้ในสาขาที่เลือก หรือ ไม่ใช่คิวของวันนี้', 'info');
 
             let job = res.jobs[0];
             let payStatus = String(job.paymentStatus || "").trim(); 
-            
             if (payStatus !== "" && payStatus !== "undefined") {
-                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการรับชำระเงินเรียบร้อยแล้ว<br><small class="text-danger">(' + payStatus + ')</small>', 'error');
+                return Swal.fire('ไม่สามารถแก้ไขได้', 'คิวนี้มีการรับชำระเงินเรียบร้อยแล้ว', 'error');
             }
 
             document.getElementById('editRowIndex').value = job.rowIndex;
@@ -311,7 +329,6 @@
             let saveBtn = document.getElementById('btnSubmitQueue');
             saveBtn.innerText = "💾 บันทึกการแก้ไข";
             saveBtn.className = "btn btn-warning w-100 py-3 fw-bold shadow";
-            
             Swal.fire('ดึงข้อมูลสำเร็จ', 'สามารถแก้ไขข้อมูลแล้วกดบันทึกใหม่ได้เลยครับ', 'success');
 
         } catch (e) {
@@ -327,11 +344,11 @@
       const reg = document.getElementById('reg').value;
       const phone = document.getElementById('phone').value;
       const carType = document.getElementById('carType').value;
+      const qtId = document.getElementById('hiddenQtId').value; // 🌟 ส่ง qtId กลับไปด้วย
       
       if(!reg || !phone) return Swal.fire('ข้อมูลไม่ครบ','กรุณากรอก ทะเบียน และ เบอร์โทร','warning');
       
       const btn = document.querySelector('#ui button.btn-primary') || document.querySelector('#btnSubmitQueue');
-      
       btn.disabled = true; 
       btn.innerText = "⏳ กำลังบันทึก...";
       
@@ -342,31 +359,26 @@
           phone: phone,
           carType: carType,
           files: processedFiles,
+          qtId: qtId, // 🌟 แนบค่า qtId ไปด้วย Code.gs จะได้รู้ว่ามาจากใบเสนอราคา
           editRowIndex: document.getElementById('editRowIndex').value, 
           editJobId: document.getElementById('editJobId').value 
       };
       
       try {
-          const response = await fetch(GAS_API_URL, {
-              method: 'POST',
-              body: JSON.stringify(payload)
-          });
+          const response = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
           const textResponse = await response.text();
-          
           let r;
-          try {
-              r = JSON.parse(textResponse);
-          } catch(err) {
-              throw new Error("ระบบหน่วงเวลา (ข้อมูลอาจบันทึกไปแล้ว! ให้เช็คข้อมูลอีกครั้ง)");
-          }
+          try { r = JSON.parse(textResponse); } catch(err) { throw new Error("ระบบหน่วงเวลา"); }
           
           if(r.status === "success") {
               document.getElementById('ui').style.display = 'none';
               document.getElementById('res').style.display = 'block';
               document.getElementById('qNum').innerText = r.queueNo;
               document.getElementById('jId').innerText = r.jobID;
+              
+              // ล้าง qtBanner ทิ้ง
+              document.getElementById('qtBanner').style.display = 'none';
 
-              // 🌟 5. ใช้ currentUserId ที่เตรียมไว้แล้ว สร้าง QR Code ได้ทันที ไม่มีค้างชัวร์!
               let queryString = "?refId=" + encodeURIComponent(currentUserId) +
                                 "&tel=" + encodeURIComponent(phone) +
                                 "&reg=" + encodeURIComponent(reg) +
@@ -376,16 +388,9 @@
               let qrApi = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(targetUrl);
               document.getElementById('qrImage').src = qrApi;
               
-          } else {
-              throw new Error("บันทึกข้อมูลไม่สำเร็จ");
-          }
+          } else { throw new Error("บันทึกข้อมูลไม่สำเร็จ"); }
       } catch(e) {
-          Swal.fire({
-              title: 'โปรดระวัง',
-              text: e.message,
-              icon: 'warning',
-              confirmButtonText: 'รับทราบ'
-          });
+          Swal.fire('โปรดระวัง', e.message, 'warning');
           btn.disabled = false; 
           btn.innerText = document.getElementById('editRowIndex').value ? "💾 บันทึกการแก้ไข" : "ออกบัตรคิว";
       }
@@ -397,6 +402,7 @@
        document.getElementById('searchQueue').value = ''; 
        document.getElementById('editRowIndex').value = ''; 
        document.getElementById('editJobId').value = ''; 
+       document.getElementById('hiddenQtId').value = ''; // เคลียร์ qtId
        document.getElementById('btnSubmitQueue').innerText = 'ออกบัตรคิว'; 
        document.getElementById('btnSubmitQueue').className = 'btn btn-primary w-100 py-3 fw-bold shadow';
        processedFiles = []; updateFileList();
