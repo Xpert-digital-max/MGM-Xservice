@@ -168,7 +168,7 @@
         userProfile = await liff.getProfile();
     };
 
-    // 🌟 ฟังก์ชัน: เลื่อนหน้าจออัตโนมัติ
+    // 🌟 ฟังก์ชัน: เลื่อนหน้าจออัตโนมัติ (ปรับแต่งเพื่อ iOS)
     function scrollToNext(elementId) {
         setTimeout(() => {
             const el = document.getElementById(elementId);
@@ -176,7 +176,7 @@
                 const y = el.getBoundingClientRect().top + window.pageYOffset - 20;
                 window.scrollTo({ top: y, behavior: 'smooth' });
             }
-        }, 150);
+        }, 300); // 🌟 เพิ่มเวลาหน่วงเป็น 300ms เพื่อให้ UI ของ iOS นิ่งก่อน ค่อยเลื่อน
     }
 
     // 🌟 ฟังก์ชัน: เลือกประเภทรถ
@@ -184,8 +184,11 @@
         document.querySelectorAll('.car-type-card').forEach(card => card.classList.remove('active'));
         el.classList.add('active');
         document.getElementById('carType').value = type;
+        
         scrollToNext(nextId);
-        document.getElementById('carReg').focus();
+        
+        // 🚨 ลบ หรือ คอมเมนต์คำสั่ง focus() บรรทัดด้านล่างนี้ทิ้งไปเลยครับ ป้องกันคีย์บอร์ดเด้งชนกับ Scroll ใน iOS
+        // document.getElementById('carReg').focus(); 
     }
 
     // 🌟 ฟังก์ชัน: ตรวจสอบการพิมพ์ เพื่อแสดงปุ่ม "ถัดไป"
