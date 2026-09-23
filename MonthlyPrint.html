@@ -17,34 +17,52 @@
         .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; color: white; transition: 0.3s; margin: 5px; }
         .btn-primary { background: #0d6efd; }
         .btn-success { background: #198754; display: none; }
+        .btn-warning { background: #ffc107; color: black; display: none; }
         
         .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .report-table th, .report-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         .report-table th { background-color: #198754; color: white; text-align: center; }
+        .report-table th.th-blue { background-color: #0d6efd; }
         .report-table td.text-right { text-align: right; }
         .report-table td.text-center { text-align: center; }
         
         .car-type-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
         .car-type-filters label { cursor: pointer; font-size: 16px; }
         
-        #print-area, #report-area { display: none; } 
+        #print-area, #report-area, #receipt-summary-area { display: none; } 
         
-        /* ซ่อนใบเสร็จไม่ให้แสดงบนหน้าจอ */
+        /* ซ่อนหน้าเอกสารเวลาแสดงบนหน้าจอ */
         @media screen {
             #print-area { display: none !important; }
             #report-area { display: none; } 
         }
         
-        /* ตั้งค่าปริ้นให้ประหยัดพื้นที่ */
+        /* 🌟 ตั้งค่าปริ้น (อัปเดตใหม่ แยก 3 โหมดชัดเจน) 🌟 */
         @media print {
             body { background: white; padding: 0; margin: 0; }
             .no-print { display: none !important; }
-            #print-area { display: block !important; }
 
-            .report-table { box-shadow: none; font-size: 13px; } /* ลดขนาดฟอนต์รายงาน */
-            .report-table th, .report-table td { padding: 4px 8px !important; } /* บีบแถวให้ชิดกัน */
+            /* โหมด 1: พิมพ์ใบปะหน้าสรุป */
+            body.print-summary #receipt-summary-area { display: block !important; }
+            body.print-summary #print-area { display: none !important; }
+            body.print-summary #report-area { display: none !important; }
+
+            /* โหมด 2: พิมพ์ใบเสร็จ (กระดาษ 2 ส่วน) */
+            body.print-receipts #print-area { display: block !important; }
+            body.print-receipts #receipt-summary-area { display: none !important; }
+            body.print-receipts #report-area { display: none !important; }
+
+            /* โหมด 3: พิมพ์รายงาน พ.ร.บ. */
+            body.print-prb #report-area { display: block !important; }
+            body.print-prb #print-area { display: none !important; }
+            body.print-prb #receipt-summary-area { display: none !important; }
+
+            /* ตั้งค่าตารางเวลาปริ้น */
+            .report-table { box-shadow: none; font-size: 13px; } 
+            .report-table th, .report-table td { padding: 6px 8px !important; } 
             .report-table th { background-color: #e0e0e0 !important; color: black; -webkit-print-color-adjust: exact; }
             
+            /* ตั้งค่าใบเสร็จ */
             .a4-page { width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; page-break-after: always; display: flex; flex-direction: column; justify-content: space-between; }
             .receipt-box { height: 48%; border: 1px dashed #ccc; padding: 15px 25px; box-sizing: border-box; position: relative; }
             .r-header { text-align: center; margin-bottom: 15px; position: relative; }
@@ -57,7 +75,7 @@
             table.r-table th, table.r-table td { border: 1px solid #333; padding: 8px; }
             .text-right { text-align: right; }
             .r-footer { display: flex; justify-content: space-between; margin-top: 25px; font-size: 14px; }
-            .r-sign { width: 40%; text-align: center; } /* นำกลับมาใช้สำหรับผู้รับเงิน */
+            .r-sign { width: 40%; text-align: center; } 
         }
     </style>
 </head>
@@ -80,8 +98,9 @@
         <b>ตั้งแต่วันที่:</b> <input type="date" id="startDateReceipt" required>
         <b>ถึง:</b> <input type="date" id="endDateReceipt" required>
 
-        <button class="btn btn-primary" onclick="loadReceiptData()">🔍 ดึงข้อมูลใบเสร็จ</button>
-        <button class="btn btn-success" id="btnPrintReceipt" onclick="window.print()">🖨️ พิมพ์ใบเสร็จทั้งหมด</button>
+        <button class="btn btn-primary" onclick="loadReceiptData()">🔍 ดึงข้อมูล</button>
+        <button class="btn btn-warning" id="btnPrintCover" onclick="printCover()">🖨️ พิมพ์ใบปะหน้ารายงาน (A4)</button>
+        <button class="btn btn-success" id="btnPrintReceipt" onclick="printReceipts()">🖨️ พิมพ์ใบเสร็จทั้งหมด</button>
         <div id="statusTextReceipt" style="margin-top: 15px; font-weight: bold; color: #0d6efd;"></div>
     </div>
 
@@ -109,9 +128,11 @@
         </div>
 
         <button class="btn btn-primary" onclick="loadPrbReport()" style="margin-top: 15px;">🔍 ดึงรายงาน Statement</button>
-        <button class="btn btn-success" id="btnPrintReport" onclick="window.print()" style="margin-top: 15px;">🖨️ พิมพ์รายงาน A4</button>
+        <button class="btn btn-success" id="btnPrintReport" onclick="printPrbReport()" style="margin-top: 15px;">🖨️ พิมพ์รายงาน A4</button>
     </div>
 
+    <!-- 🌟 โซนสำหรับปริ้น 3 รูปแบบ -->
+    <div id="receipt-summary-area"></div>
     <div id="print-area"></div>
     <div id="report-area"></div>
 
@@ -126,17 +147,30 @@
         });
 
         function switchTab(tabNum) {
+            document.body.className = ''; // ล้างสถานะ Print โหมด
             document.getElementById('section-receipt').style.display = (tabNum === 1) ? 'block' : 'none';
             document.getElementById('section-report').style.display = (tabNum === 2) ? 'block' : 'none';
             document.getElementById('btnTab1').classList.toggle('active', tabNum === 1);
             document.getElementById('btnTab2').classList.toggle('active', tabNum === 2);
+            
+            // ซ่อนทุกอย่างที่โหลดมา
             document.getElementById('print-area').style.display = 'none';
             document.getElementById('report-area').style.display = 'none';
+            document.getElementById('receipt-summary-area').style.display = 'none';
             document.getElementById('print-area').innerHTML = '';
             document.getElementById('report-area').innerHTML = '';
+            document.getElementById('receipt-summary-area').innerHTML = '';
+            
+            document.getElementById('btnPrintCover').style.display = 'none';
             document.getElementById('btnPrintReceipt').style.display = 'none';
             document.getElementById('btnPrintReport').style.display = 'none';
+            document.getElementById('statusTextReceipt').innerHTML = '';
         }
+
+        // 🌟 3 ฟังก์ชันสั่งพิมพ์ (แยก Class ชัดเจน ไม่ตีกัน)
+        function printCover() { document.body.className = 'print-summary'; window.print(); }
+        function printReceipts() { document.body.className = 'print-receipts'; window.print(); }
+        function printPrbReport() { document.body.className = 'print-prb'; window.print(); }
 
         function ThaiBahtText(number) {
             let num = parseFloat(number); 
@@ -191,12 +225,75 @@
                     let breakdownStr = Object.keys(summaryCounts).sort((a,b) => a - b).map(price => `ราคา ${price}-. มี <span style="color:#e02424; font-size:18px;">${summaryCounts[price]}</span> คัน`).join(" &nbsp;|&nbsp; ");
                     
                     document.getElementById('statusTextReceipt').innerHTML = `✅ สร้างฟอร์มสำเร็จ: ${data.length} รายการ<br><div style="font-size: 15px; color: #333; margin-top: 10px; background: #e5edff; padding: 10px; border-radius: 8px;">📊 <b>สรุปรายละเอียด:</b> ${breakdownStr}</div>`;
+                    
+                    // โชว์ปุ่มพิมพ์ 2 ปุ่ม
+                    document.getElementById('btnPrintCover').style.display = 'inline-block';
                     document.getElementById('btnPrintReceipt').style.display = 'inline-block';
+                    
+                    // สร้าง HTML 2 ส่วน
+                    generateReceiptSummaryHTML(data, startVal, endVal, branchVal);
                     generateReceiptHTML(data);
                 }
             } catch(e) { Swal.close(); Swal.fire('Error', e.message, 'error'); }
         }
 
+        // 🌟 1. ฟังก์ชันสร้าง ใบปะหน้ารวม (ตารางสรุป) 🌟
+        function generateReceiptSummaryHTML(dataList, startStr, endStr, branchStr) {
+            let container = document.getElementById('receipt-summary-area');
+            let displayDateRange = startStr === endStr ? startStr : `${startStr} ถึง ${endStr}`;
+            let sumTotal = 0;
+            
+            let html = `
+                <div style="background:white; padding:15px; border-radius:8px; margin-top:15px;">
+                    <h2 style="text-align:center; color:#0d6efd; margin-bottom: 5px;">ใบปะหน้าสรุปรายการใบเสร็จรับเงิน</h2>
+                    <h4 style="text-align:center; color:#555; margin-top: 0;">สาขา: ${branchStr} | วันที่: ${displayDateRange}</h4>
+                    
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th class="th-blue" style="width: 50px;">ลำดับ</th>
+                                <th class="th-blue">วันที่ออกใบเสร็จ</th>
+                                <th class="th-blue">เล่มที่</th>
+                                <th class="th-blue">เลขที่</th>
+                                <th class="th-blue">เลขทะเบียน</th>
+                                <th class="th-blue" style="text-align: right; width: 120px;">จำนวนเงิน</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            dataList.forEach((item, index) => {
+                let amt = parseFloat(item.total) || 0;
+                sumTotal += amt;
+                html += `
+                    <tr>
+                        <td class="text-center">${index + 1}</td>
+                        <td class="text-center">${item.dateStr}</td>
+                        <td class="text-center">${item.bookNo}</td>
+                        <td class="text-center">${item.receiptNo}</td>
+                        <td class="text-center">${item.reg}</td>
+                        <td class="text-right"><b>${amt.toLocaleString('en-US', {minimumFractionDigits: 2})}</b></td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="text-right" style="font-size:16px;"><b>รวมเป็นเงินทั้งสิ้น</b></td>
+                                <td class="text-right" style="font-size:16px; color:#e02424;"><b>${sumTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</b></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            container.style.display = 'block'; // แสดงโชว์ให้เห็นบนหน้าจอเว็บ
+        }
+
+        // 🌟 2. ฟังก์ชันสร้าง ใบเสร็จ (ซ่อนไว้สำหรับปริ้นเท่านั้น) 🌟
         function generateReceiptHTML(dataList) {
             let container = document.getElementById('print-area');
             let html = "";
@@ -205,8 +302,6 @@
                 let thText = ThaiBahtText(numTotal);
                 let totalStr = numTotal.toFixed(2); 
 
-                // เช็คว่ามีค่าของรถอะไรส่งมาบ้าง 
-                // หมายเหตุ: โค้ดที่อัปเดต getMonthlyReceipts ใน Code.gs ส่ง feeCar และ feeMoto มาให้
                 let feeCar = item.feeCar || (item.feeMoto === "-" ? totalStr : "-");
                 let feeMoto = item.feeMoto || (item.feeCar === "-" ? totalStr : "-");
 
