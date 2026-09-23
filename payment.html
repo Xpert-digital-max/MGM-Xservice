@@ -157,20 +157,21 @@
        }
     }
 
-    // 4. ฟังก์ชันแสดงตัวเลือกการชำระเงิน (อัปเดต: เก็บตัวแปร paid ไว้เช็คสถานะ)
+    // 4. ฟังก์ชันแสดงตัวเลือกการชำระเงิน (ลบปุ่มค้างชำระออก + เพิ่มปุ่มแบ่งจ่าย)
     function showPaymentOptions(jobId, plate, amount, paid) {
        tempPayData = { jobId, plate, amount, paid };
 
        Swal.fire({
           title: 'เลือกช่องทางชำระเงิน',
-          text: `ยอดรวม ${amount.toLocaleString()} บาท`,
+          text: `ยอดค้างชำระสุทธิ ${amount.toLocaleString()} บาท`,
           html: `
-            <div class="d-grid gap-2 mt-2">
-              <button class="btn btn-outline-success" onclick="selectMethod('เงินสด')">💵 เงินสด</button>
-              <button class="btn btn-outline-info" onclick="selectMethod('เงินโอน')">📲 เงินโอน (แนบลิงก์สลิป)</button>
-              <button class="btn btn-outline-primary" onclick="selectMethod('บัตรเครดิต')">💳 บัตรเครดิต</button>
-              <button class="btn btn-myshop" onclick="selectMethod('LINE Myshop')">🛍️ LINE Myshop</button>
-              <button class="btn btn-outline-danger" onclick="selectMethod('ค้างชำระ')">⚠️ ค้างชำระ</button>
+            <div class="d-grid gap-2 mt-3">
+              <button class="btn btn-outline-success btn-lg" onclick="selectMethod('เงินสด')">💵 เงินสด (จ่ายเต็ม)</button>
+              <button class="btn btn-outline-info btn-lg" onclick="selectMethod('เงินโอน')">📲 เงินโอน (แนบสลิป)</button>
+              <button class="btn btn-outline-primary btn-lg" onclick="selectMethod('บัตรเครดิต')">💳 บัตรเครดิต</button>
+              <button class="btn btn-myshop btn-lg" onclick="selectMethod('LINE Myshop')">🛍️ LINE Myshop</button>
+              <hr>
+              <button class="btn btn-warning fw-bold" onclick="selectMethod('แบ่งจ่าย')">✏️ ระบุยอดเงินเอง (แบ่งจ่ายบางส่วน)</button>
             </div>
           `,
           showConfirmButton: false, 
@@ -178,35 +179,50 @@
        });
     }
 
-    // 5. ฟังก์ชันจัดการเมื่อเลือกช่องทางชำระเงิน (อัปเดต: เช็คเคสแบ่งจ่าย)
+    // 5. ฟังก์ชันจัดการเมื่อเลือกช่องทางชำระเงิน
     async function selectMethod(method) {
        Swal.close(); 
-       let { jobId, amount: remainAmount, paid } = tempPayData;
+       let { jobId, amount: remainAmount, paid, plate } = tempPayData;
 
        let finalAmount = remainAmount; // ค่าตั้งต้นคือยอดเต็ม
+       let finalMethod = method;
 
-       // 🌟 เช็คว่าถ้ามียอดสะสม (เคยเปิด Toggle มัดจำมา) ให้โชว์กล่องให้กรอกยอดเงินแบ่งจ่าย
-       if (paid > 0) {
-           const { value: payAmount, isConfirmed } = await Swal.fire({
-              title: 'ยอดเงินที่รับชำระ',
-              input: 'number',
-              inputValue: remainAmount,
-              html: `<span class="text-muted">ลูกค้าชำระค่างวดบางส่วนได้ (ยอดค้างสุทธิ: ${remainAmount.toLocaleString()} ฿)</span>`,
+       // 🌟 ถ้าพนักงานเลือก "แบ่งจ่าย" ให้เด้งกล่องกรอกยอดเงินขึ้นมา
+       if (method === 'แบ่งจ่าย' || paid > 0) {
+           if (method === 'แบ่งจ่าย') finalMethod = 'เงินโอน'; // ตั้งค่าเริ่มต้นเป็นโอน (พนักงานพิมพ์แก้ได้)
+
+           const { value: formValues, isConfirmed } = await Swal.fire({
+              title: 'ระบุยอดที่รับชำระ',
+              html: `
+                <div class="text-start mb-2"><small class="text-muted">ยอดค้างสุทธิ: ${remainAmount.toLocaleString()} ฿</small></div>
+                <input id="swal-input-amt" type="number" class="form-control mb-3" placeholder="ระบุจำนวนเงินที่จ่ายจริง" value="${remainAmount}">
+                <select id="swal-input-method" class="form-select">
+                    <option value="เงินโอน" ${finalMethod === 'เงินโอน' ? 'selected' : ''}>📲 เงินโอน</option>
+                    <option value="เงินสด" ${finalMethod === 'เงินสด' ? 'selected' : ''}>💵 เงินสด</option>
+                    <option value="บัตรเครดิต" ${finalMethod === 'บัตรเครดิต' ? 'selected' : ''}>💳 บัตรเครดิต</option>
+                </select>
+              `,
+              focusConfirm: false,
               showCancelButton: true,
               confirmButtonText: 'ถัดไป ➡️',
               cancelButtonText: 'ยกเลิก',
-              inputValidator: (value) => {
-                 if (!value || value <= 0) return 'กรุณาระบุจำนวนเงินที่รับชำระ!';
-                 if (value > remainAmount) return 'ยอดชำระเกินยอดค้างชำระ!';
+              preConfirm: () => {
+                 let amt = document.getElementById('swal-input-amt').value;
+                 let mtd = document.getElementById('swal-input-method').value;
+                 if (!amt || amt <= 0) { Swal.showValidationMessage('กรุณาระบุจำนวนเงิน!'); return false; }
+                 if (amt > remainAmount) { Swal.showValidationMessage('ยอดชำระเกินยอดค้าง!'); return false; }
+                 return { amt: parseFloat(amt), mtd: mtd };
               }
            });
 
-           if (!isConfirmed) return showPaymentOptions(jobId, tempPayData.plate, remainAmount, paid);
-           finalAmount = parseFloat(payAmount); // เปลี่ยนเป็นยอดที่พนักงานกรอก
+           if (!isConfirmed) return showPaymentOptions(jobId, plate, remainAmount, paid);
+           
+           finalAmount = formValues.amt;
+           finalMethod = formValues.mtd;
        }
 
-       // 🌟 ถ้าเป็นเงินโอน ต้องแนบสลิป
-       if (method === 'เงินโอน') {
+       // 🌟 ถ้าเป็นเงินโอน ต้องบังคับแนบลิงก์สลิป
+       if (finalMethod === 'เงินโอน') {
           const { value: slipLink } = await Swal.fire({
              title: 'กรุณาวางลิงก์สลิป',
              input: 'text',
@@ -220,20 +236,20 @@
           });
 
           if (slipLink) {
-              submitToBackend(jobId, method, finalAmount, slipLink.trim(), "link");
+              submitToBackend(jobId, finalMethod, finalAmount, slipLink.trim(), "link");
           }
        } 
        else {
           // 🌟 ถ้าเป็นเงินสด/บัตรเครดิต/Myshop กดปุ๊บ ถามแค่ยืนยัน
           Swal.fire({
              title: `ยืนยันรับชำระ?`,
-             text: `ช่องทาง: ${method} | รับชำระ: ${finalAmount.toLocaleString()} บาท`,
+             text: `ช่องทาง: ${finalMethod} | รับชำระ: ${finalAmount.toLocaleString()} บาท`,
              icon: 'question',
              showCancelButton: true,
              confirmButtonText: '✅ ยืนยันรับเงิน'
           }).then((r) => {
              if(r.isConfirmed) {
-                submitToBackend(jobId, method, finalAmount, "", ""); 
+                submitToBackend(jobId, finalMethod, finalAmount, "", ""); 
              }
           });
        }
