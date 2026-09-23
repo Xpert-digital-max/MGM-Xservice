@@ -127,37 +127,49 @@
     var currentBranch = "";
     var currentUserId = ""; 
     let processedFiles = []; 
+    let initAttempts = 0; // ตัวนับจำนวนครั้งที่พยายามโหลด
 
     window.onload = function() { 
         initLiff(); 
     };
 
+    // 🌟 1. ปรับปรุงการโหลด LIFF ให้เสถียรขึ้น
     async function initLiff() {
         try {
             await liff.init({ liffId: RECEPTION_LIFF_ID });
             if (!liff.isLoggedIn()) { 
                 liff.login(); 
             } else { 
-                verifyPermission(); 
+                await verifyPermission(); 
             }
         } catch(e) { 
-            Swal.fire('Error', 'ไม่สามารถโหลดระบบ LINE ได้', 'error'); 
+            Swal.fire('Error', 'ไม่สามารถโหลดระบบ LINE ได้ กรุณาตรวจสอบอินเทอร์เน็ต', 'error'); 
         }
     }
 
+    // 🌟 2. เพิ่มระบบ Retry (พยายามซ้ำ) ถ้าตรวจสอบสิทธิ์หน่วงหรือหลุด
     async function verifyPermission() {
-        Swal.fire({ title: 'กำลังตรวจสอบสิทธิ์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        const profile = await liff.getProfile();
-        currentUserId = profile.userId;
-
+        if (initAttempts === 0) {
+            Swal.fire({ title: 'กำลังตรวจสอบสิทธิ์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        }
+        
         try {
+            const profile = await liff.getProfile();
+            currentUserId = profile.userId;
+
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "verifyUserAccess", userId: currentUserId, pageName: "receiption.html" })
             });
+            
             const resText = await response.text();
             let res;
-            try { res = JSON.parse(resText); } catch (err) { throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ"); }
+            try { 
+                res = JSON.parse(resText); 
+            } catch (err) { 
+                // ถ้าระบบหลังบ้านตอบกลับเป็น HTML (เช่น Timeout) ให้โยน Error ไปที่ catch
+                throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ"); 
+            }
 
             if (res.valid) {
                 Swal.close();
@@ -178,7 +190,6 @@
                 
                 document.getElementById('mainContent').style.display = 'block';
 
-                // 🌟 ตรวจสอบว่ามีรหัส qtId ส่งมาด้วยหรือไม่ (ดึงข้อมูลใบเสนอราคามาหยอดอัตโนมัติ)
                 checkQuotationData();
 
             } else {
@@ -186,10 +197,29 @@
                 document.getElementById('staffNameDisplay').innerText = "❌ ไม่มีสิทธิ์";
                 document.getElementById('staffNameDisplay').className = "badge bg-danger fs-6 shadow-sm";
             }
-        } catch(e) { Swal.fire('Error', 'เชื่อมต่อระบบไม่ได้: ' + e.message, 'error'); }
+        } catch(e) { 
+            // 🌟 ระบบ Retry: ถ้าเฟล จะพยายามโหลดใหม่สูงสุด 3 ครั้ง 
+            initAttempts++;
+            if(initAttempts < 3) {
+                setTimeout(verifyPermission, 1500); // รอ 1.5 วินาทีแล้วลองใหม่
+            } else {
+                Swal.fire({
+                    title: 'เชื่อมต่อล่าช้า', 
+                    text: 'สัญญาณอินเทอร์เน็ตหรือเซิร์ฟเวอร์อาจขัดข้อง ต้องการลองใหม่หรือไม่?', 
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '🔄 ลองอีกครั้ง'
+                }).then((r) => {
+                    if(r.isConfirmed) {
+                        initAttempts = 0;
+                        verifyPermission();
+                    }
+                });
+            }
+        }
     }
 
-    // 🌟 ฟังก์ชันดึงข้อมูลจากใบเสนอราคามาแสดง
+    // 🌟 ฟังก์ชันดึงข้อมูลจากใบเสนอราคามาแสดง (โค้ดเดิม)
     function checkQuotationData() {
         const urlParams = new URLSearchParams(window.location.search);
         const qtId = urlParams.get('qtId');
@@ -290,7 +320,6 @@
     }
 
     async function searchQueueData() {
-        // ... (โค้ดค้นหาคิวเหมือนเดิม) ...
         let keyword = document.getElementById('searchQueue').value.trim();
         if (!keyword) return Swal.fire('แจ้งเตือน', 'กรุณากรอกเลขคิว หรือ ทะเบียน', 'warning');
         
@@ -344,11 +373,11 @@
       const reg = document.getElementById('reg').value;
       const phone = document.getElementById('phone').value;
       const carType = document.getElementById('carType').value;
-      const qtId = document.getElementById('hiddenQtId').value; // 🌟 ส่ง qtId กลับไปด้วย
+      const qtId = document.getElementById('hiddenQtId').value; 
       
       if(!reg || !phone) return Swal.fire('ข้อมูลไม่ครบ','กรุณากรอก ทะเบียน และ เบอร์โทร','warning');
       
-      const btn = document.querySelector('#ui button.btn-primary') || document.querySelector('#btnSubmitQueue');
+      const btn = document.querySelector('#ui button.btn-primary') || document.getElementById('btnSubmitQueue');
       btn.disabled = true; 
       btn.innerText = "⏳ กำลังบันทึก...";
       
@@ -359,7 +388,7 @@
           phone: phone,
           carType: carType,
           files: processedFiles,
-          qtId: qtId, // 🌟 แนบค่า qtId ไปด้วย Code.gs จะได้รู้ว่ามาจากใบเสนอราคา
+          qtId: qtId, 
           editRowIndex: document.getElementById('editRowIndex').value, 
           editJobId: document.getElementById('editJobId').value 
       };
@@ -376,7 +405,6 @@
               document.getElementById('qNum').innerText = r.queueNo;
               document.getElementById('jId').innerText = r.jobID;
               
-              // ล้าง qtBanner ทิ้ง
               document.getElementById('qtBanner').style.display = 'none';
 
               let queryString = "?refId=" + encodeURIComponent(currentUserId) +
@@ -402,7 +430,7 @@
        document.getElementById('searchQueue').value = ''; 
        document.getElementById('editRowIndex').value = ''; 
        document.getElementById('editJobId').value = ''; 
-       document.getElementById('hiddenQtId').value = ''; // เคลียร์ qtId
+       document.getElementById('hiddenQtId').value = ''; 
        document.getElementById('btnSubmitQueue').innerText = 'ออกบัตรคิว'; 
        document.getElementById('btnSubmitQueue').className = 'btn btn-primary w-100 py-3 fw-bold shadow';
        processedFiles = []; updateFileList();
