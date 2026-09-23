@@ -234,11 +234,30 @@
         }
     }
 
+    // 🌟 ฟังก์ชันล็อกฟอร์มเมื่อบันทึกแล้ว
+    function disableEditForm(isDisabled) {
+        const editCard = document.getElementById('edit');
+        editCard.querySelectorAll('input, select, button').forEach(el => {
+            el.disabled = isDisabled;
+        });
+        
+        // จัดการปุ่มคำนวณแยกต่างหาก
+        let calcBtn = document.getElementById('calcBtn');
+        if(calcBtn) {
+            calcBtn.style.display = isDisabled ? 'none' : 'block';
+            calcBtn.disabled = isDisabled;
+        }
+    }
+
     function resetPage() {
        document.getElementById('sk').value = ''; 
        document.getElementById('searchSection').style.display = 'block';
        document.getElementById('edit').style.display = 'none';
        document.getElementById('previewSection').style.display = 'none';
+       
+       // ปลดล็อกฟอร์มทั้งหมดเผื่อการค้นหาคิวใหม่
+       disableEditForm(false);
+
        let successBox = document.getElementById('successBanner');
        if(successBox) successBox.style.display = 'none';
        document.getElementById('preSaveButtons').style.display = 'grid';
@@ -290,7 +309,10 @@
                  });
             } else {
                  let job = res.jobs[0]; 
-                 if (job.total > 0 || (job.fee_inspect && job.fee_inspect > 0)) { showSavedPreview(job); } 
+                 if (job.total > 0 || (job.fee_inspect && job.fee_inspect > 0)) { 
+                     // ถ้ารายการนี้เคยบันทึกค่าใช้จ่ายไปแล้ว ให้แสดงแบบล็อกฟอร์ม
+                     showSavedPreview(job); 
+                 } 
                  else { showEditForm(job); }
             }
         } catch(e) {
@@ -303,6 +325,7 @@
         document.getElementById('searchSection').style.display='none';
         document.getElementById('edit').style.display='block';
         document.getElementById('previewSection').style.display='none';
+        disableEditForm(false); // มั่นใจว่าฟอร์มไม่โดนล็อก
         
         document.getElementById('idx').value = res.rowIndex;
         document.getElementById('jobId').value = res.jobId;
@@ -375,7 +398,7 @@
         saveBtn.setAttribute('data-payload', JSON.stringify(payload));
 
         let btn = document.getElementById('calcBtn');
-        btn.innerText="⏳ กำลังคำนวณ..."; btn.disabled=true; // 🌟 ล็อกปุ่ม
+        btn.innerText="⏳ กำลังคำนวณ..."; btn.disabled=true; 
         let plate = document.getElementById('v').innerText; 
 
         try {
@@ -386,7 +409,6 @@
             const textResponse = await response.text();
             let res;
             
-            // 🌟 ดักจับ Error Unexpected Token '<'
             try {
                 res = JSON.parse(textResponse);
             } catch (jsonErr) {
@@ -400,6 +422,7 @@
             document.getElementById('edit').style.display='none';
             document.getElementById('previewSection').style.display='block';
             renderPreviewHTML(plate, res.carAge, res.prb, res.tor, res.tax, res.fine, res.service, res.insurance, res.total);
+            
             document.getElementById('preSaveButtons').style.display = 'grid';
             document.getElementById('successBanner').style.display = 'none';
             document.getElementById('postSaveButtons').style.display = 'none';
@@ -428,7 +451,7 @@
         let calcResult = JSON.parse(resultJson);
         payload.action = "saveJobFinal";
 
-        btn.innerText = "⏳ กำลังบันทึก..."; btn.disabled = true; // 🌟 ล็อกปุ่มป้องกันกดซ้ำ
+        btn.innerText = "⏳ กำลังบันทึก..."; btn.disabled = true; // ล็อกปุ่ม
 
         try {
             const response = await fetch(GAS_API_URL, {
@@ -437,7 +460,6 @@
             });
             const textResponse = await response.text();
             
-            // 🌟 ดักจับ Error Unexpected Token '<' ตรงจุดเซฟด้วย
             try {
                 JSON.parse(textResponse);
             } catch (jsonErr) {
@@ -448,6 +470,10 @@
             document.getElementById('preSaveButtons').style.display = 'none';
             document.getElementById('successBanner').style.display = 'block';
             document.getElementById('postSaveButtons').style.display = 'grid';
+            
+            // 🌟 ล็อกฟอร์มทั้งหมดหลังจากบันทึกสำเร็จ
+            disableEditForm(true);
+
         } catch(err) {
             btn.innerText = "✅ ยืนยันและบันทึก"; btn.disabled = false;
             Swal.fire({
@@ -458,9 +484,14 @@
         }
     }
 
+    // 🌟 ฟังก์ชันที่ทำงานเมื่อค้นหาเจอคิวที่เคยบันทึกค่าใช้จ่ายไปแล้ว
     function showSavedPreview(res) {
         document.getElementById('searchSection').style.display='none';
-        document.getElementById('edit').style.display='none';
+        
+        // 🌟 เปิดหน้า edit ให้ดูข้อมูล แต่สั่ง Disabled ห้ามแก้เด็ดขาด
+        document.getElementById('edit').style.display='block';
+        disableEditForm(true);
+
         document.getElementById('previewSection').style.display='block';
         let prb = Number(res.savedPrb || 0);
         let tor = Number(res.savedTor || 0);
@@ -469,10 +500,14 @@
         let sFee = Number(res.serviceFee || 0);
         let ins = Number(res.insPrice || 0);
         let total = Math.ceil(prb + tor + tax + fine + sFee + ins);
+        
         renderPreviewHTML(res.reg, res.carAge, prb, tor, tax, fine, sFee, ins, total);
+        
+        // 🌟 ซ่อนปุ่มแก้ไข/ยืนยันทั้งหมด โชว์เฉพาะปุ่มพิมพ์ใบเสร็จ
         document.getElementById('preSaveButtons').style.display = 'none';
         document.getElementById('successBanner').style.display = 'block';
         document.getElementById('postSaveButtons').style.display = 'grid';
+        
         document.getElementById('idx').value = res.rowIndex;
         document.getElementById('jobId').value = res.jobId; 
     }
